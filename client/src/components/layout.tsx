@@ -1,23 +1,16 @@
-import './layout.css';
+import { h } from "preact";
+import { Provider } from "./ui/provider";
 
-import { h, Fragment } from 'preact';
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from "react-hot-toast";
+import { Header } from "./header";
+import { Box } from "@chakra-ui/react";
 
-export const Layout = ({ page }: {page: h.JSX.Element}) => (
-	<>
-		<header>
-			<h1>НРИ Календарь</h1>
-			{/* <nav>
-				<a href="/">Главная</a>
-				<a href="/signin">Вход</a>
-				<a href="/calendar">Календарь</a>
-				<a href="/event/create">Создать событие</a>
-				<a href="/mastery">Мастерство</a>
-			</nav> */}
-		</header>
+export const Layout = ({ page }: { page: h.JSX.Element }) => (
+	<Provider>
+		<Header />
 		<main>
-			{ page }
+			{page}
 			<Toaster position="bottom-right" />
 		</main>
-	</>
+	</Provider>
 );

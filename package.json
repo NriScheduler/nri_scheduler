@@ -2,7 +2,7 @@
 	"name": "nri_scheduler",
 	"version": "0.1.0",
 	"scripts": {
-		"start": "vite",
+		"start": "node start.ts",
 		"dev": "export $(cat .env | grep -v '^#' | xargs) && vite",
 		"force": "vite --force",
 		"build": "tsc && vite build",
@@ -11,18 +11,22 @@
 		"prebuild": "rm -rf static || npx rimraf static"
 	},
 	"dependencies": {
+		"@chakra-ui/react": "^3.8.1",
 		"@nanostores/preact": "^0.5.2",
 		"@nanostores/query": "^0.3.4",
 		"@schedule-x/calendar": "^2.20.0",
 		"@schedule-x/preact": "^2.15.0",
 		"@schedule-x/theme-default": "^2.20.0",
 		"dayjs": "^1.11.13",
+		"dotenv": "^16.4.7",
 		"nanostores": "^0.11.4",
+		"next-themes": "^0.4.4",
 		"preact": "^10.26.2",
 		"preact-async-route": "^2.2.1",
 		"preact-router": "^4.1.2",
 		"purecss": "^3.0.0",
-		"react-hot-toast": "^2.5.2"
+		"react-hot-toast": "^2.5.2",
+		"react-icons": "^5.5.0"
 	},
 	"devDependencies": {
 		"@preact/preset-vite": "^2.10.1",

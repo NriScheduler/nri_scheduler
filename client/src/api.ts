@@ -1,17 +1,17 @@
-import type { UUID } from 'node:crypto';
+import type { UUID } from "node:crypto";
 
-import { route as navigate } from 'preact-router';
-import { toast } from 'react-hot-toast';
+import { route as navigate } from "preact-router";
+import { toast } from "react-hot-toast";
 
 import { startFetching, stopFetching } from "./store/fetching";
 import { enter, leave } from "./store/profile";
 
 const API_HOST = import.meta.env.PROD
-	? ''
-	: import.meta.env.CLIENT_API_HOST as string | undefined || '';
-const CREDENTIALS = import.meta.env.PROD ? undefined : 'include';
+	? ""
+	: (import.meta.env.CLIENT_API_HOST as string | undefined) || "";
+const CREDENTIALS = import.meta.env.PROD ? undefined : "include";
 
-const POST = 'POST';
+const POST = "POST";
 const URL_ENCODED = true;
 
 export const enum EScenarioStatus {
@@ -23,9 +23,9 @@ export const enum EScenarioStatus {
 }
 
 export interface IApiResponse<T = null> {
-	readonly status: EScenarioStatus,
-	readonly result: string,
-	readonly payload: T,
+	readonly status: EScenarioStatus;
+	readonly result: string;
+	readonly payload: T;
 }
 
 export interface IRequestInit {
@@ -35,28 +35,31 @@ export interface IRequestInit {
 	readonly timeoutMilliseconds?: number;
 }
 
-const ajax = <T>(input: string, init?: IRequestInit): Promise<IApiResponse<T> | null> => {
+const ajax = <T>(
+	input: string,
+	init?: IRequestInit
+): Promise<IApiResponse<T> | null> => {
 	let controller: AbortController | undefined;
 	let timeoutId: ReturnType<typeof setTimeout>;
 
 	if (init?.timeoutMilliseconds) {
 		controller = new AbortController();
-		timeoutId = setTimeout(() => controller!.abort(), init.timeoutMilliseconds);
+		timeoutId = setTimeout(
+			() => controller!.abort(),
+			init.timeoutMilliseconds
+		);
 	}
 
 	startFetching();
 
-	return fetch(
-		API_HOST + input,
-		{
-			body:    init?.body,
-			cache:   'no-store',
-			credentials: CREDENTIALS,
-			headers: init?.headers,
-			method:  init?.method,
-			signal:  controller?.signal,
-		},
-	)
+	return fetch(API_HOST + input, {
+		body: init?.body,
+		cache: "no-store",
+		credentials: CREDENTIALS,
+		headers: init?.headers,
+		method: init?.method,
+		signal: controller?.signal,
+	})
 		.then((res) => checkResponse<T>(res))
 		.finally(() => {
 			clearTimeout(timeoutId);
@@ -64,7 +67,9 @@ const ajax = <T>(input: string, init?: IRequestInit): Promise<IApiResponse<T> | 
 		});
 };
 
-const checkResponse = async <T>(response: Response): Promise<IApiResponse<T> | null> => {
+const checkResponse = async <T>(
+	response: Response
+): Promise<IApiResponse<T> | null> => {
 	if (response.ok === false) {
 		let body: object | string | null = null;
 
@@ -77,12 +82,12 @@ const checkResponse = async <T>(response: Response): Promise<IApiResponse<T> | n
 				// payload is not a json string
 			}
 		} catch (err) {
-			console.info('http response body parsing error');
+			console.info("http response body parsing error");
 			console.error(err);
 		}
 
-		toast.error('Ошибка обращения к серверу');
-		console.info('Http response is not ok');
+		toast.error("Ошибка обращения к серверу");
+		console.info("Http response is not ok");
 		console.error({
 			status: response.status,
 			statusText: response.statusText,
@@ -104,7 +109,7 @@ const checkResponse = async <T>(response: Response): Promise<IApiResponse<T> | n
 			case EScenarioStatus.SESSION_EXPIRED:
 				toast.error(apiRes.result);
 				leave();
-				navigate('/signin');
+				navigate("/signin");
 				break;
 
 			case EScenarioStatus.SCENARIO_FAIL:
@@ -113,24 +118,27 @@ const checkResponse = async <T>(response: Response): Promise<IApiResponse<T> | n
 				break;
 
 			default:
-				toast.error('Неизвестный статус ответа');
-				console.info('Неизвестный статус');
+				toast.error("Неизвестный статус ответа");
+				console.info("Неизвестный статус");
 				console.error(apiRes);
 				break;
 		}
 
 		return null;
-
 	} catch (err) {
-		toast.error('Неизвестная ошибка');
-		console.info('Хрень какая-то...');
+		toast.error("Неизвестная ошибка");
+		console.info("Хрень какая-то...");
 		console.error(err);
 
 		return null;
 	}
 };
 
-const prepareAjax = (payload?: object, method?: string, urlencoded = false): IRequestInit => {
+const prepareAjax = (
+	payload?: object,
+	method?: string,
+	urlencoded = false
+): IRequestInit => {
 	return {
 		body: payload
 			? urlencoded
@@ -138,25 +146,32 @@ const prepareAjax = (payload?: object, method?: string, urlencoded = false): IRe
 				: JSON.stringify(payload)
 			: undefined,
 		headers: payload
-			? {'Content-Type': 'application/' + (urlencoded ? 'x-www-form-urlencoded' : 'json')}
+			? {
+					"Content-Type":
+						"application/" +
+						(urlencoded ? "x-www-form-urlencoded" : "json"),
+			  }
 			: undefined,
 		method,
 	};
 };
 
-export const registration = (nickname: string, email: string, password: string) => {
+export const registration = (
+	nickname: string,
+	email: string,
+	password: string
+) => {
 	return ajax<null>(
-		'/api/registration',
-		prepareAjax({nickname, email, password}, POST, URL_ENCODED),
+		"/api/registration",
+		prepareAjax({ nickname, email, password }, POST, URL_ENCODED)
 	);
 };
 
 export const signIn = (email: string, password: string) => {
 	return ajax<null>(
-		'/api/signin',
-		prepareAjax({email, password}, POST, URL_ENCODED),
-	)
-	.then((res) => {
+		"/api/signin",
+		prepareAjax({ email, password }, POST, URL_ENCODED)
+	).then((res) => {
 		if (res?.status === EScenarioStatus.SCENARIO_SUCCESS) {
 			enter();
 		}
@@ -165,8 +180,8 @@ export const signIn = (email: string, password: string) => {
 	});
 };
 
-export const logout = () => ajax<null>('/api/logout', prepareAjax(undefined, POST))
-	.then((res) => {
+export const logout = () =>
+	ajax<null>("/api/logout", prepareAjax(undefined, POST)).then((res) => {
 		if (res?.status === EScenarioStatus.SCENARIO_SUCCESS) {
 			leave();
 		}
@@ -179,19 +194,23 @@ export interface IApiEvent {
 	readonly company: string;
 	readonly company_id: UUID;
 	readonly master: string;
-	readonly master_id: UUID,
+	readonly master_id: UUID;
 	readonly location: string;
 	readonly location_id: UUID;
 	readonly date: string;
-	readonly max_slots: number | null,
-	readonly plan_duration: number | null,
+	readonly max_slots: number | null;
+	readonly plan_duration: number | null;
 	readonly players: string[];
 	readonly you_applied: boolean;
 	readonly your_approval: boolean | null;
 }
 
 export const readEventsList = (from: string, to: string) => {
-	return ajax<IApiEvent[]>(`/api/events?date_from=${encodeURIComponent(from)}&date_to=${encodeURIComponent(to)}`);
+	return ajax<IApiEvent[]>(
+		`/api/events?date_from=${encodeURIComponent(
+			from
+		)}&date_to=${encodeURIComponent(to)}`
+	);
 };
 
 export const readEvent = (eventId: UUID) => {
@@ -199,7 +218,10 @@ export const readEvent = (eventId: UUID) => {
 };
 
 export const applyEvent = (eventId: UUID) => {
-	return ajax<UUID>(`/api/events/apply/${eventId}`, prepareAjax(undefined, POST));
+	return ajax<UUID>(
+		`/api/events/apply/${eventId}`,
+		prepareAjax(undefined, POST)
+	);
 };
 
 export interface IApiSelfInfo {
@@ -208,5 +230,5 @@ export interface IApiSelfInfo {
 }
 
 export const whoIAm = () => {
-	return ajax<IApiSelfInfo>('/api/check');
+	return ajax<IApiSelfInfo>("/api/check");
 };
