@@ -6,7 +6,9 @@ import { Layout } from "./components/layout";
 import {
 	CreateEventPage,
 	EventPage,
+	HomePage,
 	MasteryPage,
+	NotFoundPage,
 	SignInPage,
 } from "./components/pages";
 import { softCheck } from "./api";
@@ -17,6 +19,7 @@ const App = () => (
 	<Layout
 		page={
 			<Router>
+				<Route path="/" component={HomePage} />
 				<AsyncRoute
 					path="/signup"
 					getComponent={() =>
@@ -37,10 +40,8 @@ const App = () => (
 				<Route path="/event/create" component={CreateEventPage} />
 				<Route path="/event/:id" component={EventPage} />
 				<Route path="/mastery" component={MasteryPage} />
-				<Route
-					default
-					component={() => <h1>404 - Страница не найдена</h1>}
-				/>
+
+				<Route default component={() => <NotFoundPage />} />
 			</Router>
 		}
 	/>

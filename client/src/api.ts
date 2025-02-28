@@ -197,12 +197,17 @@ export interface IApiLocation {
 
 export const readLocations = () => ajax<IApiLocation[]>("/api/locations");
 
-export const readLocationById = (locId: UUID) => ajax<IApiLocation>(`/api/locations/${locId}`);
+export const readLocationById = (locId: UUID) =>
+	ajax<IApiLocation>(`/api/locations/${locId}`);
 
-export const addLocation = (name: string, address?: string | null, description?: string | null) =>
+export const addLocation = (
+	name: string,
+	address?: string | null,
+	description?: string | null
+) =>
 	ajax<UUID>(
 		"/api/locations",
-		prepareAjax({name, address, description}, POST),
+		prepareAjax({ name, address, description }, POST)
 	);
 
 export interface IApiCompany {
@@ -215,12 +220,17 @@ export interface IApiCompany {
 
 export const readMyCompanies = () => ajax<IApiCompany[]>("/api/companies/my");
 
-export const readCompanyById = (compId: UUID) => ajax<IApiCompany>(`/api/companies/${compId}`);
+export const readCompanyById = (compId: UUID) =>
+	ajax<IApiCompany>(`/api/companies/${compId}`);
 
-export const addCompany = (name: string, system: string, description?: string | null) =>
+export const addCompany = (
+	name: string,
+	system: string,
+	description?: string | null
+) =>
 	ajax<UUID>(
 		"/api/companies",
-		prepareAjax({name, system, description}, POST),
+		prepareAjax({ name, system, description }, POST)
 	);
 
 export interface IApiEvent {
@@ -251,6 +261,23 @@ export const readEvent = (eventId: UUID) => {
 	return ajax<IApiEvent>(`/api/events/${eventId}`);
 };
 
+export const createEvent = (
+	company: UUID,
+	date: string,
+	location: UUID,
+	max_slots: number | null,
+	plan_duration: number | null
+) => {
+	return ajax<UUID>(
+		"/api/events",
+		prepareAjax(
+			{ company, date, location, max_slots, plan_duration },
+			POST,
+			URL_ENCODED
+		)
+	);
+};
+
 export const applyEvent = (eventId: UUID) => {
 	return ajax<UUID>(
 		`/api/events/apply/${eventId}`,
@@ -276,4 +303,15 @@ export const check = async (isSoft = false): Promise<boolean> => {
 export const softCheck = async (): Promise<void> => {
 	const SOFT_CHECK = true;
 	await check(SOFT_CHECK);
+};
+
+export interface IApiUserInfo {
+	readonly id: UUID;
+	readonly email: string;
+	readonly nickname: string;
+	readonly phone: string;
+}
+
+export const getProfileUser = () => {
+	return ajax<IApiUserInfo>(`/api/profile`);
 };

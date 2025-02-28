@@ -17,6 +17,7 @@
 		"@nanostores/query": "^0.3.4",
 		"@schedule-x/calendar": "^2.20.0",
 		"@schedule-x/preact": "^2.15.0",
+		"@schedule-x/shared": "^2.21.0",
 		"@schedule-x/theme-default": "^2.20.0",
 		"dayjs": "^1.11.13",
 		"nanostores": "^0.11.4",
