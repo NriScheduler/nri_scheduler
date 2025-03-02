@@ -35,41 +35,19 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 	const tz = useStore($tz);
 	const signed = useStore($signed);
 
-	const counterPlayers = !event.max_slots
-		? "Без ограничений"
-		: `${event.players.length} из ${event.max_slots}`;
-
-	const planDuration = !event.plan_duration
-		? "Не строим планов"
-		: `${event.plan_duration} ч`;
-
 	const eventDate = dayjs(event.date).tz(tz);
-	const customDay = eventDate.format("DD MMMM");
 
 	const [isLoading, setIsLoading] = useState(false);
 	const [youApplied, setYouApplied] = useState(event.you_applied);
 
-	const checkArray = (data: string[]) => {
-		if (Array.isArray(data)) {
-			if (data.length !== 0) {
-				const dataString = data.join(", ");
-				return <p>{dataString}</p>;
-			} else {
-				return <p>Пока никто не записался</p>;
-			}
-		} else {
-			return <p>Пока никто не записался</p>;
-		}
-	};
-
 	const stats = [
 		{ label: "Мастер игры", value: event.master, href: "#" },
 		{ label: "Место проведения", value: event.location, href: "#" },
-		{ label: "Дата", value: customDay },
+		{ label: "Дата", value: eventDate.format("DD MMMM") },
 		{ label: "Время", value: eventDate.format("HH:mm") },
-		{ label: "Количество игроков", value: counterPlayers },
-		{ label: "Записаны", value: checkArray(event.players) },
-		{ label: "Продолжительность", value: planDuration },
+		{ label: "Количество игроков", value: event.max_slots ? `${event.players.length} из ${event.max_slots}` : "Без ограничений" },
+		{ label: "Записаны", value: event?.players?.length ? event.players.join(", ") : "Пока никто не записался" },
+		{ label: "Продолжительность", value: event.plan_duration ? `${event.plan_duration} ч` : "Не строим планов" },
 	];
 
 	const handleSubscribe = () => {
