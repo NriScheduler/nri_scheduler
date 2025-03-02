@@ -1,6 +1,6 @@
 import type { UUID } from "node:crypto";
 
-import { h, Fragment } from "preact"; // eslint-disable-line
+import { h } from "preact"; // eslint-disable-line
 import { useEffect, useState } from "preact/hooks";
 import { useRouter } from "preact-router";
 import { useStore } from "@nanostores/preact";
@@ -89,7 +89,6 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 	};
 
 	return (
-		<>
 			<Card.Root width="full">
 				<Card.Body>
 					<HStack mb="6" gap="3">
@@ -134,7 +133,6 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 					)}
 				</Card.Footer>
 			</Card.Root>
-		</>
 	);
 };
 
@@ -150,7 +148,6 @@ const EventCardSkeleton = () => {
 	];
 
 	return (
-		<>
 			<Card.Root width="full">
 				<Card.Body>
 					<HStack mb="6" gap="3">
@@ -172,7 +169,6 @@ const EventCardSkeleton = () => {
 					</Card.Description>
 				</Card.Body>
 			</Card.Root>
-		</>
 	);
 };
 
