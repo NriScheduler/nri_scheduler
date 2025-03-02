@@ -30,7 +30,7 @@ pub(super) fn init_static() {
 	println!("+ smtp static values are ok");
 }
 
-pub async fn send(to: Mailbox) -> Result<(), SendMailError> {
+pub(super) async fn send(to: Mailbox) -> Result<(), SendMailError> {
 	task::spawn_blocking(|| send_sync(to)).await?
 }
 
@@ -54,7 +54,7 @@ fn send_sync(to: Mailbox) -> Result<(), SendMailError> {
 }
 
 #[derive(Debug)]
-pub enum SendMailError {
+pub(super) enum SendMailError {
 	Email(EmailError),
 	Transport(TransportError),
 	Task(JoinError),
