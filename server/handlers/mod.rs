@@ -2,12 +2,16 @@ pub(super) mod companies;
 pub(super) mod events;
 pub(super) mod locations;
 
+#[cfg(feature = "email")]
+use ::std::str::FromStr;
 use ::std::sync::Arc;
 use axum::{
 	Extension,
 	extract::State,
 	response::{IntoResponse, Response},
 };
+#[cfg(feature = "email")]
+use lettre::message::Mailbox;
 use uuid::Uuid;
 
 use crate::{
@@ -25,6 +29,10 @@ pub(super) async fn registration(
 	State(repo): State<Arc<Repository>>,
 	Dto(body): Dto<RegistrationDto>,
 ) -> AppResult {
+	#[cfg(feature = "email")]
+	let to = Mailbox::from_str(&body.email)
+		.map_err(|err| AppError::scenario_error("Введен некорректный email", Some(err)))?;
+
 	repo
 		.registration(
 			&body.nickname,
@@ -33,6 +41,14 @@ pub(super) async fn registration(
 			body.timezone_offset,
 		)
 		.await?;
+
+	#[cfg(feature = "email")]
+	crate::email::send(to).await.map_err(|err| {
+		AppError::scenario_error(
+			"Не удалось отправить сообщение для подтверждения email",
+			Some(err),
+		)
+	})?;
 
 	return AppResponse::user_registered();
 }

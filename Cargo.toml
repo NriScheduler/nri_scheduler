@@ -29,6 +29,7 @@ chrono = { version = "0.4.39", features = ["serde"] }
 derive-masked = "0.1.0"
 futures = "0.3.31"
 jsonwebtoken = "9.3.1"
+lettre = { version = "0.11.14", optional = true }
 rand = "0.9.0"
 regex = "1.11.1"
 reqwest = { version = "0.12.12", features = ["stream"], optional = true }
@@ -44,6 +45,7 @@ uuid = { version = "1.14.0", features = ["serde"] }
 [features]
 default = []
 cors = []
+email = ["lettre"]
 https = ["axum-server"]
 swagger = ["utoipa", "utoipa-swagger-ui"]
 vite = ["reqwest"]
