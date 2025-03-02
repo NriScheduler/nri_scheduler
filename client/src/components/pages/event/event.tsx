@@ -45,10 +45,9 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 
 	const eventDate = dayjs(event.date).tz(tz);
 	const customDay = eventDate.format("DD MMMM");
-	const [buttonMsg, setButtonMsg] = useState(
-		event.you_applied ? "Вы записаны" : "Записаться"
-	);
+
 	const [isLoading, setIsLoading] = useState(false);
+	const [youApplied, setYouApplied] = useState(event.you_applied);
 
 	const checkArray = (data: string[]) => {
 		if (Array.isArray(data)) {
@@ -75,11 +74,10 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 
 	const handleSubscribe = () => {
 		setIsLoading(true);
-		setButtonMsg("...");
 		applyEvent(event.id)
 			.then((responce) => {
 				if (responce?.status === EScenarioStatus.SCENARIO_SUCCESS) {
-					setButtonMsg("Вы записаны");
+					setYouApplied(true);
 					toast.success("Успех. Запись оформлена");
 				}
 			}).finally(() => {
@@ -122,9 +120,9 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 								colorPalette="blue"
 								minW="115px"
 								onClick={handleSubscribe}
-								disabled={isLoading || event.you_applied}
+								disabled={isLoading || youApplied}
 							>
-								{buttonMsg}
+								{isLoading ? "..." : youApplied ? "Вы записаны" : "Записаться"}
 							</Button>
 						) : null
 					) : (
