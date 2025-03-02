@@ -26,7 +26,6 @@ import {
 	readEvent,
 } from "../../../api";
 import toast from "react-hot-toast";
-import { $fetching } from "../../../store/fetching";
 import { $signed } from "../../../store/profile";
 import { NotFoundPage } from "../not-found/not-found";
 
@@ -34,7 +33,6 @@ dayjs.locale("ru");
 
 const EventCard = ({ event }: { event: IApiEvent }) => {
 	const tz = useStore($tz);
-	const isLoading = useStore($fetching);
 	const signed = useStore($signed);
 
 	const counterPlayers = !event.max_slots
@@ -50,6 +48,7 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 	const [buttonMsg, setButtonMsg] = useState(
 		event.you_applied ? "Вы записаны" : "Записаться"
 	);
+	const [isLoading, setIsLoading] = useState(false);
 
 	const checkArray = (data: string[]) => {
 		if (Array.isArray(data)) {
@@ -75,6 +74,7 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 	];
 
 	const handleSubscribe = () => {
+		setIsLoading(true);
 		setButtonMsg("...");
 		applyEvent(event.id)
 			.then((responce) => {
@@ -82,6 +82,8 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 					setButtonMsg("Вы записаны");
 					toast.success("Успех. Запись оформлена");
 				}
+			}).finally(() => {
+				setIsLoading(false);
 			});
 	};
 
