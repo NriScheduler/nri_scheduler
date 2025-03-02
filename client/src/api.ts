@@ -301,10 +301,7 @@ export const createEvent = (
 ) => {
 	return ajax<UUID>(
 		"/api/events",
-		prepareAjax(
-			{ company, date, location, max_slots, plan_duration },
-			POST,
-		)
+		prepareAjax({ company, date, location, max_slots, plan_duration }, POST)
 	);
 };
 
@@ -326,7 +323,6 @@ export const check = async (isSoft = false): Promise<boolean> => {
 	if (res !== null) {
 		enter(res.payload);
 	}
-
 	return res !== null;
 };
 
