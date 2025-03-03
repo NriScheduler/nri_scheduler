@@ -75,7 +75,9 @@ export const CalendarPage = () => {
 		useForm<IFormCreateEvent>();
 
 	const addDataEventToCalendar = (dateStart: string, dateEnd: string, calendar: CalendarApp) => {
-		readEventsList(dateStart, dateEnd).then((res) => {
+		const dateStartWithTz = dayjs(dateStart).tz(tz, KEEP_LOCAL_TIME).format();
+		const dateEndWithTz = dayjs(dateEnd).tz(tz, KEEP_LOCAL_TIME).format();
+		readEventsList(dateStartWithTz, dateEndWithTz).then((res) => {
 			if (res !== null) {
 				calendar.events.set(
 					res.payload.map((apiEv) => {
@@ -107,18 +109,14 @@ export const CalendarPage = () => {
 				navigate(`/event/${event.id}`);
 			},
 			onRangeUpdate(range) {
-				const dateStart = dayjs(range.start).format();
-				const dateEnd = dayjs(range.end).format();
-				addDataEventToCalendar(dateStart, dateEnd, calendar);
+				addDataEventToCalendar(range.start, range.end, calendar);
 			},
 			onRender(app) {
 				const range = app.calendarState.range.value;
 				if(range === null) {
 					return
 				};
-				const dateStart = dayjs(range.start).format();
-				const dateEnd = dayjs(range.end).format();
-				addDataEventToCalendar(dateStart, dateEnd, calendar);
+				addDataEventToCalendar(range.start, range.end, calendar);
 			}
 		},
 	});
