@@ -20,7 +20,7 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 
-import { addCompany, IApiCompany } from "../../../api";
+import { addCompany, IApiCompany, check } from "../../../api";
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "preact/compat";
 
@@ -57,7 +57,13 @@ export const Company = ({ data }: ICompanyProps) => {
 	}, []);
 
 	return (
-		<DrawerRoot open={open} onOpenChange={(e) => {if (e) {setOpen(e.open)}}}>
+		<DrawerRoot open={open} onOpenChange={
+			(e) => {
+				if (e) {
+					check();
+					setOpen(e.open)
+				}
+			}}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
 				<Button variant="outline">Создать кампанию</Button>

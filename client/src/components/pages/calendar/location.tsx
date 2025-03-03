@@ -1,6 +1,7 @@
 import { Button, Input, Stack, Textarea } from "@chakra-ui/react";
 import { h } from "preact"; // eslint-disable-line
 import { Field } from "../../ui/field";
+import { check } from "../../../api";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -46,7 +47,13 @@ export const Location = () => {
 	});
 
 	return (
-		<DrawerRoot open={open} onOpenChange={(e) => {if (e) {setOpen(e.open)}}}>
+		<DrawerRoot open={open} onOpenChange={
+			(e) => {
+				if (e) {
+					check();
+					setOpen(e.open)
+				}}
+		}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
 				<Button variant="outline">Создать локацию</Button>

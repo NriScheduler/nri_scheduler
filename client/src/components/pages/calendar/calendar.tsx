@@ -173,9 +173,6 @@ export const CalendarPage = () => {
 	}, [locationList]);
 
 	useEffect(() => {
-		getCompanies();
-		getLocations();
-
 		document.addEventListener("keydown", handleKeyDown);
 
 		return () => {
@@ -220,6 +217,8 @@ export const CalendarPage = () => {
 						open={openDraw}
 						onOpenChange={(e) => {
 							if (e) {
+								getCompanies();
+								getLocations();
 								setOpenDraw(e.open);
 							}
 						}}
