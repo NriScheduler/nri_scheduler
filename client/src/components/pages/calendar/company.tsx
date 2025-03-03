@@ -30,6 +30,7 @@ export interface ICompanyProps {
 
 export const Company = ({ data }: ICompanyProps) => {
 	const [open, setOpen] = useState(false);
+	const [isDisableCreateCompanyButton, setIsDisableCreateCompanyButton] = useState(false);
 	const { register, handleSubmit, reset } = useForm<IApiCompany>();
 
 	function handleKeyDown(event: KeyboardEvent) {
@@ -59,14 +60,21 @@ export const Company = ({ data }: ICompanyProps) => {
 	return (
 		<DrawerRoot open={open} onOpenChange={
 			(e) => {
-				if (e) {
-					check();
-					setOpen(e.open)
+				if(e.open) {
+					setIsDisableCreateCompanyButton(true);
+					check().then((res) => {
+						if (res !== null) {
+							setOpen(e.open);
+							setIsDisableCreateCompanyButton(false);
+						}
+					});
+				} else {
+					setOpen(e.open);
 				}
 			}}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button variant="outline">Создать кампанию</Button>
+				<Button disabled={isDisableCreateCompanyButton} variant="outline">Создать кампанию</Button>
 			</DrawerTrigger>
 			<DrawerContent>
 				<DrawerHeader>
