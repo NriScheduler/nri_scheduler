@@ -1,0 +1,11 @@
+{
+	"arrowParens": "always",
+	"bracketSpacing": true,
+	"objectWrap": "preserve",
+	"quoteProps": "consistent",
+	"semi": true,
+	"singleQuote": false,
+	"tabs": true,
+	"tabWidth": 3,
+	"trailingComma": "all"
+}

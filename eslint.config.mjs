@@ -1,19 +1,32 @@
 import globals from "globals";
+import prettier from 'eslint-plugin-prettier';
+import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import pluginJs from "@eslint/js";
-import tseslint from "typescript-eslint";
-import pluginReact from "eslint-plugin-react";
+import typescriptParser from '@typescript-eslint/parser';
+import tsPlugin from'@typescript-eslint/eslint-plugin';
+import react from "eslint-plugin-react";
 
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
-  {files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"]},
-  {languageOptions: { globals: globals.browser }},
+  {files: ["**/*.{ts,tsx}"]},
+  {
+    languageOptions: {
+      globals: globals.browser,
+      parser: typescriptParser,
+      parserOptions: {
+        project: ['./tsconfig.json'],
+      },
+    }
+  },
   pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
-  pluginReact.configs.flat.recommended,
+  prettierRecommended,
+  react.configs.flat.recommended,
   {
     plugins: {
-      pluginReact
+      '@typescript-eslint': tsPlugin,
+      react,
+      prettier,
     },
     settings: {
       react: {
@@ -21,23 +34,26 @@ export default [
       }
     },
     rules: {
+      ...tsPlugin.configs.recommended.rules,
       "curly": ["error", "all"],
       "no-shadow": "off",
       "@typescript-eslint/no-shadow": "error",
-      "react/react-in-jsx-scope": "off"
+      "react/react-in-jsx-scope": "off",
     },
   },
   {
     ignores: [
-      ".cargo/*",
-      ".cargo-husky/*",
-      ".vscode/*",
-      "migrations/*",
-      "node_modules/*",
-      "postgres/*",
-      "server/*",
-      "target/*",
-      "static/*"
+      "eslint.config.mjs",
+      ".cargo",
+      ".cargo-husky",
+      ".git",
+      ".vscode",
+      "migrations",
+      "node_modules",
+      "postgres",
+      "server",
+      "static",
+      "target",
     ]
   }
 ];
