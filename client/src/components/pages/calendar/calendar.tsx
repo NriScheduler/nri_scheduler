@@ -52,6 +52,8 @@ import { Location } from "./location";
 import { UUID } from "crypto";
 import toast from "react-hot-toast";
 
+import { CalendarApp } from "@schedule-x/calendar";
+
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
 const KEEP_LOCAL_TIME = true;
@@ -74,6 +76,31 @@ export const CalendarPage = () => {
 	const { register, handleSubmit, reset } =
 		useForm<IFormCreateEvent>();
 
+	const addDataEventToCalendar = (dateStart: string, dateEnd: string, calendar: CalendarApp) => {
+		readEventsList(dateStart, dateEnd).then((res) => {
+			if (res !== null) {
+				calendar.events.set(
+					res.payload.map((apiEv) => {
+						const start = dayjs(apiEv.date);
+						const end = start.add(
+							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
+							"h"
+						);
+
+						return {
+							id: apiEv.id,
+							title: apiEv.company,
+							location: apiEv.location,
+							people: apiEv.players,
+							start: start.format(EVENT_FORMAT),
+							end: end.format(EVENT_FORMAT),
+						};
+					})
+				);
+			}
+		});
+	}
+
 	const calendar = useCalendarApp({
 		locale: "ru-RU",
 		views: [createViewMonthGrid()],
@@ -81,6 +108,18 @@ export const CalendarPage = () => {
 			onEventClick(event) {
 				navigate(`/event/${event.id}`);
 			},
+			onRangeUpdate(range) {
+				const dateStart = dayjs(range.start).format();
+				const dateEnd = dayjs(range.end).format();
+				addDataEventToCalendar(dateStart, dateEnd, calendar);
+			},
+			onRender($app) {
+				const range = $app.calendarState.range.value;
+				if(range === null) return;
+				const dateStart = dayjs(range.start).format();
+				const dateEnd = dayjs(range.end).format();
+				addDataEventToCalendar(dateStart, dateEnd, calendar);
+			}
 		},
 	});
 
@@ -137,37 +176,10 @@ export const CalendarPage = () => {
 	}, [locationList]);
 
 	useEffect(() => {
-		const now = dayjs().tz(tz);
-		const monthStart = now.startOf("M").format();
-		const monthEnd = now.endOf("M").format();
-
 		getCompanies();
 		getLocations();
 
 		document.addEventListener("keydown", handleKeyDown);
-
-		readEventsList(monthStart, monthEnd).then((res) => {
-			if (res !== null) {
-				calendar.events.set(
-					res.payload.map((apiEv) => {
-						const start = dayjs(apiEv.date);
-						const end = start.add(
-							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
-							"h"
-						);
-
-						return {
-							id: apiEv.id,
-							title: apiEv.company,
-							location: apiEv.location,
-							people: apiEv.players,
-							start: start.format(EVENT_FORMAT),
-							end: end.format(EVENT_FORMAT),
-						};
-					})
-				);
-			}
-		});
 
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
