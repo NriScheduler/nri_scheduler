@@ -6,7 +6,7 @@ import "./calendar.css";
 import dayjs from "dayjs";
 
 import { useCalendarApp, ScheduleXCalendar } from "@schedule-x/preact";
-import { createViewMonthGrid } from "@schedule-x/calendar";
+import { createViewMonthGrid, CalendarApp } from "@schedule-x/calendar";
 
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
@@ -74,6 +74,33 @@ export const CalendarPage = () => {
 	const { register, handleSubmit, reset } =
 		useForm<IFormCreateEvent>();
 
+	const addDataEventToCalendar = (dateStart: string, dateEnd: string, calendar: CalendarApp) => {
+		const dateStartWithTz = dayjs(dateStart).tz(tz, KEEP_LOCAL_TIME).format();
+		const dateEndWithTz = dayjs(dateEnd).tz(tz, KEEP_LOCAL_TIME).format();
+		readEventsList(dateStartWithTz, dateEndWithTz).then((res) => {
+			if (res !== null) {
+				calendar.events.set(
+					res.payload.map((apiEv) => {
+						const start = dayjs(apiEv.date);
+						const end = start.add(
+							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
+							"h"
+						);
+
+						return {
+							id: apiEv.id,
+							title: apiEv.company,
+							location: apiEv.location,
+							people: apiEv.players,
+							start: start.format(EVENT_FORMAT),
+							end: end.format(EVENT_FORMAT),
+						};
+					})
+				);
+			}
+		});
+	}
+
 	const calendar = useCalendarApp({
 		locale: "ru-RU",
 		views: [createViewMonthGrid()],
@@ -81,6 +108,16 @@ export const CalendarPage = () => {
 			onEventClick(event) {
 				navigate(`/event/${event.id}`);
 			},
+			onRangeUpdate(range) {
+				addDataEventToCalendar(range.start, range.end, calendar);
+			},
+			onRender(app) {
+				const range = app.calendarState.range.value;
+				if(range === null) {
+					return
+				};
+				addDataEventToCalendar(range.start, range.end, calendar);
+			}
 		},
 	});
 
@@ -137,37 +174,10 @@ export const CalendarPage = () => {
 	}, [locationList]);
 
 	useEffect(() => {
-		const now = dayjs().tz(tz);
-		const monthStart = now.startOf("M").format();
-		const monthEnd = now.endOf("M").format();
-
 		getCompanies();
 		getLocations();
 
 		document.addEventListener("keydown", handleKeyDown);
-
-		readEventsList(monthStart, monthEnd).then((res) => {
-			if (res !== null) {
-				calendar.events.set(
-					res.payload.map((apiEv) => {
-						const start = dayjs(apiEv.date);
-						const end = start.add(
-							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
-							"h"
-						);
-
-						return {
-							id: apiEv.id,
-							title: apiEv.company,
-							location: apiEv.location,
-							people: apiEv.players,
-							start: start.format(EVENT_FORMAT),
-							end: end.format(EVENT_FORMAT),
-						};
-					})
-				);
-			}
-		});
 
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
