@@ -113,10 +113,9 @@ export const CalendarPage = () => {
 			},
 			onRender(app) {
 				const range = app.calendarState.range.value;
-				if(range === null) {
-					return
-				};
-				addDataEventToCalendar(range.start, range.end, calendar);
+				if(range !== null) {
+					addDataEventToCalendar(range.start, range.end, calendar);
+				}
 			}
 		},
 	});
@@ -186,7 +185,7 @@ export const CalendarPage = () => {
 	}, []);
 
 	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") setOpenDraw(false);
+		if (event.key === "Escape") { setOpenDraw(false); }
 	}
 
 	const onSubmit = handleSubmit((data) => {

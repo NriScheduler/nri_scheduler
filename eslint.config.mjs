@@ -21,6 +21,7 @@ export default [
       }
     },
     rules: {
+      "curly": ["error", "all"],
       "no-shadow": "off",
       "@typescript-eslint/no-shadow": "error",
       "react/react-in-jsx-scope": "off"

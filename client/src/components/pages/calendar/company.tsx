@@ -33,7 +33,7 @@ export const Company = ({ data }: ICompanyProps) => {
 	const { register, handleSubmit, reset } = useForm<IApiCompany>();
 
 	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") setOpen(false);
+		if (event.key === "Escape") { setOpen(false); }
 	}
 
 	const onSubmit = handleSubmit((companyData) => {

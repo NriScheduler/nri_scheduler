@@ -21,7 +21,7 @@ export const Location = () => {
 	const { register, handleSubmit, reset } = useForm<IApiLocation>();
 
 	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") setOpen(false);
+		if (event.key === "Escape") { setOpen(false); }
 	}
 
 	useEffect(() => {
