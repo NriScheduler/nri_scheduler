@@ -6,7 +6,7 @@ import "./calendar.css";
 import dayjs from "dayjs";
 
 import { useCalendarApp, ScheduleXCalendar } from "@schedule-x/preact";
-import { createViewMonthGrid } from "@schedule-x/calendar";
+import { createViewMonthGrid, CalendarApp } from "@schedule-x/calendar";
 
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
@@ -51,8 +51,6 @@ import { Company } from "./company";
 import { Location } from "./location";
 import { UUID } from "crypto";
 import toast from "react-hot-toast";
-
-import { CalendarApp } from "@schedule-x/calendar";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
@@ -113,9 +111,11 @@ export const CalendarPage = () => {
 				const dateEnd = dayjs(range.end).format();
 				addDataEventToCalendar(dateStart, dateEnd, calendar);
 			},
-			onRender($app) {
-				const range = $app.calendarState.range.value;
-				if(range === null) return;
+			onRender(app) {
+				const range = app.calendarState.range.value;
+				if(range === null) {
+					return
+				};
 				const dateStart = dayjs(range.start).format();
 				const dateEnd = dayjs(range.end).format();
 				addDataEventToCalendar(dateStart, dateEnd, calendar);
