@@ -49,7 +49,7 @@ import { Field } from "../../ui/field";
 import { useForm } from "react-hook-form";
 import { Company } from "./company";
 import { Location } from "./location";
-import { UUID } from "crypto";
+import type { UUID } from "node:crypto";
 import toast from "react-hot-toast";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
