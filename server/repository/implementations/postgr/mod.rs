@@ -8,7 +8,7 @@ use super::super::Store;
 use crate::{
 	dto::{
 		company::{ApiCompanyDto, ReadCompaniesDto},
-		event::ReadEventsDto,
+		event::{ReadEventsDto, UpdateEventDto},
 		location::ReadLocationDto,
 	},
 	repository::models::{
@@ -470,6 +470,42 @@ impl Store for PostgresStore {
 		.await?;
 
 		Ok(new_evt_id)
+	}
+
+	async fn update_event(
+		&self,
+		event_id: Uuid,
+		master: Uuid,
+		data: UpdateEventDto,
+	) -> CoreResult<bool> {
+		let was_updated = sqlx::query_scalar::<_, bool>(
+			"update events
+			SET
+				location = $1,
+				date = $2,
+				max_slots = $3,
+				plan_duration = $4
+			where id in (
+				select e.id
+				from events e
+				inner join companies c
+					on e.company = c.id
+				where e.id = $5
+				and c.master = $6
+			)
+			returning true;",
+		)
+		.bind(data.location)
+		.bind(data.date)
+		.bind(data.max_slots)
+		.bind(data.plan_duration)
+		.bind(event_id)
+		.bind(master)
+		.fetch_optional(&self.pool)
+		.await?
+		.unwrap_or_default();
+
+		Ok(was_updated)
 	}
 
 	async fn close(&self) {

@@ -302,6 +302,51 @@
 						"cookieAuth": []
 					}
 				]
+			},
+			"put": {
+				"tags": [
+					"events"
+				],
+				"summary": "Обновление информации о событии",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор события",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateEventDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
 			}
 		},
 		"/api/events/apply/{id}": {
@@ -743,6 +788,40 @@
 						"format": "uuid",
 						"description": "Идентификатор кампании"
 					},
+					"location": {
+						"type": "string",
+						"format": "uuid",
+						"nullable": true,
+						"description": "Идентификатор места проведения"
+					},
+					"date": {
+						"type": "string",
+						"format": "date-time",
+						"example": "2025-02-28T17:00:00+03:00",
+						"description": "Дата и время проведения игры"
+					},
+					"max_slots": {
+						"type": "integer",
+						"nullable": true,
+						"description": "Максимальное количество игроков"
+					},
+					"plan_duration": {
+						"type": "integer",
+						"nullable": true,
+						"description": "Планируемая продолжительность игры в часах"
+					}
+				}
+			},
+			"UpdateEventDto": {
+				"type": "object",
+				"description": "Данные для обновления события",
+				"required": [
+					"location",
+					"date",
+					"max_slots",
+					"plan_duration"
+				],
+				"properties": {
 					"location": {
 						"type": "string",
 						"format": "uuid",

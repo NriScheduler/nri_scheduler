@@ -31,10 +31,10 @@ pub(crate) async fn get_company_by_id(
 
 pub(crate) async fn get_my_companies(
 	State(repo): State<Arc<Repository>>,
-	Extension(user_id): Extension<Uuid>,
+	Extension(master_id): Extension<Uuid>,
 	Dto(query): Dto<ReadCompaniesDto>,
 ) -> AppResult {
-	let my = repo.get_my_companies(query, user_id).await?;
+	let my = repo.get_my_companies(query, master_id).await?;
 
 	let json_value = serde_json::to_value(my)?;
 
@@ -46,11 +46,11 @@ pub(crate) async fn get_my_companies(
 
 pub(crate) async fn add_company(
 	State(repo): State<Arc<Repository>>,
-	Extension(user_id): Extension<Uuid>,
+	Extension(master_id): Extension<Uuid>,
 	Dto(body): Dto<ApiCompanyDto>,
 ) -> AppResult {
 	let new_comp_id = repo
-		.add_company(user_id, &body.name, &body.system, &body.description)
+		.add_company(master_id, &body.name, &body.system, &body.description)
 		.await?;
 
 	return Ok(AppResponse::scenario_success(
@@ -61,11 +61,11 @@ pub(crate) async fn add_company(
 
 pub(crate) async fn update_company(
 	State(repo): State<Arc<Repository>>,
-	Extension(user_id): Extension<Uuid>,
+	Extension(master_id): Extension<Uuid>,
 	Path(company_id): Path<Uuid>,
 	Dto(body): Dto<ApiCompanyDto>,
 ) -> AppResult {
-	match repo.update_company(company_id, user_id, body).await? {
+	match repo.update_company(company_id, master_id, body).await? {
 		false => Err(AppError::scenario_error(
 			"Кампания не найдена",
 			None::<&str>,

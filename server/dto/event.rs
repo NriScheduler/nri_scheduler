@@ -30,3 +30,14 @@ pub(crate) struct NewEventDto {
 	#[serde(default)]
 	pub plan_duration: Option<i16>,
 }
+
+#[derive(Deserialize)]
+pub(crate) struct UpdateEventDto {
+	#[serde(default)]
+	pub location: Option<Uuid>,
+	pub date: DateTime<FixedOffset>,
+	#[serde(default)]
+	pub max_slots: Option<i16>,
+	#[serde(default)]
+	pub plan_duration: Option<i16>,
+}
