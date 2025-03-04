@@ -36,6 +36,7 @@ export default [
     rules: {
       ...tsPlugin.configs.recommended.rules,
       "curly": ["error", "all"],
+      "eqeqeq": ["error", "always"],
       "no-shadow": "off",
       "@typescript-eslint/no-shadow": "error",
       "react/react-in-jsx-scope": "off",
