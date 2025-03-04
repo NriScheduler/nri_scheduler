@@ -8,10 +8,10 @@ use uuid::Uuid;
 use crate::{
 	dto::{
 		Dto,
-		company::{NewCompanyDto, ReadCompaniesDto},
+		company::{ApiCompanyDto, ReadCompaniesDto},
 	},
 	repository::Repository,
-	system_models::{AppResponse, AppResult},
+	system_models::{AppError, AppResponse, AppResult},
 };
 
 pub(crate) async fn get_company_by_id(
@@ -47,14 +47,32 @@ pub(crate) async fn get_my_companies(
 pub(crate) async fn add_company(
 	State(repo): State<Arc<Repository>>,
 	Extension(user_id): Extension<Uuid>,
-	Dto(body): Dto<NewCompanyDto>,
+	Dto(body): Dto<ApiCompanyDto>,
 ) -> AppResult {
 	let new_comp_id = repo
 		.add_company(user_id, &body.name, &body.system, &body.description)
 		.await?;
 
 	return Ok(AppResponse::scenario_success(
-		"Компания успешно создана",
+		"Кампания успешно создана",
 		new_comp_id.into_api(),
 	));
+}
+
+pub(crate) async fn update_company(
+	State(repo): State<Arc<Repository>>,
+	Extension(user_id): Extension<Uuid>,
+	Path(company_id): Path<Uuid>,
+	Dto(body): Dto<ApiCompanyDto>,
+) -> AppResult {
+	match repo.update_company(company_id, user_id, body).await? {
+		false => Err(AppError::scenario_error(
+			"Кампания не найдена",
+			None::<&str>,
+		)),
+		true => Ok(AppResponse::scenario_success(
+			"Данные кампании обновлены",
+			None,
+		)),
+	}
 }

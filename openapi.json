@@ -448,7 +448,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/NewCompanyDto"
+								"$ref": "#/components/schemas/ApiCompanyDto"
 							}
 						}
 					}
@@ -502,6 +502,51 @@
 						}
 					}
 				}
+			},
+			"put": {
+				"tags": [
+					"companies"
+				],
+				"summary": "Обновление информации о кампании",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор кампании",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ApiCompanyDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
 			}
 		},
 		"/api/companies/my": {
@@ -770,7 +815,7 @@
 					}
 				}
 			},
-			"NewCompanyDto": {
+			"ApiCompanyDto": {
 				"type": "object",
 				"description": "Данные для создания кампании",
 				"required": [

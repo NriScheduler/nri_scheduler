@@ -6,7 +6,11 @@ use uuid::Uuid;
 
 use super::super::Store;
 use crate::{
-	dto::{company::ReadCompaniesDto, event::ReadEventsDto, location::ReadLocationDto},
+	dto::{
+		company::{ApiCompanyDto, ReadCompaniesDto},
+		event::ReadEventsDto,
+		location::ReadLocationDto,
+	},
 	repository::models::{
 		Company, Event, EventForApplying, Location, Profile, SelfInfo, UserForAuth,
 	},
@@ -233,6 +237,26 @@ impl Store for PostgresStore {
 		.await?;
 
 		Ok(new_comp_id)
+	}
+
+	async fn update_company(
+		&self,
+		company_id: Uuid,
+		master: Uuid,
+		data: ApiCompanyDto,
+	) -> CoreResult<bool> {
+		let was_updated = sqlx::query_scalar::<_, bool>(
+			"update companies set name = $1, system = $2, description = $3 where id = $4 and master = $5 returning true;",
+		)
+		.bind(data.name)
+		.bind(data.system)
+		.bind(data.description)
+		.bind(company_id)
+		.bind(master)
+		.fetch_optional(&self.pool)
+		.await?.unwrap_or_default();
+
+		Ok(was_updated)
 	}
 
 	async fn read_events_list(

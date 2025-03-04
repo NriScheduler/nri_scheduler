@@ -1,7 +1,7 @@
 use ::std::sync::Arc;
 use axum::{
 	Router, middleware,
-	routing::{get, post},
+	routing::{get, post, put},
 };
 #[cfg(feature = "swagger")]
 use utoipa_swagger_ui::SwaggerUi;
@@ -38,6 +38,7 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 						.route("/locations", post(H::locations::add_location))
 						.route("/companies", post(H::companies::add_company))
 						.route("/companies/my", get(H::companies::get_my_companies))
+						.route("/companies/{id}", put(H::companies::update_company))
 						.route("/events", post(H::events::add_event))
 						.route("/events/apply/{id}", post(H::events::apply_event))
 						.layer(middleware::from_fn(auth::auth_middleware)),

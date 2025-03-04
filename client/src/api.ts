@@ -12,6 +12,7 @@ const API_HOST = import.meta.env.PROD
 const CREDENTIALS = import.meta.env.PROD ? undefined : "include";
 
 const POST = "POST";
+const PUT = "PUT";
 const URL_ENCODED = true;
 
 export const enum EScenarioStatus {
@@ -38,7 +39,7 @@ export interface IRequestInit {
 const ajax = <T>(
 	input: string,
 	init?: IRequestInit,
-	isSoft = false
+	isSoft = false,
 ): Promise<IApiResponse<T> | null> => {
 	let controller: AbortController | undefined;
 	let timeoutId: ReturnType<typeof setTimeout>;
@@ -47,7 +48,7 @@ const ajax = <T>(
 		controller = new AbortController();
 		timeoutId = setTimeout(
 			() => controller!.abort(),
-			init.timeoutMilliseconds
+			init.timeoutMilliseconds,
 		);
 	}
 
@@ -142,7 +143,7 @@ const checkResponse = async <T>(
 const prepareAjax = (
 	payload?: object,
 	method?: string,
-	urlencoded = false
+	urlencoded = false,
 ): IRequestInit => {
 	return {
 		body: payload
@@ -155,7 +156,7 @@ const prepareAjax = (
 					"Content-Type":
 						"application/" +
 						(urlencoded ? "x-www-form-urlencoded" : "json"),
-			  }
+				}
 			: undefined,
 		method,
 	};
@@ -164,18 +165,18 @@ const prepareAjax = (
 export const registration = (
 	nickname: string,
 	email: string,
-	password: string
+	password: string,
 ) => {
 	return ajax<null>(
 		"/api/registration",
-		prepareAjax({ nickname, email, password }, POST, URL_ENCODED)
+		prepareAjax({ nickname, email, password }, POST, URL_ENCODED),
 	);
 };
 
 export const signIn = (email: string, password: string) => {
 	return ajax<null>(
 		"/api/signin",
-		prepareAjax({ email, password }, POST, URL_ENCODED)
+		prepareAjax({ email, password }, POST, URL_ENCODED),
 	);
 };
 
@@ -210,11 +211,11 @@ export const readLocationById = (locId: UUID) =>
 export const addLocation = (
 	name: string,
 	address?: string | null,
-	description?: string | null
+	description?: string | null,
 ) =>
 	ajax<UUID>(
 		"/api/locations",
-		prepareAjax({ name, address, description }, POST)
+		prepareAjax({ name, address, description }, POST),
 	);
 
 export interface IApiCompany {
@@ -234,18 +235,30 @@ export const readMyCompanies = (nameFilter?: string | null) => {
 	return ajax<IApiCompany[]>(`/api/companies/my?${query}`);
 };
 
-export const readCompanyById = (compId: UUID) =>
-	ajax<IApiCompany>(`/api/companies/${compId}`);
+export const readCompanyById = (companyId: UUID) =>
+	ajax<IApiCompany>(`/api/companies/${companyId}`);
 
 export const addCompany = (
 	name: string,
 	system: string,
-	description?: string | null
+	description?: string | null,
 ) =>
 	ajax<UUID>(
 		"/api/companies",
-		prepareAjax({ name, system, description }, POST)
+		prepareAjax({ name, system, description }, POST),
 	);
+
+export const updateCompany = (
+	companyId: UUID,
+	name: string,
+	system: string,
+	description?: string | null,
+) => {
+	return ajax<null>(
+		`/api/companies/${companyId}`,
+		prepareAjax({ name, system, description }, PUT),
+	);
+};
 
 export interface IApiEvent {
 	readonly id: UUID;
@@ -272,8 +285,12 @@ export interface IEventsFilter {
 	imamaster?: boolean | null;
 }
 
-export const readEventsList = (date_from: string, date_to: string, filters?: IEventsFilter | null) => {
-	const query: Record<string, string> = {date_from, date_to};
+export const readEventsList = (
+	date_from: string,
+	date_to: string,
+	filters?: IEventsFilter | null,
+) => {
+	const query: Record<string, string> = { date_from, date_to };
 
 	if (filters) {
 		Object.entries(filters).forEach(([key, val]) => {
@@ -283,9 +300,7 @@ export const readEventsList = (date_from: string, date_to: string, filters?: IEv
 		});
 	}
 
-	return ajax<IApiEvent[]>(
-		`/api/events?${new URLSearchParams(query)}`
-	);
+	return ajax<IApiEvent[]>(`/api/events?${new URLSearchParams(query)}`);
 };
 
 export const readEvent = (eventId: UUID) => {
@@ -297,18 +312,18 @@ export const createEvent = (
 	date: string,
 	location: UUID,
 	max_slots: number | null,
-	plan_duration: number | null
+	plan_duration: number | null,
 ) => {
 	return ajax<UUID>(
 		"/api/events",
-		prepareAjax({ company, date, location, max_slots, plan_duration }, POST)
+		prepareAjax({ company, date, location, max_slots, plan_duration }, POST),
 	);
 };
 
 export const applyEvent = (eventId: UUID) => {
 	return ajax<UUID>(
 		`/api/events/apply/${eventId}`,
-		prepareAjax(undefined, POST)
+		prepareAjax(undefined, POST),
 	);
 };
 

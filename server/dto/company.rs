@@ -7,7 +7,7 @@ pub(crate) struct ReadCompaniesDto {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct NewCompanyDto {
+pub(crate) struct ApiCompanyDto {
 	pub name: String,
 	pub system: String,
 	#[serde(default)]

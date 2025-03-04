@@ -8,7 +8,11 @@ use uuid::Uuid;
 
 use crate::{
 	auth,
-	dto::{company::ReadCompaniesDto, event::ReadEventsDto, location::ReadLocationDto},
+	dto::{
+		company::{ApiCompanyDto, ReadCompaniesDto},
+		event::ReadEventsDto,
+		location::ReadLocationDto,
+	},
 	shared::RecordId,
 	system_models::{CoreResult, ServingError},
 };
@@ -51,6 +55,13 @@ trait Store {
 		system: &str,
 		descr: &Option<String>,
 	) -> CoreResult<RecordId>;
+
+	async fn update_company(
+		&self,
+		company_id: Uuid,
+		master: Uuid,
+		data: ApiCompanyDto,
+	) -> CoreResult<bool>;
 
 	async fn read_events_list(
 		&self,
@@ -170,6 +181,15 @@ impl Repository {
 		descr: &Option<String>,
 	) -> CoreResult<RecordId> {
 		return self.store.add_company(master, name, system, descr).await;
+	}
+
+	pub(crate) async fn update_company(
+		&self,
+		company_id: Uuid,
+		master: Uuid,
+		data: ApiCompanyDto,
+	) -> CoreResult<bool> {
+		return self.store.update_company(company_id, master, data).await;
 	}
 
 	pub(crate) async fn read_events_list(
