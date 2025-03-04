@@ -7,6 +7,7 @@ import dayjs from "dayjs";
 
 import { useCalendarApp, ScheduleXCalendar } from "@schedule-x/preact";
 import { createViewMonthGrid, CalendarApp } from "@schedule-x/calendar";
+import { CalendarAppSingleton } from "@schedule-x/shared";
 
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
@@ -58,7 +59,6 @@ import { Company } from "./company";
 import { Location } from "./location";
 import type { UUID } from "node:crypto";
 import toast from "react-hot-toast";
-import { CalendarAppSingleton } from "@schedule-x/shared";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
@@ -90,7 +90,6 @@ export const CalendarPage = () => {
 		dateEnd: string,
 		calendar: CalendarApp,
 	) => {
-		console.log(mastery);
 		const dateStartWithTz = dayjs(dateStart).tz(tz, KEEP_LOCAL_TIME).format();
 		const dateEndWithTz = dayjs(dateEnd).tz(tz, KEEP_LOCAL_TIME).format();
 		readEventsList(dateStartWithTz, dateEndWithTz, {
