@@ -74,6 +74,7 @@ interface IFormCreateEvent {
 }
 
 export const CalendarPage = () => {
+	const [showSwitch, setShowSwitch] = useState(false);
 	const [openDraw, setOpenDraw] = useState(false);
 	const [isDisableCreateEventButton, setIsDisableCreateEventButton] =
 		useState(false);
@@ -201,6 +202,10 @@ export const CalendarPage = () => {
 	}, [locationList]);
 
 	useEffect(() => {
+		check(true).then((isAuth) => {
+			setShowSwitch(isAuth);
+		});
+
 		document.addEventListener("keydown", handleKeyDown);
 
 		return () => {
@@ -242,28 +247,26 @@ export const CalendarPage = () => {
 	return (
 		<section>
 			<Container>
-				<Switch.Root
-					mb={5}
-					size="lg"
-					checked={mastery}
-					onCheckedChange={() => {
-						if (mastery) {
-							disableMastery();
-						} else {
-							check(true).then((isAuth) => {
-								if (isAuth) {
-									enableMastery();
-								}
-							});
-						}
-					}}
-				>
-					<Switch.HiddenInput />
-					<Switch.Control>
-						<Switch.Thumb />
-					</Switch.Control>
-					<Switch.Label>Режим мастера</Switch.Label>
-				</Switch.Root>
+				{showSwitch && (
+					<Switch.Root
+						mb={5}
+						size="lg"
+						checked={mastery}
+						onCheckedChange={() => {
+							if (mastery) {
+								disableMastery();
+							} else {
+								enableMastery();
+							}
+						}}
+					>
+						<Switch.HiddenInput />
+						<Switch.Control>
+							<Switch.Thumb />
+						</Switch.Control>
+						<Switch.Label>Режим мастера</Switch.Label>
+					</Switch.Root>
+				)}
 				{mastery && (
 					<Stack mb={4} direction="row" gap={4}>
 						<DrawerRoot
