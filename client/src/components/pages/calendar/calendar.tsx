@@ -23,8 +23,13 @@ import {
 	readMyCompanies,
 } from "../../../api";
 import { $tz } from "../../../store/tz";
-import { $mastery } from "../../../store/mastery";
-import { enableMastery, disableMastery } from "../../../store/mastery";
+import {
+	enableMastery,
+	disableMastery,
+	MASTERY_KEY,
+	TRUE,
+	$mastery,
+} from "../../../store/mastery";
 import {
 	Button,
 	Container,
@@ -56,7 +61,6 @@ import { Location } from "./location";
 import type { UUID } from "node:crypto";
 import toast from "react-hot-toast";
 import { CalendarAppSingleton } from "@schedule-x/shared";
-import { MASTERY_KEY, TRUE } from "../../../store/mastery";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
