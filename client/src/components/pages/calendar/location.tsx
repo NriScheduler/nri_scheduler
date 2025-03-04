@@ -1,6 +1,7 @@
 import { Button, Input, Stack, Textarea } from "@chakra-ui/react";
 import { h } from "preact"; // eslint-disable-line
 import { Field } from "../../ui/field";
+import { check } from "../../../api";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -18,6 +19,7 @@ import { useEffect, useState } from "preact/hooks";
 
 export const Location = () => {
 	const [open, setOpen] = useState(false);
+	const [isDisableCreateLocationButton, setIsDisableCreateLocationButton] = useState(false);
 	const { register, handleSubmit, reset } = useForm<IApiLocation>();
 
 	function handleKeyDown(event: KeyboardEvent) {
@@ -46,10 +48,24 @@ export const Location = () => {
 	});
 
 	return (
-		<DrawerRoot open={open} onOpenChange={(e) => {if (e) {setOpen(e.open)}}}>
+		<DrawerRoot open={open} onOpenChange={
+			(e) => {
+				if (e.open) {
+					setIsDisableCreateLocationButton(true);
+					check().then((res) => {
+						if (res !== null) {
+							setOpen(e.open)
+							setIsDisableCreateLocationButton(false);
+						}
+					});
+				} else {
+					setOpen(e.open);
+				}
+			}
+		}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button variant="outline">Создать локацию</Button>
+				<Button disabled={isDisableCreateLocationButton} variant="outline">Создать локацию</Button>
 			</DrawerTrigger>
 			<DrawerContent>
 				<DrawerHeader>

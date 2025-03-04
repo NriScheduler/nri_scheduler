@@ -67,6 +67,7 @@ interface IFormCreateEvent {
 
 export const CalendarPage = () => {
 	const [openDraw, setOpenDraw] = useState(false);
+	const [isDisableCreateEventButton, setIsDisableCreateEventButton] = useState(false);
 	const [companyList, setCompanyList] = useState<IApiCompany[]>([]);
 	const [locationList, setLocationList] = useState<IApiLocation[]>([]);
 
@@ -121,18 +122,20 @@ export const CalendarPage = () => {
 	});
 
 	const getCompanies = () => {
-		readMyCompanies().then((responce) => {
+		return readMyCompanies().then((responce) => {
 			if (responce?.payload) {
 				setCompanyList(responce.payload);
 			}
+			return responce?.payload || null;
 		});
 	};
 
 	const getLocations = () => {
-		readLocations().then((responce) => {
+		return readLocations().then((responce) => {
 			if (responce?.payload) {
 				setLocationList(responce.payload);
 			}
+			return responce?.payload || null;
 		});
 	};
 
@@ -173,9 +176,6 @@ export const CalendarPage = () => {
 	}, [locationList]);
 
 	useEffect(() => {
-		getCompanies();
-		getLocations();
-
 		document.addEventListener("keydown", handleKeyDown);
 
 		return () => {
@@ -219,14 +219,24 @@ export const CalendarPage = () => {
 					<DrawerRoot
 						open={openDraw}
 						onOpenChange={(e) => {
-							if (e) {
+							if (e.open) {
+								setIsDisableCreateEventButton(true);
+								Promise.all([getCompanies(), getLocations()]).then(([companiesResult, locationsResult]) => {
+									if(companiesResult === null || locationsResult === null) {
+										setIsDisableCreateEventButton(false);
+										return;
+									}
+									setOpenDraw(e.open)
+									setIsDisableCreateEventButton(false);
+								});
+							} else {
 								setOpenDraw(e.open);
 							}
 						}}
 					>
 						<DrawerBackdrop />
 						<DrawerTrigger asChild>
-							<Button variant="outline">Добавить событие</Button>
+							<Button disabled={isDisableCreateEventButton} variant="outline">Добавить событие</Button>
 						</DrawerTrigger>
 						<DrawerContent>
 							<DrawerHeader>
