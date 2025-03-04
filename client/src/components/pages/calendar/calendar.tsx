@@ -247,11 +247,16 @@ export const CalendarPage = () => {
 	return (
 		<section>
 			<Container>
-				<Stack direction="row" alignItems="center" mb="5">
+				<HStack
+					flexWrap="wrap"
+					alignItems="center"
+					mb="5"
+					minHeight="40px"
+					gap={10}
+				>
 					{showSwitch && (
 						<Switch.Root
 							size="lg"
-							mr="10"
 							checked={mastery}
 							onCheckedChange={() => {
 								if (mastery) {
@@ -410,7 +415,7 @@ export const CalendarPage = () => {
 							<Location />
 						</Stack>
 					)}
-				</Stack>
+				</HStack>
 				<ScheduleXCalendar calendarApp={calendar} />
 			</Container>
 		</section>
