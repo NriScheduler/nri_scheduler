@@ -1,7 +1,7 @@
 import { atom, ReadableAtom, WritableAtom } from "nanostores";
 
-export const MASTERY_KEY = "nri_mastery";
-export const TRUE = "true";
+const MASTERY_KEY = "nri_mastery";
+const TRUE = "true";
 
 export const $mastery: ReadableAtom<boolean> = atom(
 	localStorage.getItem(MASTERY_KEY) === TRUE,

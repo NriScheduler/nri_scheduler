@@ -26,8 +26,6 @@ import { $tz } from "../../../store/tz";
 import {
 	enableMastery,
 	disableMastery,
-	MASTERY_KEY,
-	TRUE,
 	$mastery,
 } from "../../../store/mastery";
 import {
@@ -96,7 +94,7 @@ export const CalendarPage = () => {
 		const dateStartWithTz = dayjs(dateStart).tz(tz, KEEP_LOCAL_TIME).format();
 		const dateEndWithTz = dayjs(dateEnd).tz(tz, KEEP_LOCAL_TIME).format();
 		readEventsList(dateStartWithTz, dateEndWithTz, {
-			imamaster: localStorage.getItem(MASTERY_KEY) === TRUE,
+			imamaster: $mastery.get(),
 		}).then((res) => {
 			if (res !== null) {
 				calendar.events.set(
