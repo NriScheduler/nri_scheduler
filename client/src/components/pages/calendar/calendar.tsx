@@ -40,6 +40,7 @@ import {
 	NativeSelect,
 	Stack,
 	Switch,
+	Box,
 } from "@chakra-ui/react";
 
 import {
@@ -247,35 +248,38 @@ export const CalendarPage = () => {
 	return (
 		<section>
 			<Container>
-				{showSwitch && (
-					<Switch.Root
-						mb={5}
-						size="lg"
-						checked={mastery}
-						onCheckedChange={() => {
-							if (mastery) {
-								disableMastery();
-							} else {
-								enableMastery();
-							}
-						}}
-					>
-						<Switch.HiddenInput />
-						<Switch.Control>
-							<Switch.Thumb />
-						</Switch.Control>
-						<Switch.Label>Режим мастера</Switch.Label>
-					</Switch.Root>
-				)}
-				{mastery && (
-					<Stack mb={4} direction="row" gap={4}>
-						<DrawerRoot
-							open={openDraw}
-							onOpenChange={(e) => {
-								if (e.open) {
-									setIsDisableCreateEventButton(true);
-									Promise.all([getCompanies(), getLocations()]).then(
-										([companiesResult, locationsResult]) => {
+				<Box height={100}>
+					{showSwitch && (
+						<Switch.Root
+							mb={5}
+							size="lg"
+							checked={mastery}
+							onCheckedChange={() => {
+								if (mastery) {
+									disableMastery();
+								} else {
+									enableMastery();
+								}
+							}}
+						>
+							<Switch.HiddenInput />
+							<Switch.Control>
+								<Switch.Thumb />
+							</Switch.Control>
+							<Switch.Label>Режим мастера</Switch.Label>
+						</Switch.Root>
+					)}
+					{mastery && (
+						<Stack mb={4} direction="row" gap={4}>
+							<DrawerRoot
+								open={openDraw}
+								onOpenChange={(e) => {
+									if (e.open) {
+										setIsDisableCreateEventButton(true);
+										Promise.all([
+											getCompanies(),
+											getLocations(),
+										]).then(([companiesResult, locationsResult]) => {
 											if (
 												companiesResult === null ||
 												locationsResult === null
@@ -285,125 +289,129 @@ export const CalendarPage = () => {
 											}
 											setOpenDraw(e.open);
 											setIsDisableCreateEventButton(false);
-										},
-									);
-								} else {
-									setOpenDraw(e.open);
-								}
-							}}
-						>
-							<DrawerBackdrop />
-							<DrawerTrigger asChild>
-								<Button
-									disabled={isDisableCreateEventButton}
-									variant="outline"
-								>
-									Добавить событие
-								</Button>
-							</DrawerTrigger>
-							<DrawerContent>
-								<DrawerHeader>
-									<DrawerTitle>Создание события</DrawerTitle>
-								</DrawerHeader>
-								<DrawerBody>
-									<form onSubmit={onSubmit}>
-										<Stack gap="4" w="full">
-											<Field label="Кампания">
-												<NativeSelect.Root>
-													<NativeSelect.Field
-														placeholder="Выберите из списка"
-														{...register("company", {
-															required: "Заполните",
-														})}
-														defaultValue={companyList?.[0]?.id}
-													>
-														{companies.items.map((company) => (
-															<option
-																value={company.id}
-																key={company.name}
-															>
-																{company.name}
-															</option>
-														))}
-													</NativeSelect.Field>
-													<NativeSelect.Indicator />
-												</NativeSelect.Root>
-											</Field>
-											<HStack gap={2} width="full">
-												<Field label="Начало">
-													<Input
-														type="date"
-														{...register("start", {
-															required: "Заполните поле",
-														})}
-													/>
+										});
+									} else {
+										setOpenDraw(e.open);
+									}
+								}}
+							>
+								<DrawerBackdrop />
+								<DrawerTrigger asChild>
+									<Button
+										disabled={isDisableCreateEventButton}
+										variant="outline"
+									>
+										Добавить событие
+									</Button>
+								</DrawerTrigger>
+								<DrawerContent>
+									<DrawerHeader>
+										<DrawerTitle>Создание события</DrawerTitle>
+									</DrawerHeader>
+									<DrawerBody>
+										<form onSubmit={onSubmit}>
+											<Stack gap="4" w="full">
+												<Field label="Кампания">
+													<NativeSelect.Root>
+														<NativeSelect.Field
+															placeholder="Выберите из списка"
+															{...register("company", {
+																required: "Заполните",
+															})}
+															defaultValue={companyList?.[0]?.id}
+														>
+															{companies.items.map((company) => (
+																<option
+																	value={company.id}
+																	key={company.name}
+																>
+																	{company.name}
+																</option>
+															))}
+														</NativeSelect.Field>
+														<NativeSelect.Indicator />
+													</NativeSelect.Root>
 												</Field>
-												<Field label="Время">
-													<Input
-														type="time"
-														{...register("startTime", {
-															required: "Заполните поле",
-														})}
-													/>
+												<HStack gap={2} width="full">
+													<Field label="Начало">
+														<Input
+															type="date"
+															{...register("start", {
+																required: "Заполните поле",
+															})}
+														/>
+													</Field>
+													<Field label="Время">
+														<Input
+															type="time"
+															{...register("startTime", {
+																required: "Заполните поле",
+															})}
+														/>
+													</Field>
+												</HStack>
+												<Field label="Локация">
+													<NativeSelect.Root>
+														<NativeSelect.Field
+															placeholder="Выберите из списка"
+															{...register("location", {
+																required: "Заполните",
+															})}
+															defaultValue={
+																locationList?.[0]?.id
+															}
+														>
+															{locations.items.map(
+																(location) => (
+																	<option
+																		value={location.id}
+																		key={location.name}
+																	>
+																		{location.name}
+																	</option>
+																),
+															)}
+														</NativeSelect.Field>
+														<NativeSelect.Indicator />
+													</NativeSelect.Root>
 												</Field>
-											</HStack>
-											<Field label="Локация">
-												<NativeSelect.Root>
-													<NativeSelect.Field
-														placeholder="Выберите из списка"
-														{...register("location", {
-															required: "Заполните",
-														})}
-														defaultValue={locationList?.[0]?.id}
-													>
-														{locations.items.map((location) => (
-															<option
-																value={location.id}
-																key={location.name}
-															>
-																{location.name}
-															</option>
-														))}
-													</NativeSelect.Field>
-													<NativeSelect.Indicator />
-												</NativeSelect.Root>
-											</Field>
 
-											<Field label="Максимальное количество игроков">
-												<Input
-													type="number"
-													min="1"
-													step="1"
-													defaultValue="1"
-													{...register("max_slots")}
-												/>
-											</Field>
-
-											<Field label="Планируемая длительность">
-												<Group attached w="full">
+												<Field label="Максимальное количество игроков">
 													<Input
 														type="number"
 														min="1"
 														step="1"
 														defaultValue="1"
-														{...register("plan_duration")}
+														{...register("max_slots")}
 													/>
-													<InputAddon>час</InputAddon>
-												</Group>
-											</Field>
-										</Stack>
-										<Button type="submit" w="full" mt={6}>
-											Создать
-										</Button>
-									</form>
-								</DrawerBody>
-								<DrawerCloseTrigger />
-							</DrawerContent>
-						</DrawerRoot>
-						<Company data={companyList} />
-						<Location />
-					</Stack>
-				)}
+												</Field>
+
+												<Field label="Планируемая длительность">
+													<Group attached w="full">
+														<Input
+															type="number"
+															min="1"
+															step="1"
+															defaultValue="1"
+															{...register("plan_duration")}
+														/>
+														<InputAddon>час</InputAddon>
+													</Group>
+												</Field>
+											</Stack>
+											<Button type="submit" w="full" mt={6}>
+												Создать
+											</Button>
+										</form>
+									</DrawerBody>
+									<DrawerCloseTrigger />
+								</DrawerContent>
+							</DrawerRoot>
+							<Company data={companyList} />
+							<Location />
+						</Stack>
+					)}
+				</Box>
 				<ScheduleXCalendar calendarApp={calendar} />
 			</Container>
 		</section>
