@@ -132,9 +132,13 @@ const checkResponse = async <T>(
 
 		return null;
 	} catch (err) {
-		toast.error("Неизвестная ошибка");
-		console.info("Хрень какая-то...");
-		console.error(err);
+		if (err instanceof Error && err.name === "AbortError") {
+			toast.error("Истекло время ожидания ответа сервера");
+		} else {
+			toast.error("Неизвестная ошибка");
+			console.info("Хрень какая-то...");
+			console.error(err);
+		}
 
 		return null;
 	}
