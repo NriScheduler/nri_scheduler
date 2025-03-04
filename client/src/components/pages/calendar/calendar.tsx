@@ -248,7 +248,7 @@ export const CalendarPage = () => {
 	return (
 		<section>
 			<Container>
-				<Box height={100}>
+				<Box minHeight={100}>
 					{showSwitch && (
 						<Switch.Root
 							mb={5}
