@@ -3,6 +3,12 @@ import "./calendar.css";
 
 import type { UUID } from "node:crypto";
 
+import { h } from "preact";
+import { useEffect, useMemo, useState } from "preact/hooks";
+import { route as navigate } from "preact-router";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+
 import {
 	Button,
 	Container,
@@ -19,12 +25,23 @@ import { useStore } from "@nanostores/preact";
 import { CalendarApp, createViewMonthGrid } from "@schedule-x/calendar";
 import { ScheduleXCalendar, useCalendarApp } from "@schedule-x/preact";
 import { CalendarAppSingleton } from "@schedule-x/shared";
+
 import dayjs from "dayjs";
-import { h } from "preact";
-import { useEffect, useMemo, useState } from "preact/hooks";
-import { route as navigate } from "preact-router";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+
+import { Company } from "./company";
+import { Location } from "./location";
+
+import {
+	DrawerBackdrop,
+	DrawerBody,
+	DrawerCloseTrigger,
+	DrawerContent,
+	DrawerHeader,
+	DrawerRoot,
+	DrawerTitle,
+	DrawerTrigger,
+} from "../../ui/drawer";
+import { Field } from "../../ui/field";
 
 import {
 	check,
@@ -42,19 +59,6 @@ import {
 	enableMastery,
 } from "../../../store/mastery";
 import { $tz } from "../../../store/tz";
-import {
-	DrawerBackdrop,
-	DrawerBody,
-	DrawerCloseTrigger,
-	DrawerContent,
-	DrawerHeader,
-	DrawerRoot,
-	DrawerTitle,
-	DrawerTrigger,
-} from "../../ui/drawer";
-import { Field } from "../../ui/field";
-import { Company } from "./company";
-import { Location } from "./location";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
@@ -137,10 +141,9 @@ export const CalendarPage = () => {
 	useEffect(() => {
 		const app = calendar["$app"] as CalendarAppSingleton;
 		const range = app.calendarState.range.value;
-		if (range === null) {
-			return;
+		if (range !== null) {
+			addDataEventToCalendar(range.start, range.end, calendar);
 		}
-		addDataEventToCalendar(range.start, range.end, calendar);
 	}, [mastery]);
 
 	const getCompanies = () => {

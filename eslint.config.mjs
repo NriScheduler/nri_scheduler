@@ -40,7 +40,29 @@ export default [
       "curly": ["error", "all"],
       "eqeqeq": ["error", "always"],
       "no-duplicate-imports": "error",
-      "simple-import-sort/imports": "error",
+      "simple-import-sort/imports": [
+      "error",
+      {
+        groups: [
+          // Стили
+          ["^.+\\.s?css$"],
+          ["^node:"],
+          ["^preact", "^react"],
+          // Библиотеки начинающиеся на @
+          ["^@"],
+          // Библиотеки НЕ начинающиеся на @
+          ["^[^@.]"],
+          // Относительные пути
+          ["^\\./\\w+"],
+          ["^\\.\\./\\w+"],
+          ["^\\.\\./\\.\\./\\w+"],
+          ["^\\.\\./\\.\\./\\.\\./\\w+"],
+          ["^\\.\\./\\.\\./\\.\\./\\.\\./\\w+"],
+          ["^\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\w+"],
+
+        ],
+      },
+    ],
       "simple-import-sort/exports": "error",
       "no-shadow": "off",
       "@typescript-eslint/no-shadow": "error",
