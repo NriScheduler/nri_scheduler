@@ -247,7 +247,7 @@ export const CalendarPage = () => {
 	return (
 		<section>
 			<Container>
-				<Stack direction="row" alignItems="center" mb="10" height="40px">
+				<Stack direction="row" alignItems="center" mb="5" height="40px">
 					{showSwitch && (
 						<Switch.Root
 							size="lg"
