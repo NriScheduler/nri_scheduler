@@ -10,7 +10,7 @@ use crate::{
 	auth,
 	dto::{
 		company::{ApiCompanyDto, ReadCompaniesDto},
-		event::ReadEventsDto,
+		event::{ReadEventsDto, UpdateEventDto},
 		location::ReadLocationDto,
 	},
 	shared::RecordId,
@@ -93,6 +93,13 @@ trait Store {
 		max_slots: Option<i16>,
 		plan_duration: Option<i16>,
 	) -> CoreResult<RecordId>;
+
+	async fn update_event(
+		&self,
+		event_id: Uuid,
+		master: Uuid,
+		data: UpdateEventDto,
+	) -> CoreResult<bool>;
 
 	async fn close(&self);
 }
@@ -240,6 +247,15 @@ impl Repository {
 			.store
 			.add_event(company, location, date, max_slots, plan_duration)
 			.await;
+	}
+
+	pub(crate) async fn update_event(
+		&self,
+		event_id: Uuid,
+		master: Uuid,
+		data: UpdateEventDto,
+	) -> CoreResult<bool> {
+		return self.store.update_event(event_id, master, data).await;
 	}
 
 	pub async fn close(&self) {

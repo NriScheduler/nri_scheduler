@@ -327,6 +327,19 @@ export const applyEvent = (eventId: UUID) => {
 	);
 };
 
+export const updateEvent = (
+	eventId: UUID,
+	date: string,
+	location: UUID,
+	max_slots: number | null,
+	plan_duration: number | null,
+) => {
+	return ajax<null>(
+		`/api/events/${eventId}`,
+		prepareAjax({ date, location, max_slots, plan_duration }, PUT),
+	);
+};
+
 export interface IApiSelfInfo {
 	readonly id: UUID;
 	readonly timezone_offset: number | null;
