@@ -40,7 +40,6 @@ import {
 	NativeSelect,
 	Stack,
 	Switch,
-	Box,
 } from "@chakra-ui/react";
 
 import {
@@ -248,11 +247,11 @@ export const CalendarPage = () => {
 	return (
 		<section>
 			<Container>
-				<Box minHeight={100}>
+				<Stack direction="row" alignItems="center" mb="10" height="40px">
 					{showSwitch && (
 						<Switch.Root
-							mb={5}
 							size="lg"
+							mr="10"
 							checked={mastery}
 							onCheckedChange={() => {
 								if (mastery) {
@@ -270,7 +269,7 @@ export const CalendarPage = () => {
 						</Switch.Root>
 					)}
 					{mastery && (
-						<Stack mb={4} direction="row" gap={4}>
+						<Stack direction="row" gap={4}>
 							<DrawerRoot
 								open={openDraw}
 								onOpenChange={(e) => {
@@ -411,7 +410,7 @@ export const CalendarPage = () => {
 							<Location />
 						</Stack>
 					)}
-				</Box>
+				</Stack>
 				<ScheduleXCalendar calendarApp={calendar} />
 			</Container>
 		</section>
