@@ -126,6 +126,7 @@ export const CalendarPage = () => {
 			if (responce?.payload) {
 				setCompanyList(responce.payload);
 			}
+			return responce?.payload || null;
 		});
 	};
 
@@ -134,6 +135,7 @@ export const CalendarPage = () => {
 			if (responce?.payload) {
 				setLocationList(responce.payload);
 			}
+			return responce?.payload || null;
 		});
 	};
 
@@ -219,7 +221,11 @@ export const CalendarPage = () => {
 						onOpenChange={(e) => {
 							if (e.open) {
 								setIsDisableCreateEventButton(true);
-								Promise.all([getCompanies(), getLocations()]).then(() => {
+								Promise.all([getCompanies(), getLocations()]).then(([companiesResult, locationsResult]) => {
+									if(companiesResult === null || locationsResult === null) {
+										setIsDisableCreateEventButton(false);
+										return;
+									}
 									setOpenDraw(e.open)
 									setIsDisableCreateEventButton(false);
 								});
