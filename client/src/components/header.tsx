@@ -9,11 +9,14 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
-import { h } from "preact"; // eslint-disable-line
+import { useStore } from "@nanostores/preact";
+import { h } from "preact";
+import { useEffect } from "preact/compat";
+import { useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 
-import { useState } from "preact/hooks";
-
+import { getUserProfile, IApiUserInfo, logout, softCheck } from "../api";
+import { $signed } from "../store/profile";
 import {
 	PopoverArrow,
 	PopoverBody,
@@ -21,10 +24,6 @@ import {
 	PopoverRoot,
 	PopoverTrigger,
 } from "./ui/popover";
-import { useStore } from "@nanostores/preact";
-import { $signed } from "../store/profile";
-import { getUserProfile, IApiUserInfo, logout, softCheck } from "../api";
-import { useEffect } from "react";
 
 export const Header = () => {
 	const [userData, setUserData] = useState<IApiUserInfo | null>(null);

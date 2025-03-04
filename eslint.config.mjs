@@ -2,6 +2,7 @@ import globals from "globals";
 import prettier from 'eslint-plugin-prettier';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import pluginJs from "@eslint/js";
+import importSort from "eslint-plugin-simple-import-sort";
 import typescriptParser from '@typescript-eslint/parser';
 import tsPlugin from'@typescript-eslint/eslint-plugin';
 import react from "eslint-plugin-react";
@@ -24,6 +25,7 @@ export default [
   react.configs.flat.recommended,
   {
     plugins: {
+      "simple-import-sort": importSort,
       '@typescript-eslint': tsPlugin,
       react,
       prettier,
@@ -37,6 +39,9 @@ export default [
       ...tsPlugin.configs.recommended.rules,
       "curly": ["error", "all"],
       "eqeqeq": ["error", "always"],
+      "no-duplicate-imports": "error",
+      "simple-import-sort/imports": "error",
+      "simple-import-sort/exports": "error",
       "no-shadow": "off",
       "@typescript-eslint/no-shadow": "error",
       "react/react-in-jsx-scope": "off",

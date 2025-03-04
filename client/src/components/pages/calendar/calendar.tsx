@@ -1,34 +1,8 @@
-import { h } from "preact";
-
 import "@schedule-x/theme-default/dist/index.css";
 import "./calendar.css";
 
-import dayjs from "dayjs";
+import type { UUID } from "node:crypto";
 
-import { useCalendarApp, ScheduleXCalendar } from "@schedule-x/preact";
-import { createViewMonthGrid, CalendarApp } from "@schedule-x/calendar";
-import { CalendarAppSingleton } from "@schedule-x/shared";
-
-import { useEffect, useMemo, useState } from "preact/hooks";
-import { route as navigate } from "preact-router";
-import { useStore } from "@nanostores/preact";
-
-import {
-	check,
-	createEvent,
-	IApiCompany,
-	IApiLocation,
-	readEvent,
-	readEventsList,
-	readLocations,
-	readMyCompanies,
-} from "../../../api";
-import { $tz } from "../../../store/tz";
-import {
-	enableMastery,
-	disableMastery,
-	$mastery,
-} from "../../../store/mastery";
 import {
 	Button,
 	Container,
@@ -41,7 +15,33 @@ import {
 	Stack,
 	Switch,
 } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
+import { CalendarApp, createViewMonthGrid } from "@schedule-x/calendar";
+import { ScheduleXCalendar, useCalendarApp } from "@schedule-x/preact";
+import { CalendarAppSingleton } from "@schedule-x/shared";
+import dayjs from "dayjs";
+import { h } from "preact";
+import { useEffect, useMemo, useState } from "preact/hooks";
+import { route as navigate } from "preact-router";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
+import {
+	check,
+	createEvent,
+	IApiCompany,
+	IApiLocation,
+	readEvent,
+	readEventsList,
+	readLocations,
+	readMyCompanies,
+} from "../../../api";
+import {
+	$mastery,
+	disableMastery,
+	enableMastery,
+} from "../../../store/mastery";
+import { $tz } from "../../../store/tz";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -52,13 +52,9 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "../../ui/drawer";
-
 import { Field } from "../../ui/field";
-import { useForm } from "react-hook-form";
 import { Company } from "./company";
 import { Location } from "./location";
-import type { UUID } from "node:crypto";
-import toast from "react-hot-toast";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
