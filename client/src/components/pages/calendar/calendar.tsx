@@ -247,13 +247,7 @@ export const CalendarPage = () => {
 	return (
 		<section>
 			<Container>
-				<HStack
-					flexWrap="wrap"
-					alignItems="center"
-					mb="5"
-					minHeight="40px"
-					gap={10}
-				>
+				<HStack flexWrap="wrap" mb="5" minHeight="40px" gap={10}>
 					{showSwitch && (
 						<Switch.Root
 							size="lg"
