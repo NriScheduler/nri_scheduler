@@ -3,6 +3,7 @@ import prettier from 'eslint-plugin-prettier';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import pluginJs from "@eslint/js";
 import importSort from "eslint-plugin-simple-import-sort";
+import nodeImport from 'eslint-plugin-node-import';
 import typescriptParser from '@typescript-eslint/parser';
 import tsPlugin from'@typescript-eslint/eslint-plugin';
 import react from "eslint-plugin-react";
@@ -26,6 +27,7 @@ export default [
   {
     plugins: {
       "simple-import-sort": importSort,
+      'node-import': nodeImport,
       '@typescript-eslint': tsPlugin,
       react,
       prettier,
@@ -40,9 +42,8 @@ export default [
       "curly": ["error", "all"],
       "eqeqeq": ["error", "always"],
       "no-duplicate-imports": "error",
-      "simple-import-sort/imports": [
-      "error",
-      {
+      "node-import/prefer-node-protocol": "error",
+      "simple-import-sort/imports": ["error", {
         groups: [
           // Стили
           ["^.+\\.s?css$"],
@@ -59,10 +60,8 @@ export default [
           ["^\\.\\./\\.\\./\\.\\./\\w+"],
           ["^\\.\\./\\.\\./\\.\\./\\.\\./\\w+"],
           ["^\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\w+"],
-
         ],
-      },
-    ],
+      }],
       "simple-import-sort/exports": "error",
       "no-shadow": "off",
       "@typescript-eslint/no-shadow": "error",
