@@ -579,7 +579,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/AppResponseWithCompany"
+									"$ref": "#/components/schemas/AppResponseWithCompanyInfo"
 								}
 							}
 						}
