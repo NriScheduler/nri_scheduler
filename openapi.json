@@ -946,6 +946,43 @@
 					}
 				}
 			},
+			"CompanyInfo": {
+				"type": "object",
+				"description": "Описание кампании",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"description": "Идентификатор кампании"
+					},
+					"master": {
+						"type": "string",
+						"format": "uuid",
+						"description": "Идентификатор мастера кампании"
+					},
+					"master_name": {
+						"type": "string",
+						"description": "Имя мастера кампании"
+					},
+					"name": {
+						"type": "string",
+						"description": "Название кампании"
+					},
+					"system": {
+						"type": "string",
+						"description": "Система правил"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Описание локации"
+					},
+					"you_are_master": {
+						"type": "boolean",
+						"description": "Является ли пользователь мастером кампании"
+					}
+				}
+			},
 			"AppResponse": {
 				"type": "object",
 				"description": "Ответ приложения без дополнительной информации",
@@ -1159,7 +1196,7 @@
 					}
 				}
 			},
-			"AppResponseWithCompany": {
+			"AppResponseWithCompanyInfo": {
 				"type": "object",
 				"description": "Ответ приложения с информацией о кампании",
 				"required": [
@@ -1176,7 +1213,7 @@
 						"description": "Текстовое описание результата"
 					},
 					"payload": {
-						"$ref": "#/components/schemas/Company"
+						"$ref": "#/components/schemas/CompanyInfo"
 					}
 				}
 			}

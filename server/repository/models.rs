@@ -36,6 +36,17 @@ pub(crate) struct Company {
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct CompanyInfo {
+	pub id: Uuid,
+	pub master: Uuid,
+	pub master_name: String,
+	pub name: String,
+	pub system: String,
+	pub description: Option<String>,
+	pub you_are_master: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
 pub(crate) struct Location {
 	pub id: Uuid,
 	pub name: String,

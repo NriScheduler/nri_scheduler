@@ -3,7 +3,9 @@ pub(crate) mod models;
 
 use chrono::{DateTime, FixedOffset};
 use implementations::PostgresStore;
-use models::{Company, Event, EventForApplying, Location, Profile, SelfInfo, UserForAuth};
+use models::{
+	Company, CompanyInfo, Event, EventForApplying, Location, Profile, SelfInfo, UserForAuth,
+};
 use uuid::Uuid;
 
 use crate::{
@@ -40,7 +42,11 @@ trait Store {
 		descr: &Option<String>,
 	) -> CoreResult<RecordId>;
 
-	async fn get_company_by_id(&self, company_id: Uuid) -> CoreResult<Option<Company>>;
+	async fn get_company_by_id(
+		&self,
+		company_id: Uuid,
+		user_id: Option<Uuid>,
+	) -> CoreResult<Option<CompanyInfo>>;
 
 	async fn get_my_companies(
 		&self,
@@ -168,8 +174,12 @@ impl Repository {
 		return self.store.add_location(name, address, descr).await;
 	}
 
-	pub(crate) async fn get_company_by_id(&self, company_id: Uuid) -> CoreResult<Option<Company>> {
-		return self.store.get_company_by_id(company_id).await;
+	pub(crate) async fn get_company_by_id(
+		&self,
+		company_id: Uuid,
+		user_id: Option<Uuid>,
+	) -> CoreResult<Option<CompanyInfo>> {
+		return self.store.get_company_by_id(company_id, user_id).await;
 	}
 
 	pub(crate) async fn get_my_companies(

@@ -12,7 +12,7 @@ use crate::{
 		location::ReadLocationDto,
 	},
 	repository::models::{
-		Company, Event, EventForApplying, Location, Profile, SelfInfo, UserForAuth,
+		Company, CompanyInfo, Event, EventForApplying, Location, Profile, SelfInfo, UserForAuth,
 	},
 	shared::RecordId,
 	system_models::{AppError, CoreResult, ServingError},
@@ -170,11 +170,25 @@ impl Store for PostgresStore {
 		Ok(new_loc_id)
 	}
 
-	async fn get_company_by_id(&self, company_id: Uuid) -> CoreResult<Option<Company>> {
-		let may_be_company = sqlx::query_as::<_, Company>("SELECT * FROM companies WHERE id = $1;")
-			.bind(company_id)
-			.fetch_optional(&self.pool)
-			.await?;
+	async fn get_company_by_id(
+		&self,
+		company_id: Uuid,
+		user_id: Option<Uuid>,
+	) -> CoreResult<Option<CompanyInfo>> {
+		let may_be_company = sqlx::query_as::<_, CompanyInfo>(
+			"SELECT
+				c.*
+				, u.nickname AS master_name
+				, ($2 is not null and u.id = $2) AS you_are_master
+			FROM companies c
+			inner join users u
+				on c.master = u.id
+			where c.id = $1;",
+		)
+		.bind(company_id)
+		.bind(user_id)
+		.fetch_optional(&self.pool)
+		.await?;
 
 		Ok(may_be_company)
 	}
