@@ -379,6 +379,10 @@ export interface IApiUserInfo {
 	readonly phone: string | null;
 }
 
-export const getUserProfile = () => {
-	return ajax<IApiUserInfo>(`/api/profile`);
+export const getMyProfile = () => {
+	return ajax<IApiUserInfo>(`/api/profile/my`);
+};
+
+export const getAnotherUserProfile = (userId: UUID) => {
+	return ajax<IApiUserInfo>(`/api/profile/${userId}`);
 };

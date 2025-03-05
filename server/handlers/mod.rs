@@ -5,7 +5,7 @@ pub(super) mod locations;
 use ::std::sync::Arc;
 use axum::{
 	Extension,
-	extract::State,
+	extract::{Path, State},
 	response::{IntoResponse, Response},
 };
 use uuid::Uuid;
@@ -76,11 +76,27 @@ pub(super) async fn logout() -> Response {
 	}
 }
 
-pub(super) async fn read_profile(
+pub(super) async fn read_my_profile(
 	State(repo): State<Arc<Repository>>,
 	Extension(user_id): Extension<Uuid>,
 ) -> AppResult {
 	let profile = repo.read_profile(user_id).await?;
+
+	Ok(match profile {
+		None => AppResponse::scenario_fail("Пользователь не найден", None),
+		Some(profile) => {
+			let payload = serde_json::to_value(profile)?;
+			AppResponse::scenario_success("Профиль получен", Some(payload))
+		}
+	})
+}
+
+pub(super) async fn read_another_profile(
+	State(repo): State<Arc<Repository>>,
+	Extension(_user_id): Extension<Option<Uuid>>, // когда-нибудь пригодится для определения показывать ли контакты
+	Path(profile_id): Path<Uuid>,
+) -> AppResult {
+	let profile = repo.read_profile(profile_id).await?;
 
 	Ok(match profile {
 		None => AppResponse::scenario_fail("Пользователь не найден", None),
