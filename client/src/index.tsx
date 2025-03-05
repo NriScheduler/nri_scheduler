@@ -10,6 +10,7 @@ import {
 	MasteryPage,
 	NotFoundPage,
 	SignInPage,
+	CompanyPage,
 } from "./components/pages";
 
 const App = () => (
@@ -21,7 +22,7 @@ const App = () => (
 					path="/signup"
 					getComponent={() =>
 						import("./components/pages/sign-up/signup").then(
-							(module) => module.SingUpPage
+							(module) => module.SingUpPage,
 						)
 					}
 				/>
@@ -30,12 +31,13 @@ const App = () => (
 					path="/calendar"
 					getComponent={() =>
 						import("./components/pages/calendar/calendar").then(
-							(module) => module.CalendarPage
+							(module) => module.CalendarPage,
 						)
 					}
 				/>
 				<Route path="/event/create" component={CreateEventPage} />
 				<Route path="/event/:id" component={EventPage} />
+				<Route path="/company/:id" component={CompanyPage} />
 				<Route path="/mastery" component={MasteryPage} />
 
 				<Route default component={() => <NotFoundPage />} />
