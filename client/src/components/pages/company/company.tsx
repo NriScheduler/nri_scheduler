@@ -111,7 +111,7 @@ export const CompanyPage = () => {
 	const [fetching, setFetching] = useState(false);
 	const [company, setCompany] = useState<IApiCompany | null>(null);
 	const [open, setOpen] = useState(false);
-	const { register, handleSubmit, reset } = useForm<IApiCompany>();
+	const { register, handleSubmit } = useForm<IApiCompany>();
 
 	const onSubmit = handleSubmit((companyData) => {
 		console.log(companyData);
@@ -121,7 +121,6 @@ export const CompanyPage = () => {
 			updateCompany(companyId, name, system, description)
 				.then((res) => {
 					if (res !== null) {
-						reset();
 						setOpen(false);
 					}
 				})
