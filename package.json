@@ -12,7 +12,7 @@
 		"lint": "eslint ./client"
 	},
 	"dependencies": {
-		"@chakra-ui/react": "^3.8.1",
+		"@chakra-ui/react": "^3.9.0",
 		"@nanostores/preact": "^0.5.2",
 		"@schedule-x/calendar": "^2.21.1",
 		"@schedule-x/preact": "^2.16.1",
