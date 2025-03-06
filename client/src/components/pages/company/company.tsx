@@ -28,16 +28,14 @@ import {
 } from "@chakra-ui/react";
 
 import { NotFoundPage } from "../not-found/not-found";
-
 import { Field } from "../../ui/field";
+import { IApiCompanyInfo, readCompanyById, updateCompany } from "../../../api";
 
-import { IApiCompany, readCompanyById, updateCompany } from "../../../api";
-
-const CompanyCard = ({ company }: { company: IApiCompany }) => {
+const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 	const stats = [
-		{ label: "Описание", value: company.description },
-		{ label: "Мастер игры", value: company.master, href: "#" },
 		{ label: "Система", value: company.system },
+		{ label: "Мастер игры", value: company.master_name, href: "#" },
+		{ label: "Описание", value: company.description },
 	];
 
 	return (
@@ -75,9 +73,9 @@ const CompanyCard = ({ company }: { company: IApiCompany }) => {
 const CompanyCardSkeleton = () => {
 	const stats = [
 		{ label: "Имя" },
-		{ label: "Описание" },
-		{ label: "Мастер" },
 		{ label: "Система" },
+		{ label: "Мастер" },
+		{ label: "Описание" },
 	];
 
 	return (
@@ -109,12 +107,11 @@ export const CompanyPage = () => {
 	const [route] = useRouter();
 	const companyId = route.matches?.id as UUID;
 	const [fetching, setFetching] = useState(false);
-	const [company, setCompany] = useState<IApiCompany | null>(null);
+	const [company, setCompany] = useState<IApiCompanyInfo | null>(null);
 	const [open, setOpen] = useState(false);
-	const { register, handleSubmit } = useForm<IApiCompany>();
+	const { register, handleSubmit } = useForm<IApiCompanyInfo>();
 
 	const onSubmit = handleSubmit((companyData) => {
-		console.log(companyData);
 		if (companyId) {
 			const { name, system, description } = companyData;
 			setFetching(true);
@@ -127,7 +124,8 @@ export const CompanyPage = () => {
 				.then(() => readCompanyById(companyId))
 				.then((res) => {
 					if (res !== null) {
-						setCompany(res.payload);
+						const result = res.payload;
+						setCompany(result);
 					}
 				})
 				.finally(() => {
@@ -137,6 +135,12 @@ export const CompanyPage = () => {
 	});
 
 	useEffect(() => {
+		const onEscClose = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				setOpen(false);
+			}
+		};
+		document.addEventListener("keydown", onEscClose);
 		if (companyId) {
 			setFetching(true);
 			readCompanyById(companyId)
@@ -149,6 +153,9 @@ export const CompanyPage = () => {
 					setFetching(false);
 				});
 		}
+		return () => {
+			document.removeEventListener("keydown", onEscClose);
+		};
 	}, [companyId]);
 
 	const handleBackButton = () => {
@@ -161,17 +168,7 @@ export const CompanyPage = () => {
 				<Button mb={4} onClick={handleBackButton}>
 					Вернуться назад
 				</Button>
-				{fetching ? (
-					<CompanyCardSkeleton />
-				) : company !== null ? (
-					<CompanyCard company={company} />
-				) : (
-					<NotFoundPage
-						checkButton={false}
-						title="Кампания не найдена, попробуйте еще раз!"
-					/>
-				)}
-				{company && (
+				{company?.you_are_master && (
 					<HStack alignItems="top">
 						<DrawerRoot
 							open={open}
@@ -181,7 +178,7 @@ export const CompanyPage = () => {
 						>
 							<DrawerBackdrop />
 							<DrawerTrigger asChild>
-								<Button mt="4" variant="outline">
+								<Button mt="4" mb="4" variant="outline">
 									Редактировать кампанию
 								</Button>
 							</DrawerTrigger>
@@ -239,6 +236,16 @@ export const CompanyPage = () => {
 							</DrawerContent>
 						</DrawerRoot>
 					</HStack>
+				)}
+				{fetching ? (
+					<CompanyCardSkeleton />
+				) : company !== null ? (
+					<CompanyCard company={company} />
+				) : (
+					<NotFoundPage
+						checkButton={false}
+						title="Кампания не найдена, попробуйте еще раз!"
+					/>
 				)}
 			</Container>
 		</section>

@@ -21,7 +21,6 @@ import "dayjs/locale/ru";
 import dayjs from "dayjs";
 
 import { NotFoundPage } from "../not-found/not-found";
-
 import {
 	applyEvent,
 	EScenarioStatus,
@@ -86,7 +85,7 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 			<Card.Body>
 				<HStack mb="6" gap="3">
 					<Heading size="3xl">
-						Игра по компании:
+						Игра по компании:&nbsp;
 						<Link href={`/company/${event.company_id}`}>
 							{event.company}
 						</Link>
