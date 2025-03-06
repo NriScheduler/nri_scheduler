@@ -3,6 +3,8 @@ use axum::{
 	Router, middleware,
 	routing::{get, post, put},
 };
+#[cfg(feature = "cors")]
+use axum::{http::StatusCode, routing::options};
 #[cfg(feature = "swagger")]
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -53,7 +55,9 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 	let router = router.fallback(proxy_to_vite);
 
 	#[cfg(feature = "cors")]
-	let router = router.layer(middleware::from_fn(cors::cors_middleware));
+	let router = router
+		.route("/{*any}", options(|| async { StatusCode::NO_CONTENT }))
+		.layer(middleware::from_fn(cors::cors_middleware));
 
 	#[cfg(feature = "swagger")]
 	let router = router.merge(SwaggerUi::new("/swagger").url("/swagger.json", openapi::get_schema()));
