@@ -1,6 +1,6 @@
 import { h, JSX, Fragment } from "preact";
 import { useRef, useState } from "preact/hooks";
-import { Avatar, Button } from "@chakra-ui/react";
+import { Avatar, Button, Group, HStack, Stack } from "@chakra-ui/react";
 
 export const ProfilePicture = ({ register, username }: any) => {
 	const hiddenInputRef = useRef<HTMLInputElement>(null);
@@ -40,15 +40,18 @@ export const ProfilePicture = ({ register, username }: any) => {
 				style={{ display: "none" }}
 				accept="image/*"
 			/>
-
-			<Avatar.Root w="full" h="90px" shape="rounded">
-				<Avatar.Fallback name={username} />
-				<Avatar.Image src={preview || undefined} />
-			</Avatar.Root>
-
-			<Button variant="outline" onClick={onUpload}>
-				{uploadButtonLabel}
-			</Button>
+			<HStack>
+				<Avatar.Root w="100px" h="100px">
+					<Avatar.Fallback name={username} />
+					<Avatar.Image src={preview || undefined} />
+				</Avatar.Root>
+				<Group>
+					<Button variant="outline" onClick={onUpload}>
+						{uploadButtonLabel}
+					</Button>
+					<Button variant="surface" colorPalette="red">Удалить</Button>
+				</Group>
+			</HStack>
 		</>
 	);
 };
