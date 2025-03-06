@@ -169,11 +169,6 @@ export const CompanyPage = () => {
 				<Button mb={4} onClick={handleBackButton}>
 					Вернуться назад
 				</Button>
-				<Image
-					height={200}
-					width="100%"
-					src="https://artworld.ru/images/cms/content/catalog2/sharabarin_kartina_maslom_po_tropinka_hodit_osen_zolotaya_as190711.jpg"
-				/>
 				{company?.you_are_master && (
 					<HStack alignItems="top">
 						<DrawerRoot
@@ -243,6 +238,11 @@ export const CompanyPage = () => {
 						</DrawerRoot>
 					</HStack>
 				)}
+				<Image
+					height={200}
+					width="100%"
+					src="https://artworld.ru/images/cms/content/catalog2/sharabarin_kartina_maslom_po_tropinka_hodit_osen_zolotaya_as190711.jpg"
+				/>
 				{fetching ? (
 					<CompanyCardSkeleton />
 				) : company !== null ? (
