@@ -3,7 +3,6 @@ import type { UUID } from "node:crypto";
 import { route as navigate } from "preact-router";
 import { toast } from "react-hot-toast";
 
-import { startFetching, stopFetching } from "./store/fetching";
 import { enter, leave } from "./store/profile";
 
 const API_HOST = import.meta.env.PROD
@@ -52,8 +51,6 @@ const ajax = <T>(
 		);
 	}
 
-	startFetching();
-
 	return fetch(API_HOST + input, {
 		body: init?.body,
 		cache: "no-store",
@@ -65,7 +62,6 @@ const ajax = <T>(
 		.then((res) => checkResponse<T>(res, isSoft))
 		.finally(() => {
 			clearTimeout(timeoutId);
-			stopFetching();
 		});
 };
 

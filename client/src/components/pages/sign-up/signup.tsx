@@ -1,4 +1,5 @@
 import { h } from "preact";
+import { useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { useForm } from "react-hook-form";
 
@@ -11,18 +12,16 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
 
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
 import { registration } from "../../../api";
-import { $fetching } from "../../../store/fetching";
 
 interface IFormValues {
-	name: string;
-	email: string;
-	password: string;
-	repassword: string;
+	readonly name: string;
+	readonly email: string;
+	readonly password: string;
+	readonly repassword: string;
 }
 
 export const SingUpPage = () => {
@@ -33,14 +32,16 @@ export const SingUpPage = () => {
 		formState: { errors },
 	} = useForm<IFormValues>();
 
-	const fetching = useStore($fetching);
+	const [fetching, setFetching] = useState(false);
 
-	const onSubmit = handleSubmit((data) => {
-		const { name, email, password } = data;
+	const onSubmit = handleSubmit(({ name, email, password }) => {
+		setFetching(true);
 
 		registration(name, email, password).then((res) => {
 			if (res !== null) {
 				navigate("/signin", true);
+			} else {
+				setFetching(false);
 			}
 		});
 	});
@@ -52,7 +53,7 @@ export const SingUpPage = () => {
 					<Heading>Регистрация</Heading>
 					<Field
 						label="Логин"
-						invalid={!!errors.name}
+						invalid={Boolean(errors.name)}
 						errorText={errors.name?.message}
 					>
 						<Input
@@ -64,7 +65,7 @@ export const SingUpPage = () => {
 					</Field>
 					<Field
 						label="Электронная почта"
-						invalid={!!errors.email}
+						invalid={Boolean(errors.email)}
 						errorText={errors.email?.message}
 					>
 						<Input
@@ -77,7 +78,7 @@ export const SingUpPage = () => {
 					</Field>
 					<Field
 						label="Пароль"
-						invalid={!!errors.password}
+						invalid={Boolean(errors.password)}
 						errorText={errors.password?.message}
 					>
 						<PasswordInput
@@ -89,7 +90,7 @@ export const SingUpPage = () => {
 					</Field>
 					<Field
 						label="Повторите пароль"
-						invalid={!!errors.repassword}
+						invalid={Boolean(errors.repassword)}
 						errorText={errors.repassword?.message}
 					>
 						<PasswordInput

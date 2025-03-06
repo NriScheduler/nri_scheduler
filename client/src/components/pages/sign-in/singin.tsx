@@ -1,4 +1,5 @@
 import { h } from "preact";
+import { useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -12,16 +13,14 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
 
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
 import { check, signIn } from "../../../api";
-import { $fetching } from "../../../store/fetching";
 
 interface IFormSignin {
-	email: string;
-	password: string;
+	readonly email: string;
+	readonly password: string;
 }
 
 export const SignInPage = () => {
@@ -32,10 +31,10 @@ export const SignInPage = () => {
 		formState: { errors },
 	} = useForm<IFormSignin>();
 
-	const fetching = useStore($fetching);
+	const [fetching, setFetching] = useState(false);
 
-	const onSubmit = handleSubmit((data) => {
-		const { email, password } = data;
+	const onSubmit = handleSubmit(({ email, password }) => {
+		setFetching(true);
 
 		signIn(email, password)
 			.then((res) => {
@@ -46,6 +45,8 @@ export const SignInPage = () => {
 					reset();
 					toast.success("Успешная авторизация");
 					navigate("/calendar");
+				} else {
+					setFetching(false);
 				}
 			});
 	});
@@ -57,7 +58,7 @@ export const SignInPage = () => {
 					<Heading>Авторизация</Heading>
 					<Field
 						label="Электронная почта"
-						invalid={!!errors.email}
+						invalid={Boolean(errors.email)}
 						errorText={errors.email?.message}
 					>
 						<Input
@@ -70,7 +71,7 @@ export const SignInPage = () => {
 					</Field>
 					<Field
 						label="Пароль"
-						invalid={!!errors.password}
+						invalid={Boolean(errors.password)}
 						errorText={errors.password?.message}
 					>
 						<PasswordInput
