@@ -230,6 +230,16 @@ export interface IApiCompany {
 	readonly description: string | null;
 }
 
+export interface IApiCompanyInfo {
+	readonly id: UUID;
+	readonly master: UUID;
+	readonly name: string;
+	readonly name_name: string;
+	readonly system: string;
+	readonly description: string | null;
+	readonly you_are_master: boolean;
+}
+
 export const readMyCompanies = (nameFilter?: string | null) => {
 	const query = new URLSearchParams();
 	if (nameFilter) {
@@ -240,7 +250,7 @@ export const readMyCompanies = (nameFilter?: string | null) => {
 };
 
 export const readCompanyById = (companyId: UUID) =>
-	ajax<IApiCompany>(`/api/companies/${companyId}`);
+	ajax<IApiCompanyInfo>(`/api/companies/${companyId}`);
 
 export const addCompany = (
 	name: string,
@@ -369,6 +379,10 @@ export interface IApiUserInfo {
 	readonly phone: string | null;
 }
 
-export const getUserProfile = () => {
-	return ajax<IApiUserInfo>(`/api/profile`);
+export const getMyProfile = () => {
+	return ajax<IApiUserInfo>(`/api/profile/my`);
+};
+
+export const getAnotherUserProfile = (userId: UUID) => {
+	return ajax<IApiUserInfo>(`/api/profile/${userId}`);
 };

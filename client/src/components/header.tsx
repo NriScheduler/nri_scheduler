@@ -1,3 +1,8 @@
+import { h } from "preact";
+import { useEffect } from "preact/compat";
+import { useState } from "preact/hooks";
+import { route as navigate } from "preact-router";
+
 import {
 	Avatar,
 	Box,
@@ -10,13 +15,7 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
-import { h } from "preact";
-import { useEffect } from "preact/compat";
-import { useState } from "preact/hooks";
-import { route as navigate } from "preact-router";
 
-import { getUserProfile, IApiUserInfo, logout, softCheck } from "../api";
-import { $signed } from "../store/profile";
 import {
 	PopoverArrow,
 	PopoverBody,
@@ -24,6 +23,8 @@ import {
 	PopoverRoot,
 	PopoverTrigger,
 } from "./ui/popover";
+import { getMyProfile, IApiUserInfo, logout, softCheck } from "../api";
+import { $signed } from "../store/profile";
 
 export const Header = () => {
 	const [userData, setUserData] = useState<IApiUserInfo | null>(null);
@@ -33,7 +34,7 @@ export const Header = () => {
 	useEffect(() => {
 		softCheck().then((isLoggedIn) => {
 			if (isLoggedIn) {
-				getUserProfile().then((res) => {
+				getMyProfile().then((res) => {
 					if (res) {
 						setUserData(res.payload);
 					}

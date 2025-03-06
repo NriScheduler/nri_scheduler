@@ -135,7 +135,7 @@ async fn check_company(
 	user_id: Uuid,
 	repo: Arc<Repository>,
 ) -> Result<(), AppError> {
-	let Some(company) = repo.get_company_by_id(company_id).await? else {
+	let Some(company) = repo.get_company_by_id(company_id, Some(user_id)).await? else {
 		return AppError::scenario_error("Кампания не найдена", Some(company_id.to_string())).into();
 	};
 

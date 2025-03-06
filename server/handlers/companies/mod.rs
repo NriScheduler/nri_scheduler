@@ -16,9 +16,10 @@ use crate::{
 
 pub(crate) async fn get_company_by_id(
 	State(repo): State<Arc<Repository>>,
+	Extension(user_id): Extension<Option<Uuid>>,
 	Path(company_id): Path<Uuid>,
 ) -> AppResult {
-	let maybe_company = repo.get_company_by_id(company_id).await?;
+	let maybe_company = repo.get_company_by_id(company_id, user_id).await?;
 
 	Ok(match maybe_company {
 		None => AppResponse::scenario_fail("Кампания не найдена", None),
