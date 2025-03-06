@@ -1,24 +1,22 @@
-import { ComponentChild, h } from "preact"; // eslint-disable-line
+import { ComponentChild, h } from "preact";
 import { forwardRef } from "preact/compat";
 import { useRef } from "preact/hooks";
-import type {
-	ButtonProps,
-	GroupProps,
-	InputProps,
-	StackProps,
-} from "@chakra-ui/react";
+import { LuEye, LuEyeOff } from "react-icons/lu";
 
 import {
 	Box,
+	ButtonProps,
+	GroupProps,
 	HStack,
 	IconButton,
 	Input,
-	Stack,
+	InputProps,
 	mergeRefs,
+	Stack,
+	StackProps,
 	useControllableState,
 } from "@chakra-ui/react";
 
-import { LuEye, LuEyeOff } from "react-icons/lu";
 import { InputGroup } from "./input-group";
 
 export interface IPasswordVisibilityProps {
@@ -30,57 +28,60 @@ export interface IPasswordVisibilityProps {
 
 export interface IPasswordInputProps
 	extends InputProps,
-	IPasswordVisibilityProps {
+		IPasswordVisibilityProps {
 	rootProps?: GroupProps;
 }
 
-export const PasswordInput = forwardRef<
-	HTMLInputElement,
-	IPasswordInputProps
->(function PasswordInput(props, ref) {
-	const {
-		rootProps,
-		defaultVisible,
-		visible: visibleProp,
-		onVisibleChange,
-		visibilityIcon = { on: <LuEye />, off: <LuEyeOff /> },
-		...rest
-	} = props;
+export const PasswordInput = forwardRef<HTMLInputElement, IPasswordInputProps>(
+	function PasswordInput(props, ref) {
+		const {
+			rootProps,
+			defaultVisible,
+			visible: visibleProp,
+			onVisibleChange,
+			visibilityIcon = { on: <LuEye />, off: <LuEyeOff /> },
+			...rest
+		} = props;
 
-	const [visible, setVisible] = useControllableState({
-		value: visibleProp,
-		defaultValue: defaultVisible || false,
-		onChange: onVisibleChange,
-	});
+		const [visible, setVisible] = useControllableState({
+			value: visibleProp,
+			defaultValue: defaultVisible || false,
+			onChange: onVisibleChange,
+		});
 
-	const inputRef = useRef<HTMLInputElement>(null);
+		const inputRef = useRef<HTMLInputElement>(null);
 
-	return (
-		<InputGroup
-			width="full"
-			endElement={
-				<VisibilityTrigger
-					disabled={rest.disabled}
-					onPointerDown={(e) => {
-						if (rest.disabled) { return; }
-						if (e.button !== 0) { return; }
-						e.preventDefault();
-						setVisible(!visible);
-					}}
-				>
-					{visible ? visibilityIcon.off : visibilityIcon.on}
-				</VisibilityTrigger>
-			}
-			{...rootProps}
-		>
-			<Input
-				{...rest}
-				ref={mergeRefs(ref, inputRef)}
-				type={visible ? "text" : "password"}
-			/>
-		</InputGroup>
-	);
-});
+		return (
+			<InputGroup
+				width="full"
+				endElement={
+					<VisibilityTrigger
+						disabled={rest.disabled}
+						onPointerDown={(e) => {
+							if (rest.disabled) {
+								return;
+							}
+							if (e.button !== 0) {
+								return;
+							}
+							e.preventDefault();
+							setVisible(!visible);
+						}}
+					>
+						{visible ? visibilityIcon.off : visibilityIcon.on}
+					</VisibilityTrigger>
+				}
+				{...rootProps}
+			>
+				<Input
+					{...rest}
+					ref={mergeRefs(ref, inputRef)}
+					type={visible ? "text" : "password"}
+				/>
+			</InputGroup>
+		);
+	},
+);
 
 const VisibilityTrigger = forwardRef<HTMLButtonElement, ButtonProps>(
 	function VisibilityTrigger(props, ref) {
@@ -97,7 +98,7 @@ const VisibilityTrigger = forwardRef<HTMLButtonElement, ButtonProps>(
 				{...props}
 			/>
 		);
-	}
+	},
 );
 
 interface IPasswordStrengthMeterProps extends StackProps {

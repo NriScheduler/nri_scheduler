@@ -1,4 +1,5 @@
 import { h } from "preact";
+
 import { ChakraProvider, createSystem, defaultConfig } from "@chakra-ui/react";
 
 const system = createSystem(defaultConfig, {
@@ -12,7 +13,5 @@ interface IProviderProps {
 }
 
 export function Provider({ children }: IProviderProps) {
-	return <ChakraProvider value={system} >
-		{ children }
-	</ChakraProvider>;
+	return <ChakraProvider value={system}>{children}</ChakraProvider>;
 }

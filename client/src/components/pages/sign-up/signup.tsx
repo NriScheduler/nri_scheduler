@@ -1,5 +1,6 @@
-import { h } from "preact"; // eslint-disable-line
+import { h } from "preact";
 import { route as navigate } from "preact-router";
+import { useForm } from "react-hook-form";
 
 import {
 	Button,
@@ -10,12 +11,12 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
+
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
-import { useForm } from "react-hook-form";
-import { useStore } from "@nanostores/preact";
-import { $fetching } from "../../../store/fetching";
 import { registration } from "../../../api";
+import { $fetching } from "../../../store/fetching";
 
 interface IFormValues {
 	name: string;

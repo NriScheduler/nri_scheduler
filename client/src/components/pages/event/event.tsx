@@ -1,12 +1,9 @@
 import type { UUID } from "node:crypto";
 
-import { h } from "preact"; // eslint-disable-line
+import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { useRouter } from "preact-router";
-import { useStore } from "@nanostores/preact";
-
-import dayjs from "dayjs";
-import "dayjs/locale/ru";
+import toast from "react-hot-toast";
 
 import {
 	Button,
@@ -18,16 +15,19 @@ import {
 	Link,
 	Skeleton,
 } from "@chakra-ui/react";
-import { $tz } from "../../../store/tz";
+import { useStore } from "@nanostores/preact";
+import "dayjs/locale/ru";
+import dayjs from "dayjs";
+
+import { NotFoundPage } from "../not-found/not-found";
 import {
 	applyEvent,
 	EScenarioStatus,
 	IApiEvent,
 	readEvent,
 } from "../../../api";
-import toast from "react-hot-toast";
 import { $signed } from "../../../store/profile";
-import { NotFoundPage } from "../not-found/not-found";
+import { $tz } from "../../../store/tz";
 
 dayjs.locale("ru");
 
@@ -45,9 +45,24 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 		{ label: "Место проведения", value: event.location, href: "#" },
 		{ label: "Дата", value: eventDate.format("DD MMMM") },
 		{ label: "Время", value: eventDate.format("HH:mm") },
-		{ label: "Количество игроков", value: event.max_slots ? `${event.players.length} из ${event.max_slots}` : "Без ограничений" },
-		{ label: "Записаны", value: event?.players?.length ? event.players.join(", ") : "Пока никто не записался" },
-		{ label: "Продолжительность", value: event.plan_duration ? `${event.plan_duration} ч` : "Не строим планов" },
+		{
+			label: "Количество игроков",
+			value: event.max_slots
+				? `${event.players.length} из ${event.max_slots}`
+				: "Без ограничений",
+		},
+		{
+			label: "Записаны",
+			value: event?.players?.length
+				? event.players.join(", ")
+				: "Пока никто не записался",
+		},
+		{
+			label: "Продолжительность",
+			value: event.plan_duration
+				? `${event.plan_duration} ч`
+				: "Не строим планов",
+		},
 	];
 
 	const handleSubscribe = () => {
@@ -58,56 +73,61 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 					setYouApplied(true);
 					toast.success("Успех. Запись оформлена");
 				}
-			}).finally(() => {
+			})
+			.finally(() => {
 				setIsLoading(false);
 			});
 	};
 
 	return (
-			<Card.Root width="full">
-				<Card.Body>
-					<HStack mb="6" gap="3">
-						<Heading size="3xl">{event.company}</Heading>
-					</HStack>
-					<Card.Description>
-						<DataList.Root orientation="horizontal">
-							{stats.map((item) => (
-								<DataList.Item key={item.label}>
-									<DataList.ItemLabel minW="150px">
-										{item.label}
-									</DataList.ItemLabel>
-									<DataList.ItemValue color="black" fontWeight="500">
-										{item.href ? (
-											<Link href={item.href} colorPalette="blue">
-												{item.value}
-											</Link>
-										) : (
-											<p>{item.value}</p>
-										)}
-									</DataList.ItemValue>
-								</DataList.Item>
-							))}
-						</DataList.Root>
-					</Card.Description>
-				</Card.Body>
-				<Card.Footer>
-					{signed ? (
-						!event.you_are_master ? (
-							<Button
-								variant="subtle"
-								colorPalette="blue"
-								minW="115px"
-								onClick={handleSubscribe}
-								disabled={isLoading || youApplied}
-							>
-								{isLoading ? "..." : youApplied ? "Вы записаны" : "Записаться"}
-							</Button>
-						) : null
-					) : (
-						"необходимо авторизоваться для записи на игру"
-					)}
-				</Card.Footer>
-			</Card.Root>
+		<Card.Root width="full">
+			<Card.Body>
+				<HStack mb="6" gap="3">
+					<Heading size="3xl">{event.company}</Heading>
+				</HStack>
+				<Card.Description>
+					<DataList.Root orientation="horizontal">
+						{stats.map((item) => (
+							<DataList.Item key={item.label}>
+								<DataList.ItemLabel minW="150px">
+									{item.label}
+								</DataList.ItemLabel>
+								<DataList.ItemValue color="black" fontWeight="500">
+									{item.href ? (
+										<Link href={item.href} colorPalette="blue">
+											{item.value}
+										</Link>
+									) : (
+										<p>{item.value}</p>
+									)}
+								</DataList.ItemValue>
+							</DataList.Item>
+						))}
+					</DataList.Root>
+				</Card.Description>
+			</Card.Body>
+			<Card.Footer>
+				{signed ? (
+					!event.you_are_master ? (
+						<Button
+							variant="subtle"
+							colorPalette="blue"
+							minW="115px"
+							onClick={handleSubscribe}
+							disabled={isLoading || youApplied}
+						>
+							{isLoading
+								? "..."
+								: youApplied
+									? "Вы записаны"
+									: "Записаться"}
+						</Button>
+					) : null
+				) : (
+					"необходимо авторизоваться для записи на игру"
+				)}
+			</Card.Footer>
+		</Card.Root>
 	);
 };
 
@@ -123,27 +143,27 @@ const EventCardSkeleton = () => {
 	];
 
 	return (
-			<Card.Root width="full">
-				<Card.Body>
-					<HStack mb="6" gap="3">
-						<Skeleton height="38px" w="30%" />
-					</HStack>
-					<Card.Description>
-						<DataList.Root orientation="horizontal">
-							{stats.map((item, index) => (
-								<DataList.Item key={index}>
-									<DataList.ItemLabel minW="150px">
-										{item.label}
-									</DataList.ItemLabel>
-									<DataList.ItemValue color="black" fontWeight="500">
-										<Skeleton height="20px" w="30%" />
-									</DataList.ItemValue>
-								</DataList.Item>
-							))}
-						</DataList.Root>
-					</Card.Description>
-				</Card.Body>
-			</Card.Root>
+		<Card.Root width="full">
+			<Card.Body>
+				<HStack mb="6" gap="3">
+					<Skeleton height="38px" w="30%" />
+				</HStack>
+				<Card.Description>
+					<DataList.Root orientation="horizontal">
+						{stats.map((item, index) => (
+							<DataList.Item key={index}>
+								<DataList.ItemLabel minW="150px">
+									{item.label}
+								</DataList.ItemLabel>
+								<DataList.ItemValue color="black" fontWeight="500">
+									<Skeleton height="20px" w="30%" />
+								</DataList.ItemValue>
+							</DataList.Item>
+						))}
+					</DataList.Root>
+				</Card.Description>
+			</Card.Body>
+		</Card.Root>
 	);
 };
 

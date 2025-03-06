@@ -1,8 +1,7 @@
-import { h } from "preact"; // eslint-disable-line
+import { h } from "preact";
 import { route as navigate } from "preact-router";
 import { useForm } from "react-hook-form";
-
-import { signIn, check } from "../../../api";
+import toast from "react-hot-toast";
 
 import {
 	Button,
@@ -13,12 +12,12 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
+
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
-
-import { useStore } from "@nanostores/preact";
+import { check, signIn } from "../../../api";
 import { $fetching } from "../../../store/fetching";
-import toast from "react-hot-toast";
 
 interface IFormSignin {
 	email: string;
