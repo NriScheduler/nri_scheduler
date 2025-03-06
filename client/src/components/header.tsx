@@ -22,25 +22,17 @@ import {
 	PopoverTrigger,
 } from "./ui/popover";
 import { useStore } from "@nanostores/preact";
-import { $signed } from "../store/profile";
-import { getUserProfile, IApiUserInfo, logout, softCheck } from "../api";
+import { $signed, DEFAULT_PROFILE_IMAGE, fetchUserData, userStore } from "../store/profile";
+import { logout } from "../api";
 import { useEffect } from "react";
 
 export const Header = () => {
-	const [userData, setUserData] = useState<IApiUserInfo | null>(null);
 	const [open, setOpen] = useState(false);
 	const auth = useStore($signed);
+	const user = useStore(userStore);
 
 	useEffect(() => {
-		softCheck().then((isLoggedIn) => {
-			if (isLoggedIn) {
-				getUserProfile().then((res) => {
-					if (res) {
-						setUserData(res.payload);
-					}
-				});
-			}
-		});
+		fetchUserData();
 	}, [auth]);
 
 	return (
@@ -68,19 +60,17 @@ export const Header = () => {
 							>
 								<PopoverTrigger asChild cursor="pointer">
 									<Stack gap="8">
-										<HStack key={userData?.email} gap="4">
+										<HStack key={user?.email} gap="4">
 											<Avatar.Root>
-												<Avatar.Fallback
-													name={userData?.nickname}
-												/>
-												<Avatar.Image src="https://gas-kvas.com/grafic/uploads/posts/2023-09/1695869715_gas-kvas-com-p-kartinki-bez-13.png" />
+												<Avatar.Fallback name={user?.nickname} />
+												<Avatar.Image src={user?.avatar || DEFAULT_PROFILE_IMAGE} />
 											</Avatar.Root>
 											<Stack gap="0">
 												<Text fontWeight="medium">
-													{userData?.nickname}
+													{user?.nickname}
 												</Text>
 												<Text color="fg.muted" textStyle="sm">
-													{userData?.email}
+													{user?.email}
 												</Text>
 											</Stack>
 										</HStack>
@@ -90,7 +80,7 @@ export const Header = () => {
 									<PopoverArrow />
 									<PopoverBody>
 										<Stack gapY={2}>
-											<Link href="#">Профиль</Link>
+											<Link href="/profile">Профиль</Link>
 											<Link
 												href="#"
 												colorPalette="red"

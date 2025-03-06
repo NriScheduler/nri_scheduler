@@ -9,6 +9,7 @@ import {
 	HomePage,
 	MasteryPage,
 	NotFoundPage,
+	ProfilePage,
 	SignInPage,
 } from "./components/pages";
 
@@ -37,6 +38,7 @@ const App = () => (
 				<Route path="/event/create" component={CreateEventPage} />
 				<Route path="/event/:id" component={EventPage} />
 				<Route path="/mastery" component={MasteryPage} />
+				<Route path="/profile" component={ProfilePage} />
 
 				<Route default component={() => <NotFoundPage />} />
 			</Router>

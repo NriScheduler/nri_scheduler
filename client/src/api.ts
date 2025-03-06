@@ -308,6 +308,7 @@ export interface IApiUserInfo {
 	readonly email: string | null;
 	readonly nickname: string;
 	readonly phone: string | null;
+	readonly avatar: string | null;
 }
 
 export const getUserProfile = () => {

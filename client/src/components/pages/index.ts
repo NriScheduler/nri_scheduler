@@ -4,6 +4,7 @@ import { MasteryPage } from "./mastery";
 import { SignInPage } from "./sign-in/singin";
 import { HomePage } from "./home/home";
 import { NotFoundPage } from "./not-found/not-found";
+import { ProfilePage } from "./profile/profile";
 
 export {
 	CreateEventPage,
@@ -12,4 +13,5 @@ export {
 	SignInPage,
 	HomePage,
 	NotFoundPage,
+	ProfilePage,
 };
