@@ -10,14 +10,6 @@ import {
 	Card,
 	Container,
 	DataList,
-	DrawerBackdrop,
-	DrawerBody,
-	DrawerCloseTrigger,
-	DrawerContent,
-	DrawerHeader,
-	DrawerRoot,
-	DrawerTitle,
-	DrawerTrigger,
 	Heading,
 	HStack,
 	Image,
@@ -29,6 +21,16 @@ import {
 } from "@chakra-ui/react";
 
 import { NotFoundPage } from "../not-found/not-found";
+import {
+	DrawerBackdrop,
+	DrawerBody,
+	DrawerCloseTrigger,
+	DrawerContent,
+	DrawerHeader,
+	DrawerRoot,
+	DrawerTitle,
+	DrawerTrigger,
+} from "../../ui/drawer";
 import { Field } from "../../ui/field";
 import { IApiCompanyInfo, readCompanyById, updateCompany } from "../../../api";
 
@@ -164,96 +166,94 @@ export const CompanyPage = () => {
 	};
 
 	return (
-		<section>
-			<Container>
-				<Button mb={4} onClick={handleBackButton}>
-					Вернуться назад
-				</Button>
-				{company?.you_are_master && (
-					<HStack alignItems="top">
-						<DrawerRoot
-							open={open}
-							onOpenChange={(e) => {
-								setOpen(e.open);
-							}}
-						>
-							<DrawerBackdrop />
-							<DrawerTrigger asChild>
-								<Button mt="4" mb="4" variant="outline">
-									Редактировать кампанию
-								</Button>
-							</DrawerTrigger>
-							<DrawerContent>
-								<DrawerHeader>
-									<DrawerTitle>Редактирование кампании</DrawerTitle>
-								</DrawerHeader>
-								<DrawerBody>
-									<form onSubmit={onSubmit}>
-										<Stack
-											gap="4"
-											align="flex-start"
-											maxW="lg"
-											w="full"
-											mx="auto"
-										>
-											<Field label="Название *">
-												<Input
-													placeholder="Заполните поле"
-													{...register("name", {
-														required: "Заполните поле",
-													})}
-													defaultValue={company?.name}
-												/>
-											</Field>
-											<Field label="Система *">
-												<Input
-													placeholder="Заполните поле"
-													{...register("system", {
-														required: "Заполните поле",
-													})}
-													defaultValue={company?.system}
-												/>
-											</Field>
-											<Field label="Описание">
-												<Textarea
-													placeholder="Расскажите о своей кампании"
-													{...register("description")}
-												>
-													{company?.description}
-												</Textarea>
-											</Field>
-										</Stack>
-										<Button type="submit" w="full" mt={6}>
-											Редактировать
+		<Container>
+			<Button mb={4} onClick={handleBackButton}>
+				Вернуться назад
+			</Button>
+			{company?.you_are_master && (
+				<HStack alignItems="top">
+					<DrawerRoot
+						open={open}
+						onOpenChange={(e) => {
+							setOpen(e.open);
+						}}
+					>
+						<DrawerBackdrop />
+						<DrawerTrigger asChild>
+							<Button mt="4" mb="4" variant="outline">
+								Редактировать кампанию
+							</Button>
+						</DrawerTrigger>
+						<DrawerContent>
+							<DrawerHeader>
+								<DrawerTitle>Редактирование кампании</DrawerTitle>
+							</DrawerHeader>
+							<DrawerBody>
+								<form onSubmit={onSubmit}>
+									<Stack
+										gap="4"
+										align="flex-start"
+										maxW="lg"
+										w="full"
+										mx="auto"
+									>
+										<Field label="Название *">
+											<Input
+												placeholder="Заполните поле"
+												{...register("name", {
+													required: "Заполните поле",
+												})}
+												defaultValue={company?.name}
+											/>
+										</Field>
+										<Field label="Система *">
+											<Input
+												placeholder="Заполните поле"
+												{...register("system", {
+													required: "Заполните поле",
+												})}
+												defaultValue={company?.system}
+											/>
+										</Field>
+										<Field label="Описание">
+											<Textarea
+												placeholder="Расскажите о своей кампании"
+												{...register("description")}
+											>
+												{company?.description}
+											</Textarea>
+										</Field>
+									</Stack>
+									<Button type="submit" w="full" mt={6}>
+										Редактировать
+									</Button>
+									<DrawerTrigger asChild>
+										<Button type="button" w="full" mt={6}>
+											Отмена
 										</Button>
-										<DrawerTrigger asChild>
-											<Button type="button" w="full" mt={6}>
-												Отмена
-											</Button>
-										</DrawerTrigger>
-									</form>
-								</DrawerBody>
-								<DrawerCloseTrigger />
-							</DrawerContent>
-						</DrawerRoot>
-					</HStack>
-				)}
-				<Image
-					height={200}
-					width="100%"
-					src="https://artworld.ru/images/cms/content/catalog2/sharabarin_kartina_maslom_po_tropinka_hodit_osen_zolotaya_as190711.jpg"
+									</DrawerTrigger>
+								</form>
+							</DrawerBody>
+							<DrawerCloseTrigger />
+						</DrawerContent>
+					</DrawerRoot>
+				</HStack>
+			)}
+			<Image
+				height={200}
+				width="100%"
+				src="https://artworld.ru/images/cms/content/catalog2/sharabarin_kartina_maslom_po_tropinka_hodit_osen_zolotaya_as190711.jpg"
+			/>
+			{fetching ? (
+				<CompanyCardSkeleton />
+			) : company !== null ? (
+				<CompanyCard company={company} />
+			) : (
+				<NotFoundPage
+					checkButton={false}
+					title="Кампания не найдена, попробуйте еще раз!"
 				/>
-				{fetching ? (
-					<CompanyCardSkeleton />
-				) : company !== null ? (
-					<CompanyCard company={company} />
-				) : (
-					<NotFoundPage
-						checkButton={false}
-						title="Кампания не найдена, попробуйте еще раз!"
-					/>
-				)}
-			</Container>
-		</section>
+			)}
+		</Container>
 	);
 };
