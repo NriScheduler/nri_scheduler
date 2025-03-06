@@ -42,7 +42,6 @@ export const Location = () => {
 		if (data) {
 			addLocation(name, address, description).then((res) => {
 				if (res !== null) {
-					console.log(res.payload);
 					reset();
 					setOpen(false);
 				}

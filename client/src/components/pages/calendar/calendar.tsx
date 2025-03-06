@@ -41,7 +41,6 @@ import {
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
 import {
-	check,
 	createEvent,
 	IApiCompany,
 	IApiLocation,
@@ -55,6 +54,7 @@ import {
 	disableMastery,
 	enableMastery,
 } from "../../../store/mastery";
+import { $signed } from "../../../store/profile";
 import { $tz } from "../../../store/tz";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
@@ -80,6 +80,7 @@ export const CalendarPage = () => {
 
 	const tz = useStore($tz);
 	const mastery = useStore($mastery);
+	const signed = useStore($signed);
 
 	const { register, handleSubmit, reset } = useForm<IFormCreateEvent>();
 
@@ -125,12 +126,6 @@ export const CalendarPage = () => {
 			},
 			onRangeUpdate(range) {
 				addDataEventToCalendar(range.start, range.end, calendar);
-			},
-			onRender(app) {
-				const range = app.calendarState.range.value;
-				if (range !== null) {
-					addDataEventToCalendar(range.start, range.end, calendar);
-				}
 			},
 		},
 	});
@@ -198,9 +193,7 @@ export const CalendarPage = () => {
 	}, [locationList]);
 
 	useEffect(() => {
-		check(true).then((isAuth) => {
-			setShowSwitch(isAuth);
-		});
+		setShowSwitch(signed);
 
 		document.addEventListener("keydown", handleKeyDown);
 
@@ -208,7 +201,7 @@ export const CalendarPage = () => {
 			document.removeEventListener("keydown", handleKeyDown);
 			setOpenDraw(false);
 		};
-	}, []);
+	}, [signed]);
 
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === "Escape") {
@@ -248,13 +241,9 @@ export const CalendarPage = () => {
 						<Switch.Root
 							size="lg"
 							checked={mastery}
-							onCheckedChange={() => {
-								if (mastery) {
-									disableMastery();
-								} else {
-									enableMastery();
-								}
-							}}
+							onCheckedChange={() =>
+								mastery ? disableMastery() : enableMastery()
+							}
 						>
 							<Switch.HiddenInput />
 							<Switch.Control>
@@ -263,7 +252,7 @@ export const CalendarPage = () => {
 							<Switch.Label>Режим мастера</Switch.Label>
 						</Switch.Root>
 					)}
-					{mastery && (
+					{mastery && showSwitch && (
 						<Stack direction="row" gap={4}>
 							<DrawerRoot
 								open={openDraw}
