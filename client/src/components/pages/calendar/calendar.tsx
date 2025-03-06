@@ -25,12 +25,10 @@ import { useStore } from "@nanostores/preact";
 import { CalendarApp, createViewMonthGrid } from "@schedule-x/calendar";
 import { ScheduleXCalendar, useCalendarApp } from "@schedule-x/preact";
 import { CalendarAppSingleton } from "@schedule-x/shared";
-
 import dayjs from "dayjs";
 
 import { Company } from "./company";
 import { Location } from "./location";
-
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -42,7 +40,6 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
-
 import {
 	check,
 	createEvent,
