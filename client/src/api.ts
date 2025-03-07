@@ -230,7 +230,7 @@ export interface IApiCompanyInfo {
 	readonly id: UUID;
 	readonly master: UUID;
 	readonly name: string;
-	readonly name_name: string;
+	readonly master_name: string;
 	readonly system: string;
 	readonly description: string | null;
 	readonly you_are_master: boolean;

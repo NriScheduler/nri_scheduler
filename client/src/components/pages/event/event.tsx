@@ -83,28 +83,31 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 		<Card.Root width="full">
 			<Card.Body>
 				<HStack mb="6" gap="3">
-					<Heading size="3xl">{event.company}</Heading>
+					<Heading size="3xl">
+						Игра по компании:&nbsp;
+						<Link href={`/company/${event.company_id}`}>
+							{event.company}
+						</Link>
+					</Heading>
 				</HStack>
-				<Card.Description>
-					<DataList.Root orientation="horizontal">
-						{stats.map((item) => (
-							<DataList.Item key={item.label}>
-								<DataList.ItemLabel minW="150px">
-									{item.label}
-								</DataList.ItemLabel>
-								<DataList.ItemValue color="black" fontWeight="500">
-									{item.href ? (
-										<Link href={item.href} colorPalette="blue">
-											{item.value}
-										</Link>
-									) : (
-										<p>{item.value}</p>
-									)}
-								</DataList.ItemValue>
-							</DataList.Item>
-						))}
-					</DataList.Root>
-				</Card.Description>
+				<DataList.Root orientation="horizontal">
+					{stats.map((item) => (
+						<DataList.Item key={item.label}>
+							<DataList.ItemLabel minW="150px">
+								{item.label}
+							</DataList.ItemLabel>
+							<DataList.ItemValue color="black" fontWeight="500">
+								{item.href ? (
+									<Link href={item.href} colorPalette="blue">
+										{item.value}
+									</Link>
+								) : (
+									<p>{item.value}</p>
+								)}
+							</DataList.ItemValue>
+						</DataList.Item>
+					))}
+				</DataList.Root>
 			</Card.Body>
 			<Card.Footer>
 				{signed ? (
@@ -148,20 +151,18 @@ const EventCardSkeleton = () => {
 				<HStack mb="6" gap="3">
 					<Skeleton height="38px" w="30%" />
 				</HStack>
-				<Card.Description>
-					<DataList.Root orientation="horizontal">
-						{stats.map((item, index) => (
-							<DataList.Item key={index}>
-								<DataList.ItemLabel minW="150px">
-									{item.label}
-								</DataList.ItemLabel>
-								<DataList.ItemValue color="black" fontWeight="500">
-									<Skeleton height="20px" w="30%" />
-								</DataList.ItemValue>
-							</DataList.Item>
-						))}
-					</DataList.Root>
-				</Card.Description>
+				<DataList.Root orientation="horizontal">
+					{stats.map((item, index) => (
+						<DataList.Item key={index}>
+							<DataList.ItemLabel minW="150px">
+								{item.label}
+							</DataList.ItemLabel>
+							<DataList.ItemValue color="black" fontWeight="500">
+								<Skeleton height="20px" w="30%" />
+							</DataList.ItemValue>
+						</DataList.Item>
+					))}
+				</DataList.Root>
 			</Card.Body>
 		</Card.Root>
 	);
