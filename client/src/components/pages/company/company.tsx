@@ -176,7 +176,7 @@ export const CompanyPage = () => {
 					>
 						<DrawerBackdrop />
 						<DrawerTrigger asChild>
-							<Button mt="4" mb="4" variant="outline">
+							<Button colorPalette="cyan" mt="4" mb="4" variant="solid">
 								Редактировать кампанию
 							</Button>
 						</DrawerTrigger>
