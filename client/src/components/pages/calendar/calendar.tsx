@@ -71,6 +71,10 @@ interface IFormCreateEvent {
 }
 
 export const CalendarPage = () => {
+	const [
+		isDisableCreateEventSubmitButton,
+		setIsDisableCreateEventSubmitButton,
+	] = useState(false);
 	const [showSwitch, setShowSwitch] = useState(false);
 	const [openDraw, setOpenDraw] = useState(false);
 	const [isDisableCreateEventButton, setIsDisableCreateEventButton] =
@@ -215,21 +219,25 @@ export const CalendarPage = () => {
 
 		if (data) {
 			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
-
+			setIsDisableCreateEventSubmitButton(true);
 			createEvent(
 				company,
 				date.toISOString(),
 				location,
 				Number(max_slots) || null,
 				Number(plan_duration) || null,
-			).then((res) => {
-				if (res) {
-					toast.success("Событие успешно создано");
-					setOpenDraw(false);
-					getNewEvent(res.payload);
-					reset();
-				}
-			});
+			)
+				.then((res) => {
+					if (res) {
+						toast.success("Событие успешно создано");
+						setOpenDraw(false);
+						getNewEvent(res.payload);
+						reset();
+					}
+				})
+				.finally(() => {
+					setIsDisableCreateEventSubmitButton(false);
+				});
 		}
 	});
 
@@ -382,7 +390,12 @@ export const CalendarPage = () => {
 													</Group>
 												</Field>
 											</Stack>
-											<Button type="submit" w="full" mt={6}>
+											<Button
+												disabled={isDisableCreateEventSubmitButton}
+												type="submit"
+												w="full"
+												mt={6}
+											>
 												Создать
 											</Button>
 										</form>
