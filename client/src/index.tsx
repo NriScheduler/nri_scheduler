@@ -4,12 +4,12 @@ import { Route, Router } from "preact-router";
 
 import { Layout } from "./components/layout";
 import {
+	CompanyPage,
 	EventPage,
 	HomePage,
 	MasteryPage,
 	NotFoundPage,
 	SignInPage,
-	CompanyPage,
 } from "./components/pages";
 
 const App = () => (
