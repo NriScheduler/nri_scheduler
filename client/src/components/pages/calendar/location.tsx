@@ -1,7 +1,9 @@
+import { h } from "preact";
+import { useEffect, useState } from "preact/hooks";
+import { useForm } from "react-hook-form";
+
 import { Button, Input, Stack, Textarea } from "@chakra-ui/react";
-import { h } from "preact"; // eslint-disable-line
-import { Field } from "../../ui/field";
-import { check } from "../../../api";
+
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -12,18 +14,19 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "../../ui/drawer";
-
-import { addLocation, IApiLocation } from "../../../api";
-import { useForm } from "react-hook-form";
-import { useEffect, useState } from "preact/hooks";
+import { Field } from "../../ui/field";
+import { addLocation, check, IApiLocation } from "../../../api";
 
 export const Location = () => {
 	const [open, setOpen] = useState(false);
-	const [isDisableCreateLocationButton, setIsDisableCreateLocationButton] = useState(false);
+	const [isDisableCreateLocationButton, setIsDisableCreateLocationButton] =
+		useState(false);
 	const { register, handleSubmit, reset } = useForm<IApiLocation>();
 
 	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") { setOpen(false); }
+		if (event.key === "Escape") {
+			setOpen(false);
+		}
 	}
 
 	useEffect(() => {
@@ -39,7 +42,6 @@ export const Location = () => {
 		if (data) {
 			addLocation(name, address, description).then((res) => {
 				if (res !== null) {
-					console.log(res.payload);
 					reset();
 					setOpen(false);
 				}
@@ -48,24 +50,27 @@ export const Location = () => {
 	});
 
 	return (
-		<DrawerRoot open={open} onOpenChange={
-			(e) => {
+		<DrawerRoot
+			open={open}
+			onOpenChange={(e) => {
 				if (e.open) {
 					setIsDisableCreateLocationButton(true);
 					check().then((res) => {
 						if (res !== null) {
-							setOpen(e.open)
+							setOpen(e.open);
 							setIsDisableCreateLocationButton(false);
 						}
 					});
 				} else {
 					setOpen(e.open);
 				}
-			}
-		}>
+			}}
+		>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button disabled={isDisableCreateLocationButton} variant="outline">Создать локацию</Button>
+				<Button disabled={isDisableCreateLocationButton} variant="outline">
+					Создать локацию
+				</Button>
 			</DrawerTrigger>
 			<DrawerContent>
 				<DrawerHeader>

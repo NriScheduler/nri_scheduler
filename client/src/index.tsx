@@ -1,10 +1,9 @@
-import { h, render } from "preact"; // eslint-disable-line
-import { Router, Route } from "preact-router";
+import { h, render } from "preact";
 import AsyncRoute from "preact-async-route";
+import { Route, Router } from "preact-router";
 
 import { Layout } from "./components/layout";
 import {
-	CreateEventPage,
 	EventPage,
 	HomePage,
 	MasteryPage,
@@ -35,7 +34,6 @@ const App = () => (
 						)
 					}
 				/>
-				<Route path="/event/create" component={CreateEventPage} />
 				<Route path="/event/:id" component={EventPage} />
 				<Route path="/company/:id" component={CompanyPage} />
 				<Route path="/mastery" component={MasteryPage} />

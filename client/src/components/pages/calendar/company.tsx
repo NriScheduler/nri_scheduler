@@ -1,3 +1,7 @@
+import { h } from "preact";
+import { useEffect, useState } from "preact/compat";
+import { useForm } from "react-hook-form";
+
 import {
 	Button,
 	Heading,
@@ -7,8 +11,7 @@ import {
 	Text,
 	Textarea,
 } from "@chakra-ui/react";
-import { h } from "preact"; // eslint-disable-line
-import { Field } from "../../ui/field";
+
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -19,10 +22,8 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "../../ui/drawer";
-
-import { addCompany, IApiCompany, check } from "../../../api";
-import { useForm } from "react-hook-form";
-import { useEffect, useState } from "preact/compat";
+import { Field } from "../../ui/field";
+import { addCompany, check, IApiCompany } from "../../../api";
 
 export interface ICompanyProps {
 	data: IApiCompany[];
@@ -30,11 +31,14 @@ export interface ICompanyProps {
 
 export const Company = ({ data }: ICompanyProps) => {
 	const [open, setOpen] = useState(false);
-	const [isDisableCreateCompanyButton, setIsDisableCreateCompanyButton] = useState(false);
+	const [isDisableCreateCompanyButton, setIsDisableCreateCompanyButton] =
+		useState(false);
 	const { register, handleSubmit, reset } = useForm<IApiCompany>();
 
 	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") { setOpen(false); }
+		if (event.key === "Escape") {
+			setOpen(false);
+		}
 	}
 
 	const onSubmit = handleSubmit((companyData) => {
@@ -58,9 +62,10 @@ export const Company = ({ data }: ICompanyProps) => {
 	}, []);
 
 	return (
-		<DrawerRoot open={open} onOpenChange={
-			(e) => {
-				if(e.open) {
+		<DrawerRoot
+			open={open}
+			onOpenChange={(e) => {
+				if (e.open) {
 					setIsDisableCreateCompanyButton(true);
 					check().then((res) => {
 						if (res !== null) {
@@ -71,10 +76,13 @@ export const Company = ({ data }: ICompanyProps) => {
 				} else {
 					setOpen(e.open);
 				}
-			}}>
+			}}
+		>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button disabled={isDisableCreateCompanyButton} variant="outline">Создать кампанию</Button>
+				<Button disabled={isDisableCreateCompanyButton} variant="outline">
+					Создать кампанию
+				</Button>
 			</DrawerTrigger>
 			<DrawerContent>
 				<DrawerHeader>

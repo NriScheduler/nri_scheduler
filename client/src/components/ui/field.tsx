@@ -1,5 +1,6 @@
-import { ComponentChild, h } from "preact"; // eslint-disable-line
+import { ComponentChild, h } from "preact";
 import { forwardRef } from "preact/compat";
+
 import { Field as ChakraField } from "@chakra-ui/react";
 
 export interface IFieldProps extends Omit<ChakraField.RootProps, "label"> {
@@ -30,5 +31,5 @@ export const Field = forwardRef<HTMLDivElement, IFieldProps>(
 				)}
 			</ChakraField.Root>
 		);
-	}
+	},
 );

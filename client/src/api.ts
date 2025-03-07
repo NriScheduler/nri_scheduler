@@ -3,7 +3,6 @@ import type { UUID } from "node:crypto";
 import { route as navigate } from "preact-router";
 import { toast } from "react-hot-toast";
 
-import { startFetching, stopFetching } from "./store/fetching";
 import { enter, leave } from "./store/profile";
 
 const API_HOST = import.meta.env.PROD
@@ -52,8 +51,6 @@ const ajax = <T>(
 		);
 	}
 
-	startFetching();
-
 	return fetch(API_HOST + input, {
 		body: init?.body,
 		cache: "no-store",
@@ -65,7 +62,6 @@ const ajax = <T>(
 		.then((res) => checkResponse<T>(res, isSoft))
 		.finally(() => {
 			clearTimeout(timeoutId);
-			stopFetching();
 		});
 };
 
@@ -359,7 +355,9 @@ export interface IApiSelfInfo {
 	readonly timezone_offset: number | null;
 }
 
-export const check = async (isSoft = false): Promise<boolean> => {
+export const check: () => Promise<boolean> = async (
+	isSoft = false,
+): Promise<boolean> => {
 	const res = await ajax<IApiSelfInfo>("/api/check", undefined, isSoft);
 
 	if (res !== null) {
@@ -368,10 +366,8 @@ export const check = async (isSoft = false): Promise<boolean> => {
 	return res !== null;
 };
 
-export const softCheck = (): Promise<boolean> => {
-	const SOFT_CHECK = true;
-	return check(SOFT_CHECK);
-};
+export const softCheck = () =>
+	(check as unknown as (isSoft: boolean) => Promise<boolean>)(true);
 
 export interface IApiUserInfo {
 	readonly email: string | null;

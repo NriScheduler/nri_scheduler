@@ -12,12 +12,12 @@
 		"lint": "eslint ./client"
 	},
 	"dependencies": {
-		"@chakra-ui/react": "^3.8.1",
+		"@chakra-ui/react": "^3.9.0",
 		"@nanostores/preact": "^0.5.2",
-		"@schedule-x/calendar": "^2.21.0",
-		"@schedule-x/preact": "^2.16.0",
-		"@schedule-x/shared": "^2.21.0",
-		"@schedule-x/theme-default": "^2.21.0",
+		"@schedule-x/calendar": "^2.21.1",
+		"@schedule-x/preact": "^2.16.1",
+		"@schedule-x/shared": "^2.21.1",
+		"@schedule-x/theme-default": "^2.21.1",
 		"dayjs": "^1.11.13",
 		"nanostores": "^0.11.4",
 		"next-themes": "^0.4.4",

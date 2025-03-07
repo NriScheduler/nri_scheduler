@@ -16,7 +16,6 @@ import {
 	Skeleton,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
-
 import "dayjs/locale/ru";
 import dayjs from "dayjs";
 

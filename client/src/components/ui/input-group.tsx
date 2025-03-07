@@ -1,8 +1,12 @@
 import { ComponentChild, h, VNode } from "preact";
 import { cloneElement, forwardRef } from "preact/compat";
 
-import type { BoxProps, InputElementProps } from "@chakra-ui/react";
-import { Group, InputElement } from "@chakra-ui/react";
+import {
+	BoxProps,
+	Group,
+	InputElement,
+	InputElementProps,
+} from "@chakra-ui/react";
 
 export interface IInputGroupProps extends BoxProps {
 	startElementProps?: InputElementProps;
