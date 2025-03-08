@@ -371,6 +371,7 @@ export const CalendarPage = () => {
 													>
 														<Input
 															type="date"
+															min={dayjs().format("YYYY-MM-DD")}
 															{...register("start", {
 																required: "Заполните поле",
 																validate: validateDate,
