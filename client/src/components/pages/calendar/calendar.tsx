@@ -90,6 +90,7 @@ export const CalendarPage = () => {
 		register,
 		handleSubmit,
 		reset,
+		watch,
 		formState: { errors },
 	} = useForm<IFormCreateEvent>();
 	const addDataEventToCalendar = (
@@ -244,7 +245,7 @@ export const CalendarPage = () => {
 				});
 		}
 	});
-
+	const [start] = watch(["start"]);
 	const validateDate = (value: string) => {
 		const fieldDate = dayjs(value);
 		if (
@@ -254,6 +255,18 @@ export const CalendarPage = () => {
 			return true;
 		} else {
 			return "Вы указали прошлый день";
+		}
+	};
+
+	const validateTime = (value: string) => {
+		const fultime = dayjs(`${start} ${value}`);
+		if (
+			dayjs().isSame(fultime, "hour") ||
+			dayjs(fultime).isAfter(dayjs(), "hour")
+		) {
+			return true;
+		} else {
+			return "Вы указали прошлый час";
 		}
 	};
 
@@ -370,6 +383,7 @@ export const CalendarPage = () => {
 															type="time"
 															{...register("startTime", {
 																required: "Заполните поле",
+																validate: validateTime,
 															})}
 														/>
 													</Field>
