@@ -264,12 +264,12 @@ export const CalendarPage = () => {
 		}
 		const fultime = dayjs(`${start} ${value}`);
 		if (
-			dayjs().isSame(fultime, "hour") ||
-			dayjs(fultime).isAfter(dayjs(), "hour")
+			dayjs().isSame(fultime, "minute") ||
+			dayjs(fultime).isAfter(dayjs(), "minute")
 		) {
 			return true;
 		} else {
-			return "Вы указали прошлый час";
+			return "Вы указали прошлое время";
 		}
 	};
 
