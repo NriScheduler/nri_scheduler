@@ -259,6 +259,9 @@ export const CalendarPage = () => {
 	};
 
 	const validateTime = (value: string) => {
+		if (!start) {
+			return "Укажите дату";
+		}
 		const fultime = dayjs(`${start} ${value}`);
 		if (
 			dayjs().isSame(fultime, "hour") ||
