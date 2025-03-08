@@ -86,8 +86,14 @@ export const CalendarPage = () => {
 	const mastery = useStore($mastery);
 	const signed = useStore($signed);
 
-	const { register, handleSubmit, reset } = useForm<IFormCreateEvent>();
-
+	const {
+		register,
+		handleSubmit,
+		reset,
+		watch,
+		clearErrors,
+		formState: { errors },
+	} = useForm<IFormCreateEvent>();
 	const addDataEventToCalendar = (
 		dateStart: string,
 		dateEnd: string,
@@ -240,6 +246,34 @@ export const CalendarPage = () => {
 				});
 		}
 	});
+	const [start] = watch(["start"]);
+	const validateDate = (value: string) => {
+		clearErrors("startTime");
+		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
+		if (
+			dayjs().tz(tz, KEEP_LOCAL_TIME).isSame(fieldDate, "day") ||
+			dayjs(fieldDate).tz(tz, KEEP_LOCAL_TIME).isAfter(dayjs(), "day")
+		) {
+			return true;
+		} else {
+			return "Вы указали прошлый день";
+		}
+	};
+
+	const validateTime = (value: string) => {
+		if (!start) {
+			return "Укажите дату";
+		}
+		const fultime = dayjs(`${start} ${value}`).tz(tz, KEEP_LOCAL_TIME);
+		if (
+			dayjs().tz(tz, KEEP_LOCAL_TIME).isSame(fultime, "minute") ||
+			dayjs(fultime).tz(tz, KEEP_LOCAL_TIME).isAfter(dayjs(), "minute")
+		) {
+			return true;
+		} else {
+			return "Вы указали прошлое время";
+		}
+	};
 
 	return (
 		<section>
@@ -302,7 +336,11 @@ export const CalendarPage = () => {
 									<DrawerBody>
 										<form onSubmit={onSubmit}>
 											<Stack gap="4" w="full">
-												<Field label="Кампания">
+												<Field
+													label="Кампания"
+													errorText={errors.company?.message}
+													invalid={!!errors.company?.message}
+												>
 													<NativeSelect.Root>
 														<NativeSelect.Field
 															placeholder="Выберите из списка"
@@ -323,25 +361,44 @@ export const CalendarPage = () => {
 														<NativeSelect.Indicator />
 													</NativeSelect.Root>
 												</Field>
-												<HStack gap={2} width="full">
-													<Field label="Начало">
+												<HStack
+													alignItems="start"
+													gap={2}
+													width="full"
+												>
+													<Field
+														label="Начало"
+														errorText={errors.start?.message}
+														invalid={!!errors.start?.message}
+													>
 														<Input
 															type="date"
+															min={dayjs().format("YYYY-MM-DD")}
 															{...register("start", {
 																required: "Заполните поле",
+																validate: validateDate,
 															})}
 														/>
 													</Field>
-													<Field label="Время">
+													<Field
+														label="Время"
+														errorText={errors.startTime?.message}
+														invalid={!!errors.startTime?.message}
+													>
 														<Input
 															type="time"
 															{...register("startTime", {
 																required: "Заполните поле",
+																validate: validateTime,
 															})}
 														/>
 													</Field>
 												</HStack>
-												<Field label="Локация">
+												<Field
+													label="Локация"
+													errorText={errors.location?.message}
+													invalid={!!errors.location?.message}
+												>
 													<NativeSelect.Root>
 														<NativeSelect.Field
 															placeholder="Выберите из списка"
