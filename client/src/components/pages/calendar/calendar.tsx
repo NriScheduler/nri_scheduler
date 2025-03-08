@@ -248,7 +248,7 @@ export const CalendarPage = () => {
 	});
 	const [start] = watch(["start"]);
 	const validateDate = (value: string) => {
-		clearErrors();
+		clearErrors("startTime");
 		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
 		if (
 			dayjs().tz(tz, KEEP_LOCAL_TIME).isSame(fieldDate, "day") ||
