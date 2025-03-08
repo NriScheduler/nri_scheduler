@@ -207,6 +207,105 @@
 				]
 			}
 		},
+		"/api/profile/avatar/{id}": {
+			"get": {
+				"tags": [
+					"profile"
+				],
+				"summary": "Получение аватара пользователя",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор пользователя",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Файл аватара",
+						"content": {
+							"image/*": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Файл не найден",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Ошибка получения файла",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/profile/avatar": {
+			"put": {
+				"tags": [
+					"profile"
+				],
+				"summary": "Передача ссылки на файл аватара",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"description": "Данные для установки авара",
+								"required": [
+									"url"
+								],
+								"properties": {
+									"url": {
+										"type": "string",
+										"format": "uri",
+										"description": "Ссылка на файл аватара"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
+			}
+		},
 		"/api/events": {
 			"get": {
 				"tags": [

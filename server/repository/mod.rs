@@ -1,6 +1,7 @@
 mod implementations;
 pub(crate) mod models;
 
+use ::std::error::Error;
 use chrono::{DateTime, FixedOffset};
 use implementations::PostgresStore;
 use models::{
@@ -17,7 +18,7 @@ use crate::{
 		location::ReadLocationDto,
 	},
 	shared::RecordId,
-	system_models::{CoreResult, ServingError},
+	system_models::CoreResult,
 };
 
 // TODO: разделить на разные репозитоии, только пока не знаю как
@@ -31,8 +32,10 @@ trait Store {
 	) -> CoreResult;
 	async fn get_user_for_signing_in(&self, email: &str) -> CoreResult<Option<UserForAuth>>;
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>>;
-	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult<bool>;
+	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult;
 	async fn who_i_am(&self, user_id: Uuid) -> CoreResult<Option<SelfInfo>>;
+	async fn get_avatar_link(&self, user_id: Uuid) -> CoreResult<Option<String>>;
+	async fn set_avatar(&self, user_id: Uuid, url: &str) -> CoreResult;
 
 	async fn get_locations_list(&self, query: ReadLocationDto) -> CoreResult<Vec<Location>>;
 	async fn get_location_by_id(&self, location_id: Uuid) -> CoreResult<Option<Location>>;
@@ -117,7 +120,7 @@ pub struct Repository {
 }
 
 impl Repository {
-	pub async fn new() -> Result<Self, ServingError> {
+	pub async fn new() -> Result<Self, Box<dyn Error>> {
 		return Ok(Self {
 			store: PostgresStore::new().await?,
 		});
@@ -153,8 +156,16 @@ impl Repository {
 		&self,
 		user_id: Uuid,
 		profile: UpdateProfileDto,
-	) -> CoreResult<bool> {
+	) -> CoreResult {
 		return self.store.update_profile(user_id, profile).await;
+	}
+
+	pub(crate) async fn get_avatar_link(&self, user_id: Uuid) -> CoreResult<Option<String>> {
+		return self.store.get_avatar_link(user_id).await;
+	}
+
+	pub(crate) async fn set_avatar(&self, user_id: Uuid, url: &str) -> CoreResult {
+		return self.store.set_avatar(user_id, url).await;
 	}
 
 	pub(crate) async fn who_i_am(&self, user_id: Uuid) -> CoreResult<Option<SelfInfo>> {

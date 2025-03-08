@@ -24,6 +24,7 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 				.route("/registration", post(H::registration))
 				.route("/signin", post(H::sign_in))
 				.route("/logout", post(H::logout))
+				.route("/profile/avatar/{id}", get(H::read_avatar))
 				.route("/locations", get(H::locations::get_locations_list))
 				.route("/locations/{id}", get(H::locations::get_location_by_id))
 				.merge(
@@ -40,6 +41,7 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 						.route("/profile", get(H::read_my_profile)) // todo удалить
 						.route("/profile/my", get(H::read_my_profile))
 						.route("/profile/my", put(H::update_my_profile))
+						.route("/profile/avatar", put(H::set_avatar))
 						.route("/locations", post(H::locations::add_location))
 						.route("/companies", post(H::companies::add_company))
 						.route("/companies/my", get(H::companies::get_my_companies))

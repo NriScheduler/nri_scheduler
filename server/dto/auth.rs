@@ -102,3 +102,8 @@ pub(crate) struct UpdateProfileDto {
 	pub nickname: String,
 	pub about_me: Option<String>,
 }
+
+#[derive(Deserialize)]
+pub(crate) struct SetAvatarDto {
+	pub url: String,
+}

@@ -6,16 +6,17 @@ use ::std::sync::Arc;
 use axum::{
 	Extension,
 	extract::{Path, State},
+	http::StatusCode,
 	response::{IntoResponse, Response},
 };
 use uuid::Uuid;
 
 use crate::{
-	auth,
+	auth, avatar,
 	cookie::{remove_auth_cookie, set_auth_cookie},
 	dto::{
 		Dto,
-		auth::{RegistrationDto, SignInDto, UpdateProfileDto},
+		auth::{RegistrationDto, SetAvatarDto, SignInDto, UpdateProfileDto},
 	},
 	repository::Repository,
 	system_models::{AppError, AppResponse, AppResult},
@@ -96,16 +97,12 @@ pub(super) async fn update_my_profile(
 	Extension(user_id): Extension<Uuid>,
 	Dto(body): Dto<UpdateProfileDto>,
 ) -> AppResult {
-	match repo.update_profile(user_id, body).await? {
-		false => Err(AppError::scenario_error(
-			"Пользователь не найден",
-			None::<&str>,
-		)),
-		true => Ok(AppResponse::scenario_success(
-			"Данные пользователя обновлены",
-			None,
-		)),
-	}
+	repo.update_profile(user_id, body).await?;
+
+	Ok(AppResponse::scenario_success(
+		"Данные пользователя обновлены",
+		None,
+	))
 }
 
 pub(super) async fn read_another_profile(
@@ -137,4 +134,40 @@ pub(super) async fn who_i_am(
 			AppResponse::scenario_success("I know who I am", Some(payload))
 		}
 	})
+}
+
+pub(super) async fn read_avatar(
+	State(repo): State<Arc<Repository>>,
+	Path(profile_id): Path<Uuid>,
+) -> Response {
+	match repo.get_avatar_link(profile_id).await {
+		Err(err) => err.into_response(),
+		Ok(maybe_link) => match maybe_link {
+			None => StatusCode::NOT_FOUND.into_response(),
+			Some(link) => avatar::proxy(&link)
+				.await
+				.unwrap_or_else(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()),
+		},
+	}
+}
+
+pub(super) async fn set_avatar(
+	State(repo): State<Arc<Repository>>,
+	Extension(user_id): Extension<Uuid>,
+	Dto(body): Dto<SetAvatarDto>,
+) -> AppResult {
+	let is_image = avatar::check_remote_file(&body.url).await.map_err(|e| {
+		eprintln!("Ошибка проверки аватара: {e}");
+		AppError::system_error("Ошибка проверки аватара")
+	})?;
+
+	if !is_image {
+		return Err(AppError::system_error(
+			"Переданная ссылка не является ссылкой на файл изображения",
+		));
+	}
+
+	repo.set_avatar(user_id, &body.url).await?;
+
+	Ok(AppResponse::scenario_success("Установлен аватар", None))
 }

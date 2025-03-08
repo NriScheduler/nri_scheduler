@@ -1,4 +1,5 @@
 pub(crate) mod auth;
+pub(crate) mod avatar;
 pub mod config;
 pub(crate) mod cookie;
 #[cfg(feature = "cors")]

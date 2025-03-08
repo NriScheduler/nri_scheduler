@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 
 import { enter, leave } from "./store/profile";
 
-const API_HOST = import.meta.env.PROD
+export const API_HOST = import.meta.env.PROD
 	? ""
 	: (import.meta.env.CLIENT_API_HOST as string | undefined) || "";
 const CREDENTIALS = import.meta.env.PROD ? undefined : "include";
@@ -391,3 +391,6 @@ export const updateMyProfile = (nickname: string, about_me?: string | null) => {
 		prepareAjax({ nickname, about_me }, PUT),
 	);
 };
+
+export const setAvatar = (url: string) =>
+	ajax<null>(`/api/profile/avatar`, prepareAjax({ url }, PUT));

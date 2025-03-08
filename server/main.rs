@@ -1,15 +1,12 @@
-use ::std::sync::Arc;
+use ::std::{error::Error, sync::Arc};
 #[cfg(feature = "https")]
 use axum_server::{Handle, tls_rustls::RustlsConfig};
-use nri_scheduler::{
-	config, graceful_shutdown::shutdown_signal, repository::Repository, router,
-	system_models::ServingError,
-};
+use nri_scheduler::{config, graceful_shutdown::shutdown_signal, repository::Repository, router};
 #[cfg(not(feature = "https"))]
 use tokio::net::TcpListener as AsyncTcpListener;
 
 #[tokio::main]
-async fn main() -> Result<(), ServingError> {
+async fn main() -> Result<(), Box<dyn Error>> {
 	config::init_static();
 
 	let repo = Repository::new().await?;

@@ -1,5 +1,6 @@
 mod pool;
 
+use ::std::error::Error;
 use chrono::{DateTime, FixedOffset};
 use sqlx::{Error as SqlxError, PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
@@ -16,7 +17,7 @@ use crate::{
 		Company, CompanyInfo, Event, EventForApplying, Location, Profile, SelfInfo, UserForAuth,
 	},
 	shared::RecordId,
-	system_models::{AppError, CoreResult, ServingError},
+	system_models::{AppError, CoreResult},
 };
 
 const DUPLICATE_KEY: &str = "duplicate key";
@@ -32,7 +33,7 @@ pub(crate) struct PostgresStore {
 }
 
 impl PostgresStore {
-	pub(crate) async fn new() -> Result<Self, ServingError> {
+	pub(crate) async fn new() -> Result<Self, Box<dyn Error>> {
 		let pool = pool::create_db_connection().await?;
 		Ok(Self { pool })
 	}
@@ -80,7 +81,13 @@ impl Store for PostgresStore {
 
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>> {
 		let may_be_profile = sqlx::query_as::<_, Profile>(
-			"SELECT nickname, phone, email, about_me, avatar_link FROM users WHERE id = $1;",
+			"SELECT
+				nickname, phone, email, about_me,
+				CASE
+					WHEN avatar_link IS NOT NULL THEN ('/profile/avatar/' || id)
+					ELSE NULL
+				END AS avatar_link
+			FROM users WHERE id = $1;",
 		)
 		.bind(user_id)
 		.fetch_optional(&self.pool)
@@ -89,18 +96,15 @@ impl Store for PostgresStore {
 		Ok(may_be_profile)
 	}
 
-	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult<bool> {
-		let was_updated = sqlx::query_scalar::<_, bool>(
-			"update users set nickname = $1, about_me = $2 where id = $3 returning true;",
-		)
-		.bind(profile.nickname)
-		.bind(profile.about_me)
-		.bind(user_id)
-		.fetch_optional(&self.pool)
-		.await?
-		.unwrap_or_default();
+	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult {
+		sqlx::query("update users set nickname = $1, about_me = $2 where id = $3;")
+			.bind(profile.nickname)
+			.bind(profile.about_me)
+			.bind(user_id)
+			.execute(&self.pool)
+			.await?;
 
-		Ok(was_updated)
+		Ok(())
 	}
 
 	async fn who_i_am(&self, user_id: Uuid) -> CoreResult<Option<SelfInfo>> {
@@ -111,6 +115,26 @@ impl Store for PostgresStore {
 				.await?;
 
 		Ok(may_be_self_info)
+	}
+
+	async fn get_avatar_link(&self, user_id: Uuid) -> CoreResult<Option<String>> {
+		let maybe_link =
+			sqlx::query_scalar::<_, String>("select avatar_link from users where id = $1;")
+				.bind(user_id)
+				.fetch_optional(&self.pool)
+				.await?;
+
+		Ok(maybe_link)
+	}
+
+	async fn set_avatar(&self, user_id: Uuid, url: &str) -> CoreResult {
+		sqlx::query("update users set avatar_link = $1 where id = $2;")
+			.bind(url)
+			.bind(user_id)
+			.execute(&self.pool)
+			.await?;
+
+		Ok(())
 	}
 
 	async fn get_locations_list(&self, query_args: ReadLocationDto) -> CoreResult<Vec<Location>> {
