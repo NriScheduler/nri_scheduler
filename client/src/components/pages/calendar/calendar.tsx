@@ -91,6 +91,7 @@ export const CalendarPage = () => {
 		handleSubmit,
 		reset,
 		watch,
+		clearErrors,
 		formState: { errors },
 	} = useForm<IFormCreateEvent>();
 	const addDataEventToCalendar = (
@@ -247,10 +248,11 @@ export const CalendarPage = () => {
 	});
 	const [start] = watch(["start"]);
 	const validateDate = (value: string) => {
-		const fieldDate = dayjs(value);
+		clearErrors();
+		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
 		if (
-			dayjs().isSame(fieldDate, "day") ||
-			dayjs(fieldDate).isAfter(dayjs(), "day")
+			dayjs().tz(tz, KEEP_LOCAL_TIME).isSame(fieldDate, "day") ||
+			dayjs(fieldDate).tz(tz, KEEP_LOCAL_TIME).isAfter(dayjs(), "day")
 		) {
 			return true;
 		} else {
@@ -262,10 +264,10 @@ export const CalendarPage = () => {
 		if (!start) {
 			return "Укажите дату";
 		}
-		const fultime = dayjs(`${start} ${value}`);
+		const fultime = dayjs(`${start} ${value}`).tz(tz, KEEP_LOCAL_TIME);
 		if (
-			dayjs().isSame(fultime, "minute") ||
-			dayjs(fultime).isAfter(dayjs(), "minute")
+			dayjs().tz(tz, KEEP_LOCAL_TIME).isSame(fultime, "minute") ||
+			dayjs(fultime).tz(tz, KEEP_LOCAL_TIME).isAfter(dayjs(), "minute")
 		) {
 			return true;
 		} else {
