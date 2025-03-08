@@ -134,6 +134,39 @@
 						"cookieAuth": []
 					}
 				]
+			},
+			"put": {
+				"tags": [
+					"profile"
+				],
+				"summary": "Обновление информации о пользователе",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateProfileDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
 			}
 		},
 		"/api/profile/{id}": {
@@ -1106,6 +1139,32 @@
 						"format": "email",
 						"nullable": true,
 						"description": "Электронная почта пользователя"
+					},
+					"about_me": {
+						"type": "string",
+						"nullable": true,
+						"description": "Информация о себе"
+					},
+					"avatar_link": {
+						"type": "string",
+						"format": "uri-reference",
+						"nullable": true,
+						"description": "Ссылка на аватар"
+					}
+				}
+			},
+			"UpdateProfileDto": {
+				"type": "object",
+				"description": "Информация для обновления данных пользователя",
+				"properties": {
+					"nickname": {
+						"type": "string",
+						"description": "Имя пользователя"
+					},
+					"about_me": {
+						"type": "string",
+						"nullable": true,
+						"description": "Информация о себе"
 					}
 				}
 			},

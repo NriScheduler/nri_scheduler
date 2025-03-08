@@ -11,6 +11,7 @@ use uuid::Uuid;
 use crate::{
 	auth,
 	dto::{
+		auth::UpdateProfileDto,
 		company::{ApiCompanyDto, ReadCompaniesDto},
 		event::{ReadEventsDto, UpdateEventDto},
 		location::ReadLocationDto,
@@ -30,6 +31,7 @@ trait Store {
 	) -> CoreResult;
 	async fn get_user_for_signing_in(&self, email: &str) -> CoreResult<Option<UserForAuth>>;
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>>;
+	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult<bool>;
 	async fn who_i_am(&self, user_id: Uuid) -> CoreResult<Option<SelfInfo>>;
 
 	async fn get_locations_list(&self, query: ReadLocationDto) -> CoreResult<Vec<Location>>;
@@ -145,6 +147,14 @@ impl Repository {
 
 	pub(crate) async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>> {
 		return self.store.read_profile(user_id).await;
+	}
+
+	pub(crate) async fn update_profile(
+		&self,
+		user_id: Uuid,
+		profile: UpdateProfileDto,
+	) -> CoreResult<bool> {
+		return self.store.update_profile(user_id, profile).await;
 	}
 
 	pub(crate) async fn who_i_am(&self, user_id: Uuid) -> CoreResult<Option<SelfInfo>> {

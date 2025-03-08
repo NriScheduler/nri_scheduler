@@ -96,3 +96,9 @@ impl<'de> Deserialize<'de> for SignInDto {
 		Ok(Self { email, password })
 	}
 }
+
+#[derive(Deserialize)]
+pub(crate) struct UpdateProfileDto {
+	pub nickname: String,
+	pub about_me: Option<String>,
+}

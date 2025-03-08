@@ -15,7 +15,7 @@ use crate::{
 	cookie::{remove_auth_cookie, set_auth_cookie},
 	dto::{
 		Dto,
-		auth::{RegistrationDto, SignInDto},
+		auth::{RegistrationDto, SignInDto, UpdateProfileDto},
 	},
 	repository::Repository,
 	system_models::{AppError, AppResponse, AppResult},
@@ -89,6 +89,23 @@ pub(super) async fn read_my_profile(
 			AppResponse::scenario_success("Профиль получен", Some(payload))
 		}
 	})
+}
+
+pub(super) async fn update_my_profile(
+	State(repo): State<Arc<Repository>>,
+	Extension(user_id): Extension<Uuid>,
+	Dto(body): Dto<UpdateProfileDto>,
+) -> AppResult {
+	match repo.update_profile(user_id, body).await? {
+		false => Err(AppError::scenario_error(
+			"Пользователь не найден",
+			None::<&str>,
+		)),
+		true => Ok(AppResponse::scenario_success(
+			"Данные пользователя обновлены",
+			None,
+		)),
+	}
 }
 
 pub(super) async fn read_another_profile(

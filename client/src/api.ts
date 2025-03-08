@@ -369,16 +369,25 @@ export const check: () => Promise<boolean> = async (
 export const softCheck = () =>
 	(check as unknown as (isSoft: boolean) => Promise<boolean>)(true);
 
-export interface IApiUserInfo {
+export interface IApiProfile {
 	readonly email: string | null;
 	readonly nickname: string;
 	readonly phone: string | null;
+	readonly about_me: string | null;
+	readonly avatar_link: string | null;
 }
 
 export const getMyProfile = () => {
-	return ajax<IApiUserInfo>(`/api/profile/my`);
+	return ajax<IApiProfile>(`/api/profile/my`);
 };
 
 export const getAnotherUserProfile = (userId: UUID) => {
-	return ajax<IApiUserInfo>(`/api/profile/${userId}`);
+	return ajax<IApiProfile>(`/api/profile/${userId}`);
+};
+
+export const updateMyProfile = (nickname: string, about_me?: string | null) => {
+	return ajax<null>(
+		`/api/profile/my`,
+		prepareAjax({ nickname, about_me }, PUT),
+	);
 };

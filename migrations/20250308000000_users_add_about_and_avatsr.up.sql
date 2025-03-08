@@ -1,0 +1,3 @@
+ALTER TABLE "users"
+ADD COLUMN "about_me" TEXT DEFAULT NULL,
+ADD COLUMN "avatar_link" TEXT DEFAULT NULL;

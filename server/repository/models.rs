@@ -24,6 +24,8 @@ pub(crate) struct Profile {
 	pub nickname: String,
 	pub phone: Option<String>,
 	pub email: Option<String>,
+	pub about_me: Option<String>,
+	pub avatar_link: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]

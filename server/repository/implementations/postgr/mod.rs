@@ -7,6 +7,7 @@ use uuid::Uuid;
 use super::super::Store;
 use crate::{
 	dto::{
+		auth::UpdateProfileDto,
 		company::{ApiCompanyDto, ReadCompaniesDto},
 		event::{ReadEventsDto, UpdateEventDto},
 		location::ReadLocationDto,
@@ -78,13 +79,28 @@ impl Store for PostgresStore {
 	}
 
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>> {
-		let may_be_profile =
-			sqlx::query_as::<_, Profile>("SELECT nickname, phone, email FROM users WHERE id = $1;")
-				.bind(user_id)
-				.fetch_optional(&self.pool)
-				.await?;
+		let may_be_profile = sqlx::query_as::<_, Profile>(
+			"SELECT nickname, phone, email, about_me, avatar_link FROM users WHERE id = $1;",
+		)
+		.bind(user_id)
+		.fetch_optional(&self.pool)
+		.await?;
 
 		Ok(may_be_profile)
+	}
+
+	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult<bool> {
+		let was_updated = sqlx::query_scalar::<_, bool>(
+			"update users set nickname = $1, about_me = $2 where id = $3 returning true;",
+		)
+		.bind(profile.nickname)
+		.bind(profile.about_me)
+		.bind(user_id)
+		.fetch_optional(&self.pool)
+		.await?
+		.unwrap_or_default();
+
+		Ok(was_updated)
 	}
 
 	async fn who_i_am(&self, user_id: Uuid) -> CoreResult<Option<SelfInfo>> {

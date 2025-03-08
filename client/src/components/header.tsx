@@ -22,12 +22,12 @@ import {
 	PopoverRoot,
 	PopoverTrigger,
 } from "./ui/popover";
-import { getMyProfile, IApiUserInfo, logout, softCheck } from "../api";
+import { getMyProfile, IApiProfile, logout, softCheck } from "../api";
 import { $signed } from "../store/profile";
 
 export const Header = () => {
 	const [fetching, setFetching] = useState(false);
-	const [userData, setUserData] = useState<IApiUserInfo | null>(null);
+	const [userData, setUserData] = useState<IApiProfile | null>(null);
 	const [open, setOpen] = useState(false);
 	const signed = useStore($signed);
 
