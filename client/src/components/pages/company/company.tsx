@@ -108,7 +108,11 @@ export const CompanyPage = () => {
 	const [fetching, setFetching] = useState(false);
 	const [company, setCompany] = useState<IApiCompanyInfo | null>(null);
 	const [open, setOpen] = useState(false);
-	const { register, handleSubmit } = useForm<IApiCompanyInfo>();
+	const {
+		register,
+		handleSubmit,
+		formState: { errors },
+	} = useForm<IApiCompanyInfo>();
 
 	const onSubmit = handleSubmit((companyData) => {
 		if (companyId) {
@@ -193,7 +197,11 @@ export const CompanyPage = () => {
 										w="full"
 										mx="auto"
 									>
-										<Field label="Название *">
+										<Field
+											label="Название *"
+											errorText={errors.name?.message}
+											invalid={!!errors.name?.message}
+										>
 											<Input
 												placeholder="Заполните поле"
 												{...register("name", {
@@ -202,7 +210,11 @@ export const CompanyPage = () => {
 												defaultValue={company?.name}
 											/>
 										</Field>
-										<Field label="Система *">
+										<Field
+											label="Система *"
+											errorText={errors.system?.message}
+											invalid={!!errors.system?.message}
+										>
 											<Input
 												placeholder="Заполните поле"
 												{...register("system", {

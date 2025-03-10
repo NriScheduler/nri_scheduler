@@ -21,7 +21,12 @@ export const Location = () => {
 	const [open, setOpen] = useState(false);
 	const [isDisableCreateLocationButton, setIsDisableCreateLocationButton] =
 		useState(false);
-	const { register, handleSubmit, reset } = useForm<IApiLocation>();
+	const {
+		register,
+		handleSubmit,
+		reset,
+		formState: { errors },
+	} = useForm<IApiLocation>();
 
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === "Escape") {
@@ -85,7 +90,11 @@ export const Location = () => {
 							w="full"
 							mx="auto"
 						>
-							<Field label="Название *">
+							<Field
+								label="Название *"
+								errorText={errors.name?.message}
+								invalid={!!errors.name?.message}
+							>
 								<Input
 									placeholder="Заполните поле"
 									{...register("name", { required: "Заполните поле" })}

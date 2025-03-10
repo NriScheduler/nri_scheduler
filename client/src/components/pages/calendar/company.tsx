@@ -33,7 +33,12 @@ export const Company = ({ data }: ICompanyProps) => {
 	const [open, setOpen] = useState(false);
 	const [isDisableCreateCompanyButton, setIsDisableCreateCompanyButton] =
 		useState(false);
-	const { register, handleSubmit, reset } = useForm<IApiCompany>();
+	const {
+		register,
+		handleSubmit,
+		reset,
+		formState: { errors },
+	} = useForm<IApiCompany>();
 
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === "Escape") {
@@ -97,13 +102,21 @@ export const Company = ({ data }: ICompanyProps) => {
 							w="full"
 							mx="auto"
 						>
-							<Field label="Название *">
+							<Field
+								label="Название *"
+								errorText={errors.name?.message}
+								invalid={!!errors.name?.message}
+							>
 								<Input
 									placeholder="Заполните поле"
 									{...register("name", { required: "Заполните поле" })}
 								/>
 							</Field>
-							<Field label="Система *">
+							<Field
+								label="Система *"
+								errorText={errors.system?.message}
+								invalid={!!errors.system?.message}
+							>
 								<Input
 									placeholder="Заполните поле"
 									{...register("system", {
