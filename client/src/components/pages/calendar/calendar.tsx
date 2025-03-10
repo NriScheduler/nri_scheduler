@@ -250,9 +250,10 @@ export const CalendarPage = () => {
 	const validateDate = (value: string) => {
 		clearErrors("startTime");
 		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
+		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
 		if (
-			dayjs().tz(tz, KEEP_LOCAL_TIME).isSame(fieldDate, "day") ||
-			dayjs(fieldDate).tz(tz, KEEP_LOCAL_TIME).isAfter(dayjs(), "day")
+			nowDate.isSame(fieldDate, "day") ||
+			fieldDate.isAfter(nowDate, "day")
 		) {
 			return true;
 		} else {
@@ -265,9 +266,10 @@ export const CalendarPage = () => {
 			return "Укажите дату";
 		}
 		const fultime = dayjs(`${start} ${value}`).tz(tz, KEEP_LOCAL_TIME);
+		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
 		if (
-			dayjs().tz(tz, KEEP_LOCAL_TIME).isSame(fultime, "minute") ||
-			dayjs(fultime).tz(tz, KEEP_LOCAL_TIME).isAfter(dayjs(), "minute")
+			nowDate.isSame(fultime, "minute") ||
+			fultime.isAfter(nowDate, "minute")
 		) {
 			return true;
 		} else {
@@ -373,7 +375,9 @@ export const CalendarPage = () => {
 													>
 														<Input
 															type="date"
-															min={dayjs().format("YYYY-MM-DD")}
+															min={dayjs()
+																.tz(tz, KEEP_LOCAL_TIME)
+																.format("YYYY-MM-DD")}
 															{...register("start", {
 																required: "Заполните поле",
 																validate: validateDate,
