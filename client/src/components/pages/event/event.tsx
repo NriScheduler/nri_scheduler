@@ -1,19 +1,26 @@
 import type { UUID } from "node:crypto";
 
 import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useMemo, useState } from "preact/hooks";
 import { useRouter } from "preact-router";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import {
 	Button,
 	Card,
 	Container,
+	createListCollection,
 	DataList,
+	Group,
 	Heading,
 	HStack,
+	Input,
+	InputAddon,
 	Link,
+	NativeSelect,
 	Skeleton,
+	Stack,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 import "dayjs/locale/ru";
@@ -21,10 +28,24 @@ import dayjs from "dayjs";
 
 import { NotFoundPage } from "../not-found/not-found";
 import {
+	DrawerBackdrop,
+	DrawerBody,
+	DrawerCloseTrigger,
+	DrawerContent,
+	DrawerHeader,
+	DrawerRoot,
+	DrawerTitle,
+	DrawerTrigger,
+} from "../../ui/drawer";
+import { Field } from "../../ui/field";
+import {
 	applyEvent,
 	EScenarioStatus,
 	IApiEvent,
+	IApiLocation,
 	readEvent,
+	readLocations,
+	updateEvent,
 } from "../../../api";
 import { $signed } from "../../../store/profile";
 import { $tz } from "../../../store/tz";
@@ -172,20 +193,128 @@ const EventCardSkeleton = () => {
 	);
 };
 
+interface IFormEditEvent {
+	readonly company: UUID;
+	readonly location: UUID;
+	readonly start: string;
+	readonly startTime: string;
+	readonly max_slots: string;
+	readonly plan_duration: string;
+}
+
+const KEEP_LOCAL_TIME = true;
+
 export const EventPage = () => {
 	const [route] = useRouter();
-
+	const eventId = route.matches?.id as UUID | undefined;
 	const [fetching, setFetching] = useState(false);
 	const [event, setEvent] = useState<IApiEvent | null>(null);
+	const [open, setOpen] = useState(false);
+	const [locationList, setLocationList] = useState<IApiLocation[]>([]);
+	const [isDisableEditEventSubmitButton, setIsDisableEditEventSubmitButton] =
+		useState(false);
+	const tz = useStore($tz);
 
+	const getLocations = () => {
+		return readLocations().then((responce) => {
+			if (responce?.payload) {
+				setLocationList(responce.payload);
+			}
+			return responce?.payload || null;
+		});
+	};
+
+	const locations = useMemo(() => {
+		return createListCollection({
+			items: locationList,
+			itemToString: (item) => item.name,
+			itemToValue: (item) => item.id,
+		});
+	}, [locationList]);
+	const {
+		register,
+		handleSubmit,
+		watch,
+		clearErrors,
+		formState: { errors },
+	} = useForm<IFormEditEvent>();
+	const onSubmit = handleSubmit((data) => {
+		const { location, start, startTime, max_slots, plan_duration } = data;
+
+		if (data) {
+			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
+			setIsDisableEditEventSubmitButton(true);
+			if (!eventId) {
+				return;
+			}
+			updateEvent(
+				eventId,
+				date.toISOString(),
+				location,
+				Number(max_slots) || null,
+				Number(plan_duration) || null,
+			)
+				.then((res) => {
+					if (res !== null) {
+						setOpen(false);
+					}
+				})
+				.then(() =>
+					readEvent(eventId).then((res) => {
+						if (res !== null) {
+							setEvent(res.payload);
+							return res?.payload;
+						}
+					}),
+				)
+				.finally(() => {
+					setIsDisableEditEventSubmitButton(false);
+				});
+		}
+	});
+	const [start] = watch(["start"]);
+	const validateDate = (value: string) => {
+		clearErrors("startTime");
+		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
+		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+		if (
+			nowDate.isSame(fieldDate, "day") ||
+			fieldDate.isAfter(nowDate, "day")
+		) {
+			return true;
+		} else {
+			return "Вы указали прошлый день";
+		}
+	};
+
+	const validateTime = (value: string) => {
+		if (!start) {
+			return "Укажите дату";
+		}
+		const fultime = dayjs(`${start} ${value}`).tz(tz, KEEP_LOCAL_TIME);
+		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+		if (
+			nowDate.isSame(fultime, "minute") ||
+			fultime.isAfter(nowDate, "minute")
+		) {
+			return true;
+		} else {
+			return "Вы указали прошлое время";
+		}
+	};
 	useEffect(() => {
-		const eventId = route.matches?.id as UUID | undefined;
 		if (eventId) {
 			setFetching(true);
 			readEvent(eventId)
 				.then((res) => {
 					if (res !== null) {
 						setEvent(res.payload);
+						return res?.payload;
+					}
+				})
+				.then((eventData) => {
+					if (eventData?.you_are_master) {
+						return getLocations();
 					}
 				})
 				.finally(() => {
@@ -198,12 +327,152 @@ export const EventPage = () => {
 		window.history.back();
 	}
 
+	const eventDate = dayjs(event?.date).tz(tz);
+
 	return (
 		<section>
 			<Container>
 				<Button mb={4} onClick={handleBackButton}>
 					Вернуться назад
 				</Button>
+				{event?.you_are_master && (
+					<HStack alignItems="top">
+						<DrawerRoot
+							open={open}
+							onOpenChange={(e) => {
+								setOpen(e.open);
+							}}
+						>
+							<DrawerBackdrop />
+							<DrawerTrigger asChild>
+								<Button
+									colorPalette="cyan"
+									mt="4"
+									mb="4"
+									variant="solid"
+								>
+									Редактировать событие
+								</Button>
+							</DrawerTrigger>
+							<DrawerContent>
+								<DrawerHeader>
+									<DrawerTitle>Редактирование события</DrawerTitle>
+								</DrawerHeader>
+								<DrawerBody>
+									<form onSubmit={onSubmit}>
+										<Stack gap="4" w="full">
+											<HStack
+												alignItems="start"
+												gap={2}
+												width="full"
+											>
+												<Field
+													label="Начало"
+													errorText={errors.start?.message}
+													invalid={!!errors.start?.message}
+												>
+													<Input
+														type="date"
+														defaultValue={eventDate.format(
+															"YYYY-MM-DD",
+														)}
+														min={dayjs()
+															.tz(tz, KEEP_LOCAL_TIME)
+															.format("YYYY-MM-DD")}
+														{...register("start", {
+															required: "Заполните поле",
+															validate: validateDate,
+														})}
+													/>
+												</Field>
+												<Field
+													label="Время"
+													errorText={errors.startTime?.message}
+													invalid={!!errors.startTime?.message}
+												>
+													<Input
+														type="time"
+														defaultValue={eventDate.format(
+															"HH:mm",
+														)}
+														{...register("startTime", {
+															required: "Заполните поле",
+															validate: validateTime,
+														})}
+													/>
+												</Field>
+											</HStack>
+											<Field
+												label="Локация"
+												errorText={errors.location?.message}
+												invalid={!!errors.location?.message}
+											>
+												<NativeSelect.Root>
+													<NativeSelect.Field
+														placeholder="Выберите из списка"
+														{...register("location", {
+															required: "Заполните",
+														})}
+														defaultValue={event.location_id}
+													>
+														{locations.items.map((location) => (
+															<option
+																value={location.id}
+																key={location.name}
+															>
+																{location.name}
+															</option>
+														))}
+													</NativeSelect.Field>
+													<NativeSelect.Indicator />
+												</NativeSelect.Root>
+											</Field>
+
+											<Field label="Максимальное количество игроков">
+												<Input
+													type="number"
+													min="1"
+													step="1"
+													defaultValue={event?.max_slots || 0}
+													{...register("max_slots")}
+												/>
+											</Field>
+
+											<Field label="Планируемая длительность">
+												<Group attached w="full">
+													<Input
+														type="number"
+														min="1"
+														step="1"
+														defaultValue={
+															event?.plan_duration || 0
+														}
+														{...register("plan_duration")}
+													/>
+													<InputAddon>час</InputAddon>
+												</Group>
+											</Field>
+										</Stack>
+										<Button
+											disabled={isDisableEditEventSubmitButton}
+											type="submit"
+											w="full"
+											mt={6}
+										>
+											Редактировать
+										</Button>
+										<DrawerTrigger asChild>
+											<Button type="button" w="full" mt={6}>
+												Отмена
+											</Button>
+										</DrawerTrigger>
+									</form>
+								</DrawerBody>
+								<DrawerCloseTrigger />
+							</DrawerContent>
+						</DrawerRoot>
+					</HStack>
+				)}
 				{fetching ? (
 					<EventCardSkeleton />
 				) : event !== null ? (
