@@ -63,7 +63,11 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 
 	const stats = [
 		{ label: "Мастер игры", value: event.master, href: "#" },
-		{ label: "Место проведения", value: event.location, href: "#" },
+		{
+			label: "Место проведения",
+			value: event.location,
+			href: `/location/${event.location_id}`,
+		},
 		{ label: "Дата", value: eventDate.format("DD MMMM") },
 		{ label: "Время", value: eventDate.format("HH:mm") },
 		{

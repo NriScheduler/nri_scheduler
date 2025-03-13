@@ -7,6 +7,7 @@ import {
 	CompanyPage,
 	EventPage,
 	HomePage,
+	LocationPage,
 	MasteryPage,
 	NotFoundPage,
 	SignInPage,
@@ -36,6 +37,7 @@ const App = () => (
 				/>
 				<Route path="/event/:id" component={EventPage} />
 				<Route path="/company/:id" component={CompanyPage} />
+				<Route path="/location/:id" component={LocationPage} />
 				<Route path="/mastery" component={MasteryPage} />
 
 				<Route default component={() => <NotFoundPage />} />
