@@ -9,7 +9,7 @@ use super::super::Store;
 use crate::{
 	dto::{
 		auth::UpdateProfileDto,
-		company::{ApiCompanyDto, ReadCompaniesDto},
+		company::{ApiUpdateCompanyDto, ReadCompaniesDto},
 		event::{ReadEventsDto, UpdateEventDto},
 		location::ReadLocationDto,
 	},
@@ -84,7 +84,7 @@ impl Store for PostgresStore {
 			"SELECT
 				nickname, phone, email, about_me,
 				CASE
-					WHEN avatar_link IS NOT NULL THEN ('/profile/avatar/' || id)
+					WHEN avatar_link IS NOT NULL THEN ('/avatar/' || id)
 					ELSE NULL
 				END AS avatar_link
 			FROM users WHERE id = $1;",
@@ -217,7 +217,11 @@ impl Store for PostgresStore {
 	) -> CoreResult<Option<CompanyInfo>> {
 		let may_be_company = sqlx::query_as::<_, CompanyInfo>(
 			"SELECT
-				c.*
+				c.id, c.master, c.name, c.system, c.description
+				, CASE
+					WHEN cover_link IS NOT NULL THEN ('/cover/' || c.id)
+					ELSE NULL
+				END AS cover_link
 				, u.nickname AS master_name
 				, ($2 is not null and u.id = $2) AS you_are_master
 			FROM companies c
@@ -233,12 +237,28 @@ impl Store for PostgresStore {
 		Ok(may_be_company)
 	}
 
+	async fn get_company_cover(&self, company_id: Uuid) -> CoreResult<Option<String>> {
+		let maybe_link =
+			sqlx::query_scalar::<_, String>("select cover_link from companies where id = $1;")
+				.bind(company_id)
+				.fetch_optional(&self.pool)
+				.await?;
+
+		Ok(maybe_link)
+	}
+
 	async fn get_my_companies(
 		&self,
 		query_args: ReadCompaniesDto,
 		master: Uuid,
 	) -> CoreResult<Vec<Company>> {
-		let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new("SELECT *");
+		let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new(
+			r#"SELECT "id", "master", "name", "system", "description"
+				, CASE
+					WHEN "cover_link" IS NOT NULL THEN ('/cover/' || "id")
+					ELSE NULL
+				END AS "cover_link""#,
+		);
 
 		let query_name = query_args.name.unwrap_or_default();
 
@@ -279,14 +299,16 @@ impl Store for PostgresStore {
 		name: &str,
 		system: &str,
 		descr: &Option<String>,
+		cover_link: &Option<String>,
 	) -> CoreResult<RecordId> {
 		let new_comp_id = sqlx::query_scalar::<_, RecordId>(
-			"INSERT INTO companies (master, name, system, description) values ($1, $2, $3, $4) returning id;",
+			"INSERT INTO companies (master, name, system, description, cover_link) values ($1, $2, $3, $4, $5) returning id;",
 		)
 		.bind(master)
 		.bind(name)
 		.bind(system)
 		.bind(descr)
+		.bind(cover_link)
 		.fetch_one(&self.pool)
 		.await?;
 
@@ -297,7 +319,7 @@ impl Store for PostgresStore {
 		&self,
 		company_id: Uuid,
 		master: Uuid,
-		data: ApiCompanyDto,
+		data: ApiUpdateCompanyDto,
 	) -> CoreResult<bool> {
 		let was_updated = sqlx::query_scalar::<_, bool>(
 			"update companies set name = $1, system = $2, description = $3 where id = $4 and master = $5 returning true;",
@@ -309,6 +331,25 @@ impl Store for PostgresStore {
 		.bind(master)
 		.fetch_optional(&self.pool)
 		.await?.unwrap_or_default();
+
+		Ok(was_updated)
+	}
+
+	async fn set_cover(
+		&self,
+		master_id: Uuid,
+		company_id: Uuid,
+		cover_link: &str,
+	) -> CoreResult<bool> {
+		let was_updated = sqlx::query_scalar::<_, bool>(
+			"update companies set cover_link = $1 where id = $2 and master = $3 returning true;",
+		)
+		.bind(cover_link)
+		.bind(company_id)
+		.bind(master_id)
+		.fetch_optional(&self.pool)
+		.await?
+		.unwrap_or_default();
 
 		Ok(was_updated)
 	}

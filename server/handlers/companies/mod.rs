@@ -2,14 +2,16 @@ use ::std::sync::Arc;
 use axum::{
 	Extension,
 	extract::{Path, State},
+	response::Response,
 };
 use uuid::Uuid;
 
 use crate::{
 	dto::{
-		Dto,
-		company::{ApiCompanyDto, ReadCompaniesDto},
+		Dto, FileLinkDto,
+		company::{ApiCompanyDto, ApiUpdateCompanyDto, ReadCompaniesDto},
 	},
+	image,
 	repository::Repository,
 	system_models::{AppError, AppResponse, AppResult},
 };
@@ -28,6 +30,13 @@ pub(crate) async fn get_company_by_id(
 			AppResponse::scenario_success("Информация о кампании", Some(payload))
 		}
 	})
+}
+
+pub(crate) async fn read_company_cover(
+	State(repo): State<Arc<Repository>>,
+	Path(company_id): Path<Uuid>,
+) -> Response {
+	image::serve(repo.get_company_cover(company_id)).await
 }
 
 pub(crate) async fn get_my_companies(
@@ -50,8 +59,18 @@ pub(crate) async fn add_company(
 	Extension(master_id): Extension<Uuid>,
 	Dto(body): Dto<ApiCompanyDto>,
 ) -> AppResult {
+	if let Some(ref cover_link) = body.cover_link {
+		image::check_remote_file(cover_link).await?;
+	}
+
 	let new_comp_id = repo
-		.add_company(master_id, &body.name, &body.system, &body.description)
+		.add_company(
+			master_id,
+			&body.name,
+			&body.system,
+			&body.description,
+			&body.cover_link,
+		)
 		.await?;
 
 	return Ok(AppResponse::scenario_success(
@@ -64,7 +83,7 @@ pub(crate) async fn update_company(
 	State(repo): State<Arc<Repository>>,
 	Extension(master_id): Extension<Uuid>,
 	Path(company_id): Path<Uuid>,
-	Dto(body): Dto<ApiCompanyDto>,
+	Dto(body): Dto<ApiUpdateCompanyDto>,
 ) -> AppResult {
 	match repo.update_company(company_id, master_id, body).await? {
 		false => Err(AppError::scenario_error(
@@ -73,6 +92,26 @@ pub(crate) async fn update_company(
 		)),
 		true => Ok(AppResponse::scenario_success(
 			"Данные кампании обновлены",
+			None,
+		)),
+	}
+}
+
+pub(crate) async fn set_cover(
+	State(repo): State<Arc<Repository>>,
+	Extension(user_id): Extension<Uuid>,
+	Path(company_id): Path<Uuid>,
+	Dto(body): Dto<FileLinkDto>,
+) -> AppResult {
+	image::check_remote_file(&body.url).await?;
+
+	match repo.set_cover(user_id, company_id, &body.url).await? {
+		false => Err(AppError::scenario_error(
+			"Кампания не найдена",
+			None::<&str>,
+		)),
+		true => Ok(AppResponse::scenario_success(
+			"Обложка кампании установлена",
 			None,
 		)),
 	}

@@ -6,18 +6,18 @@ use ::std::sync::Arc;
 use axum::{
 	Extension,
 	extract::{Path, State},
-	http::StatusCode,
 	response::{IntoResponse, Response},
 };
 use uuid::Uuid;
 
 use crate::{
-	auth, avatar,
+	auth,
 	cookie::{remove_auth_cookie, set_auth_cookie},
 	dto::{
-		Dto,
-		auth::{RegistrationDto, SetAvatarDto, SignInDto, UpdateProfileDto},
+		Dto, FileLinkDto,
+		auth::{RegistrationDto, SignInDto, UpdateProfileDto},
 	},
+	image,
 	repository::Repository,
 	system_models::{AppError, AppResponse, AppResult},
 };
@@ -140,33 +140,15 @@ pub(super) async fn read_avatar(
 	State(repo): State<Arc<Repository>>,
 	Path(profile_id): Path<Uuid>,
 ) -> Response {
-	match repo.get_avatar_link(profile_id).await {
-		Err(err) => err.into_response(),
-		Ok(maybe_link) => match maybe_link {
-			None => StatusCode::NOT_FOUND.into_response(),
-			Some(link) => avatar::proxy(&link)
-				.await
-				.unwrap_or_else(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()),
-		},
-	}
+	image::serve(repo.get_avatar_link(profile_id)).await
 }
 
 pub(super) async fn set_avatar(
 	State(repo): State<Arc<Repository>>,
 	Extension(user_id): Extension<Uuid>,
-	Dto(body): Dto<SetAvatarDto>,
+	Dto(body): Dto<FileLinkDto>,
 ) -> AppResult {
-	let is_image = avatar::check_remote_file(&body.url).await.map_err(|e| {
-		eprintln!("Ошибка проверки аватара: {e}");
-		AppError::system_error("Ошибка проверки аватара")
-	})?;
-
-	if !is_image {
-		return Err(AppError::system_error(
-			"Переданная ссылка не является ссылкой на файл изображения",
-		));
-	}
-
+	image::check_remote_file(&body.url).await?;
 	repo.set_avatar(user_id, &body.url).await?;
 
 	Ok(AppResponse::scenario_success("Установлен аватар", None))

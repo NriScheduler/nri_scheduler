@@ -13,7 +13,7 @@ use crate::{
 	auth,
 	dto::{
 		auth::UpdateProfileDto,
-		company::{ApiCompanyDto, ReadCompaniesDto},
+		company::{ApiUpdateCompanyDto, ReadCompaniesDto},
 		event::{ReadEventsDto, UpdateEventDto},
 		location::ReadLocationDto,
 	},
@@ -53,6 +53,8 @@ trait Store {
 		user_id: Option<Uuid>,
 	) -> CoreResult<Option<CompanyInfo>>;
 
+	async fn get_company_cover(&self, company_id: Uuid) -> CoreResult<Option<String>>;
+
 	async fn get_my_companies(
 		&self,
 		query: ReadCompaniesDto,
@@ -65,13 +67,21 @@ trait Store {
 		name: &str,
 		system: &str,
 		descr: &Option<String>,
+		cover_link: &Option<String>,
 	) -> CoreResult<RecordId>;
 
 	async fn update_company(
 		&self,
 		company_id: Uuid,
 		master: Uuid,
-		data: ApiCompanyDto,
+		data: ApiUpdateCompanyDto,
+	) -> CoreResult<bool>;
+
+	async fn set_cover(
+		&self,
+		master_id: Uuid,
+		company_id: Uuid,
+		cover_link: &str,
 	) -> CoreResult<bool>;
 
 	async fn read_events_list(
@@ -203,6 +213,10 @@ impl Repository {
 		return self.store.get_company_by_id(company_id, user_id).await;
 	}
 
+	pub(crate) async fn get_company_cover(&self, company_id: Uuid) -> CoreResult<Option<String>> {
+		return self.store.get_company_cover(company_id).await;
+	}
+
 	pub(crate) async fn get_my_companies(
 		&self,
 		query: ReadCompaniesDto,
@@ -217,17 +231,33 @@ impl Repository {
 		name: &str,
 		system: &str,
 		descr: &Option<String>,
+		cover_link: &Option<String>,
 	) -> CoreResult<RecordId> {
-		return self.store.add_company(master, name, system, descr).await;
+		return self
+			.store
+			.add_company(master, name, system, descr, cover_link)
+			.await;
 	}
 
 	pub(crate) async fn update_company(
 		&self,
 		company_id: Uuid,
 		master: Uuid,
-		data: ApiCompanyDto,
+		data: ApiUpdateCompanyDto,
 	) -> CoreResult<bool> {
 		return self.store.update_company(company_id, master, data).await;
+	}
+
+	pub(crate) async fn set_cover(
+		&self,
+		master_id: Uuid,
+		company_id: Uuid,
+		cover_link: &str,
+	) -> CoreResult<bool> {
+		return self
+			.store
+			.set_cover(master_id, company_id, cover_link)
+			.await;
 	}
 
 	pub(crate) async fn read_events_list(

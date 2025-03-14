@@ -1,0 +1,2 @@
+ALTER TABLE "companies"
+ADD COLUMN "cover_link" TEXT DEFAULT NULL;

@@ -1,6 +1,12 @@
-use ::std::error::Error;
-use axum::{body::Body, http::header, response::Response};
+use ::std::{error::Error, future::Future};
+use axum::{
+	body::Body,
+	http::{StatusCode, header},
+	response::{IntoResponse, Response},
+};
 use futures::TryStreamExt;
+
+use crate::system_models::{AppError, CoreResult};
 
 const JPG_HEADER: [u8; 2] = [0xFF, 0xD8];
 const PNG_HEADER: [u8; 8] = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
@@ -11,7 +17,23 @@ const WEBP_HEADER: [u8; 4] = *b"WEBP";
 const FTYP_HEADER: [u8; 4] = *b"ftyp";
 const AVIF_HEADER: [u8; 4] = *b"avif";
 
-pub(super) async fn check_remote_file(url: &str) -> Result<bool, Box<dyn Error>> {
+pub(super) async fn check_remote_file(url: &str) -> CoreResult {
+	let is_image = self::check_file_headers(url).await.map_err(|e| {
+		eprintln!("Ошибка проверки ссылки на изображение: {e}");
+		AppError::system_error("Ошибка проверки ссылки на изображение")
+	})?;
+
+	if !is_image {
+		return Err(AppError::scenario_error(
+			"Переданная ссылка не является ссылкой на файл изображения",
+			None::<&str>,
+		));
+	}
+
+	Ok(())
+}
+
+async fn check_file_headers(url: &str) -> Result<bool, Box<dyn Error>> {
 	let mut header = [0; 12];
 
 	{
@@ -39,7 +61,19 @@ pub(super) async fn check_remote_file(url: &str) -> Result<bool, Box<dyn Error>>
 	Ok(is_jpg || is_png || is_webp || is_avif || is_gif)
 }
 
-pub(super) async fn proxy(url: &str) -> Result<Response, Box<dyn Error>> {
+pub(super) async fn serve(link_fut: impl Future<Output = CoreResult<Option<String>>>) -> Response {
+	match link_fut.await {
+		Err(err) => err.into_response(),
+		Ok(maybe_link) => match maybe_link {
+			None => StatusCode::NOT_FOUND.into_response(),
+			Some(link) => self::proxy(&link)
+				.await
+				.unwrap_or_else(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()),
+		},
+	}
+}
+
+async fn proxy(url: &str) -> Result<Response, Box<dyn Error>> {
 	let res = reqwest::get(url).await?;
 
 	let proxy_res = res

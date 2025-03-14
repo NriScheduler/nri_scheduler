@@ -224,6 +224,7 @@ export interface IApiCompany {
 	readonly name: string;
 	readonly system: string;
 	readonly description: string | null;
+	readonly cover_link: string | null;
 }
 
 export interface IApiCompanyInfo {
@@ -233,6 +234,7 @@ export interface IApiCompanyInfo {
 	readonly master_name: string;
 	readonly system: string;
 	readonly description: string | null;
+	readonly cover_link: string | null;
 	readonly you_are_master: boolean;
 }
 
@@ -252,10 +254,11 @@ export const addCompany = (
 	name: string,
 	system: string,
 	description?: string | null,
+	cover_link?: string | null,
 ) =>
 	ajax<UUID>(
 		"/api/companies",
-		prepareAjax({ name, system, description }, POST),
+		prepareAjax({ name, system, description, cover_link }, POST),
 	);
 
 export const updateCompany = (
@@ -269,6 +272,9 @@ export const updateCompany = (
 		prepareAjax({ name, system, description }, PUT),
 	);
 };
+
+export const setCompanyCover = (companyId: UUID, url: string) =>
+	ajax<null>(`/api/companies/${companyId}/cover`, prepareAjax({ url }, PUT));
 
 export interface IApiEvent {
 	readonly id: UUID;

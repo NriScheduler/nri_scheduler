@@ -213,6 +213,7 @@
 					"profile"
 				],
 				"summary": "Получение аватара пользователя",
+				"deprecated": true,
 				"parameters": [
 					{
 						"name": "id",
@@ -228,6 +229,112 @@
 				"responses": {
 					"200": {
 						"description": "Файл аватара",
+						"content": {
+							"image/*": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Файл не найден",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Ошибка получения файла",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/avatar/{id}": {
+			"get": {
+				"tags": [
+					"profile"
+				],
+				"summary": "Получение аватара пользователя",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор пользователя",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Файл аватара",
+						"content": {
+							"image/*": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Файл не найден",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Ошибка получения файла",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/cover/{id}": {
+			"get": {
+				"tags": [
+					"companies"
+				],
+				"summary": "Получение обложки кампании",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор кампании",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Файл обложки кампании",
 						"content": {
 							"image/*": {
 								"schema": {
@@ -740,7 +847,65 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/ApiCompanyDto"
+								"$ref": "#/components/schemas/ApiUpdateCompanyDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
+			}
+		},
+		"/api/companies/{id}/cover": {
+			"put": {
+				"tags": [
+					"companies"
+				],
+				"summary": "Передача ссылки на файл обложки кампании",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор кампании",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"description": "Данные для установки обложки кампании",
+								"required": [
+									"url"
+								],
+								"properties": {
+									"url": {
+										"type": "string",
+										"format": "uri",
+										"description": "Ссылка на файл обложки кампании"
+									}
+								}
 							}
 						}
 					}
@@ -1084,6 +1249,35 @@
 						"type": "string",
 						"nullable": true,
 						"description": "Описание локации"
+					},
+					"cover_link": {
+						"type": "string",
+						"format": "uri-reference",
+						"nullable": true,
+						"description": "Ссылка на обложку"
+					}
+				}
+			},
+			"ApiUpdateCompanyDto": {
+				"type": "object",
+				"description": "Данные для создания кампании",
+				"required": [
+					"name",
+					"system"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Название кампании"
+					},
+					"system": {
+						"type": "string",
+						"description": "Система правил"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Описание локации"
 					}
 				}
 			},
@@ -1113,6 +1307,13 @@
 						"type": "string",
 						"nullable": true,
 						"description": "Описание локации"
+					},
+					"cover_link": {
+						"type": "string",
+						"format": "uri-reference",
+						"example": "/cover/1f0010e2-2ad8-6960-b794-1694f0da179f",
+						"nullable": true,
+						"description": "Ссылка на обложку"
 					}
 				}
 			},
@@ -1146,6 +1347,13 @@
 						"type": "string",
 						"nullable": true,
 						"description": "Описание локации"
+					},
+					"cover_link": {
+						"type": "string",
+						"format": "uri-reference",
+						"example": "/cover/1f0010e2-2ad8-6960-b794-1694f0da179f",
+						"nullable": true,
+						"description": "Ссылка на обложку"
 					},
 					"you_are_master": {
 						"type": "boolean",
@@ -1247,6 +1455,7 @@
 					"avatar_link": {
 						"type": "string",
 						"format": "uri-reference",
+						"example": "/avatar/1f0010e2-2ad8-6960-b794-1694f0da179f",
 						"nullable": true,
 						"description": "Ссылка на аватар"
 					}

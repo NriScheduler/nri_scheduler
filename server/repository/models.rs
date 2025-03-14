@@ -35,6 +35,7 @@ pub(crate) struct Company {
 	pub name: String,
 	pub system: String,
 	pub description: Option<String>,
+	pub cover_link: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
@@ -45,6 +46,7 @@ pub(crate) struct CompanyInfo {
 	pub name: String,
 	pub system: String,
 	pub description: Option<String>,
+	pub cover_link: Option<String>,
 	pub you_are_master: bool,
 }
 

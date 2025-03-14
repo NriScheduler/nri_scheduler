@@ -18,13 +18,15 @@ use crate::{auth, handlers as H, repository::Repository};
 
 pub fn create_router(repo: Arc<Repository>) -> Router {
 	let router = Router::new()
+		.route("/avatar/{id}", get(H::read_avatar))
+		.route("/cover/{id}", get(H::companies::read_company_cover))
 		.nest(
 			"/api",
 			Router::new()
 				.route("/registration", post(H::registration))
 				.route("/signin", post(H::sign_in))
 				.route("/logout", post(H::logout))
-				.route("/profile/avatar/{id}", get(H::read_avatar))
+				.route("/profile/avatar/{id}", get(H::read_avatar)) // todo удалить
 				.route("/locations", get(H::locations::get_locations_list))
 				.route("/locations/{id}", get(H::locations::get_location_by_id))
 				.merge(
@@ -46,6 +48,7 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 						.route("/companies", post(H::companies::add_company))
 						.route("/companies/my", get(H::companies::get_my_companies))
 						.route("/companies/{id}", put(H::companies::update_company))
+						.route("/companies/{id}/cover", put(H::companies::set_cover))
 						.route("/events", post(H::events::add_event))
 						.route("/events/apply/{id}", post(H::events::apply_event))
 						.route("/events/{id}", put(H::events::update_event))
