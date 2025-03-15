@@ -23,7 +23,7 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
-import { addCompany, check, IApiCompany } from "../../../api";
+import { addCompany, getMyProfile, IApiCompany } from "../../../api";
 
 export interface ICompanyProps {
 	data: IApiCompany[];
@@ -72,7 +72,7 @@ export const Company = ({ data }: ICompanyProps) => {
 			onOpenChange={(e) => {
 				if (e.open) {
 					setIsDisableCreateCompanyButton(true);
-					check().then((res) => {
+					getMyProfile().then((res) => {
 						if (res !== null) {
 							setOpen(e.open);
 							setIsDisableCreateCompanyButton(false);

@@ -101,4 +101,8 @@ impl<'de> Deserialize<'de> for SignInDto {
 pub(crate) struct UpdateProfileDto {
 	pub nickname: String,
 	pub about_me: Option<String>,
+	pub city: Option<String>,
+	// todo
+	// readonly timezone_offset: number | null;
+	// readonly tz_variant: ETzVariant | null;
 }

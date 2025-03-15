@@ -41,8 +41,10 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 					Router::new()
 						.route("/check", get(H::who_i_am))
 						.route("/profile", get(H::read_my_profile)) // todo удалить
-						.route("/profile/my", get(H::read_my_profile))
-						.route("/profile/my", put(H::update_my_profile))
+						.route(
+							"/profile/my",
+							get(H::read_my_profile).put(H::update_my_profile),
+						)
 						.route("/profile/avatar", put(H::set_avatar))
 						.route("/locations", post(H::locations::add_location))
 						.route("/companies", post(H::companies::add_company))

@@ -22,7 +22,7 @@ import {
 	PopoverRoot,
 	PopoverTrigger,
 } from "./ui/popover";
-import { getMyProfile, IApiProfile, logout, softCheck } from "../api";
+import { IApiProfile, logout, softCheck } from "../api";
 import { $signed } from "../store/profile";
 
 export const Header = () => {
@@ -35,13 +35,9 @@ export const Header = () => {
 		setFetching(true);
 
 		softCheck()
-			.then((isLoggedIn) => {
-				if (isLoggedIn) {
-					return getMyProfile().then((res) => {
-						if (res) {
-							setUserData(res.payload);
-						}
-					});
+			.then((res) => {
+				if (res) {
+					setUserData(res.payload);
 				}
 			})
 			.then(() => setFetching(false));

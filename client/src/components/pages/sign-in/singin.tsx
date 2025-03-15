@@ -16,7 +16,7 @@ import {
 
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
-import { check, signIn } from "../../../api";
+import { getMyProfile, signIn } from "../../../api";
 
 interface IFormSignin {
 	readonly email: string;
@@ -38,10 +38,10 @@ export const SignInPage = () => {
 
 		signIn(email, password)
 			.then((res) => {
-				return res === null ? null : check();
+				return res === null ? null : getMyProfile();
 			})
-			.then((success) => {
-				if (success) {
+			.then((res) => {
+				if (res !== null) {
 					reset();
 					toast.success("Успешная авторизация");
 					navigate("/calendar");

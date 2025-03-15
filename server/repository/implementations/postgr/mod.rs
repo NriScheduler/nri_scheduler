@@ -48,7 +48,7 @@ impl Store for PostgresStore {
 		timezone_offset: Option<i16>,
 	) -> CoreResult {
 		let query_result = sqlx::query(
-			"INSERT INTO users (nickname, email, pw_hash, timezone_offset) values ($1, $2, $3, $4);",
+			"INSERT INTO users (nickname, email, pw_hash, own_tz) values ($1, $2, $3, $4);",
 		)
 		.bind(nickname)
 		.bind(email)
@@ -81,13 +81,42 @@ impl Store for PostgresStore {
 
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>> {
 		let may_be_profile = sqlx::query_as::<_, Profile>(
-			"SELECT
-				nickname, phone, email, about_me,
-				CASE
-					WHEN avatar_link IS NOT NULL THEN ('/avatar/' || id)
-					ELSE NULL
-				END AS avatar_link
-			FROM users WHERE id = $1;",
+			"select
+				sq.id
+				, sq.nickname
+				, sq.email
+				, sq.about_me
+				, sq.city
+				, sq.avatar_link
+				, EXTRACT(HOUR FROM tz.utc_offset)::smallint as timezone_offset
+				, sq.tz_variant
+				, (sq.tz_variant = 'device') as get_tz_from_device
+			from (
+				select
+					u.id
+					, u.nickname
+					, u.email
+					, u.about_me
+					, u.city
+					, CASE
+						WHEN avatar_link IS NOT NULL THEN ('/avatar/' || id)
+						ELSE NULL
+					END AS avatar_link
+					, case
+						when u.tz_variant = 'own' and u.own_tz is not null then u.own_tz
+						when u.tz_variant = 'city' then coalesce(c.own_timezone, r.timezone)
+						else null
+					end as timezone_offset
+					, u.tz_variant
+				FROM users u
+				left join cities c
+					on c.name = u.city
+				left join regions r
+					on r.name = c.region
+				WHERE u.id = $1
+			) sq
+			left join pg_timezone_names tz
+				on tz.name = sq.timezone_offset;",
 		)
 		.bind(user_id)
 		.fetch_optional(&self.pool)
@@ -97,9 +126,10 @@ impl Store for PostgresStore {
 	}
 
 	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult {
-		sqlx::query("update users set nickname = $1, about_me = $2 where id = $3;")
+		sqlx::query("update users set nickname = $1, about_me = $2, city = $3 where id = $4;")
 			.bind(profile.nickname)
 			.bind(profile.about_me)
+			.bind(profile.city)
 			.bind(user_id)
 			.execute(&self.pool)
 			.await?;
@@ -108,11 +138,33 @@ impl Store for PostgresStore {
 	}
 
 	async fn who_i_am(&self, user_id: Uuid) -> CoreResult<Option<SelfInfo>> {
-		let may_be_self_info =
-			sqlx::query_as::<_, SelfInfo>("SELECT id, timezone_offset FROM users WHERE id = $1;")
-				.bind(user_id)
-				.fetch_optional(&self.pool)
-				.await?;
+		let may_be_self_info = sqlx::query_as::<_, SelfInfo>(
+			"select
+				sq.id,
+				EXTRACT(HOUR FROM tz.utc_offset)::smallint as timezone_offset,
+				(sq.tz_variant = 'device') as get_tz_from_device
+			from (
+				select
+					u.id,
+					case
+						when u.tz_variant = 'own' and u.own_tz is not null then u.own_tz
+						when u.tz_variant = 'city' then coalesce(c.own_timezone, r.timezone)
+						else null
+					end as timezone_offset,
+					u.tz_variant
+				FROM users u
+				left join cities c
+					on c.name = u.city
+				left join regions r
+					on r.name = c.region
+				WHERE u.id = $1
+			) sq
+			left join pg_timezone_names tz
+				on tz.name = sq.timezone_offset;",
+		)
+		.bind(user_id)
+		.fetch_optional(&self.pool)
+		.await?;
 
 		Ok(may_be_self_info)
 	}

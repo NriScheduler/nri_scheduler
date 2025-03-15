@@ -356,45 +356,56 @@ export const updateEvent = (
 	);
 };
 
-export interface IApiSelfInfo {
-	readonly id: UUID;
-	readonly timezone_offset: number | null;
+export const enum ETzVariant {
+	CITY = "city",
+	DEVICE = "device",
+	OWN = "own",
 }
-
-export const check: () => Promise<boolean> = async (
-	isSoft = false,
-): Promise<boolean> => {
-	const res = await ajax<IApiSelfInfo>("/api/check", undefined, isSoft);
-
-	if (res !== null) {
-		enter(res.payload);
-	}
-	return res !== null;
-};
-
-export const softCheck = () =>
-	(check as unknown as (isSoft: boolean) => Promise<boolean>)(true);
 
 export interface IApiProfile {
+	readonly id: UUID;
 	readonly email: string | null;
 	readonly nickname: string;
-	readonly phone: string | null;
 	readonly about_me: string | null;
 	readonly avatar_link: string | null;
+	readonly city: string | null;
+	readonly timezone_offset: number | null;
+	readonly tz_variant: ETzVariant | null;
+	readonly get_tz_from_device: boolean;
 }
 
-export const getMyProfile = () => {
-	return ajax<IApiProfile>(`/api/profile/my`);
-};
+export const getMyProfile: () => Promise<IApiResponse<IApiProfile> | null> =
+	async (isSoft = false) => {
+		const res = await ajax<IApiProfile>(`/api/profile/my`, undefined, isSoft);
+
+		if (res !== null) {
+			enter(res.payload);
+		}
+		return res;
+	};
+
+export const softCheck = () =>
+	(
+		getMyProfile as unknown as (
+			isSoft: boolean,
+		) => Promise<IApiResponse<IApiProfile> | null>
+	)(true);
 
 export const getAnotherUserProfile = (userId: UUID) => {
 	return ajax<IApiProfile>(`/api/profile/${userId}`);
 };
 
-export const updateMyProfile = (nickname: string, about_me?: string | null) => {
+export const updateMyProfile = (
+	nickname: string,
+	about_me: string | null | undefined,
+	city: string | null | undefined,
+	/** @todo */
+	// timezone_offset: number | null;
+	// tz_variant: ETzVariant | null;
+) => {
 	return ajax<null>(
 		`/api/profile/my`,
-		prepareAjax({ nickname, about_me }, PUT),
+		prepareAjax({ nickname, about_me, city }, PUT),
 	);
 };
 

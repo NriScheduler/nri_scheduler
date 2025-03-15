@@ -86,31 +86,6 @@
 				}
 			}
 		},
-		"/api/check": {
-			"get": {
-				"tags": [
-					"profile"
-				],
-				"summary": "Проверка авторизации, получение минимальной информации о пользователе",
-				"responses": {
-					"200": {
-						"description": "Результат выполнения запроса",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/AppResponseWhoIAm"
-								}
-							}
-						}
-					}
-				},
-				"security": [
-					{
-						"cookieAuth": []
-					}
-				]
-			}
-		},
 		"/api/profile/my": {
 			"get": {
 				"tags": [
@@ -1409,6 +1384,10 @@
 						"type": "integer",
 						"nullable": true,
 						"description": "Временная зона пользователя"
+					},
+					"get_tz_from_device": {
+						"type": "boolean",
+						"description": "Указание брать ли временную зону с устройства"
 					}
 				}
 			},
@@ -1432,14 +1411,14 @@
 				"type": "object",
 				"description": "Минимальная информация о пользователе",
 				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"description": "Идентификатор пользователя"
+					},
 					"nickname": {
 						"type": "string",
 						"description": "Имя пользователя"
-					},
-					"phone": {
-						"type": "string",
-						"nullable": true,
-						"description": "Номер телефона пользователя"
 					},
 					"email": {
 						"type": "string",
@@ -1458,6 +1437,26 @@
 						"example": "/avatar/1f0010e2-2ad8-6960-b794-1694f0da179f",
 						"nullable": true,
 						"description": "Ссылка на аватар"
+					},
+					"city": {
+						"type": "string",
+						"nullable": true,
+						"description": "Город пользователя"
+					},
+					"timezone_offset": {
+						"type": "integer",
+						"nullable": true,
+						"description": "Временная зона пользователя"
+					},
+					"tz_variant": {
+						"type": "string",
+						"enum": ["city", "device", "own"],
+						"nullable": true,
+						"description": "Указание брать ли временную зону с устройства"
+					},
+					"get_tz_from_device": {
+						"type": "boolean",
+						"description": "Указание брать ли временную зону с устройства"
 					}
 				}
 			},
@@ -1473,6 +1472,11 @@
 						"type": "string",
 						"nullable": true,
 						"description": "Информация о себе"
+					},
+					"city": {
+						"type": "string",
+						"nullable": true,
+						"description": "Город пользователя"
 					}
 				}
 			},
