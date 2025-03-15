@@ -1,0 +1,118 @@
+import type { UUID } from "node:crypto";
+
+import { h } from "preact";
+import { useEffect, useState } from "preact/hooks";
+import { useRouter } from "preact-router";
+
+import {
+	Button,
+	Card,
+	Container,
+	DataList,
+	Heading,
+	HStack,
+	Skeleton,
+} from "@chakra-ui/react";
+
+import { NotFoundPage } from "../not-found/not-found";
+import { IApiLocation, readLocationById } from "../../../api";
+
+const LocationCard = ({ location }: { location: IApiLocation }) => {
+	const stats = [
+		{ label: "Адрес", value: location.address },
+		{ label: "Описание", value: location.description },
+	];
+
+	return (
+		<Card.Root width="full">
+			<Card.Body>
+				<HStack mb="6" gap="3">
+					<Heading size="3xl">Локация - {location.name}</Heading>
+				</HStack>
+				<DataList.Root orientation="horizontal">
+					{stats.map((item) => (
+						<DataList.Item key={item.label}>
+							<DataList.ItemLabel minW="150px">
+								{item.label}
+							</DataList.ItemLabel>
+							<DataList.ItemValue color="black" fontWeight="500">
+								<span>{item.value}</span>
+							</DataList.ItemValue>
+						</DataList.Item>
+					))}
+				</DataList.Root>
+			</Card.Body>
+			<Card.Footer></Card.Footer>
+		</Card.Root>
+	);
+};
+
+const LocationCardSkeleton = () => {
+	const stats = [{ label: "Имя" }, { label: "Адрес" }, { label: "Описание" }];
+
+	return (
+		<Card.Root width="full">
+			<Card.Body>
+				<HStack mb="6" gap="3">
+					<Skeleton height="38px" w="30%" />
+				</HStack>
+				<DataList.Root orientation="horizontal">
+					{stats.map((item, index) => (
+						<DataList.Item key={index}>
+							<DataList.ItemLabel minW="150px">
+								{item.label}
+							</DataList.ItemLabel>
+							<DataList.ItemValue color="black" fontWeight="500">
+								<Skeleton height="20px" w="30%" />
+							</DataList.ItemValue>
+						</DataList.Item>
+					))}
+				</DataList.Root>
+			</Card.Body>
+		</Card.Root>
+	);
+};
+
+export const LocationPage = () => {
+	const [route] = useRouter();
+	const locationId = route.matches?.id as UUID;
+	const [fetching, setFetching] = useState(false);
+	const [location, setLocation] = useState<IApiLocation | null>(null);
+
+	useEffect(() => {
+		if (locationId) {
+			setFetching(true);
+			readLocationById(locationId)
+				.then((res) => {
+					if (res !== null) {
+						setLocation(res.payload);
+					}
+				})
+				.finally(() => {
+					setFetching(false);
+				});
+		}
+	}, [locationId]);
+
+	const handleBackButton = () => {
+		window.history.back();
+	};
+
+	return (
+		<Container>
+			<Button mb={4} onClick={handleBackButton}>
+				Вернуться назад
+			</Button>
+			{fetching ? (
+				<LocationCardSkeleton />
+			) : location !== null ? (
+				<LocationCard location={location} />
+			) : (
+				<NotFoundPage
+					checkButton={false}
+					title="Локация не найдена, попробуйте еще раз!"
+				/>
+			)}
+		</Container>
+	);
+};
