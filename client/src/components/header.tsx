@@ -27,8 +27,12 @@ import { API_HOST, getMyProfile, IApiProfile, logout, softCheck } from "../api";
 import { $signed } from "../store/profile";
 
 const generateAvatarLink = (userId: string) =>
-	procetar(userId).then((generatedAvatar) =>
-		URL.createObjectURL(new Blob([generatedAvatar])),
+	procetar(userId).then((generatedSvg) =>
+		URL.createObjectURL(
+			new Blob([generatedSvg], {
+				type: "image/svg+xml",
+			}),
+		),
 	);
 
 export const Header = () => {
