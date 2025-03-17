@@ -14,6 +14,7 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
+import { procetar } from "procetar";
 
 import {
 	PopoverArrow,
@@ -22,17 +23,25 @@ import {
 	PopoverRoot,
 	PopoverTrigger,
 } from "./ui/popover";
-import { getMyProfile, IApiProfile, logout, softCheck } from "../api";
+import { API_HOST, getMyProfile, IApiProfile, logout, softCheck } from "../api";
 import { $signed } from "../store/profile";
+
+const generateAvatarLink = (userId: string) =>
+	procetar(userId).then((generatedAvatar) =>
+		URL.createObjectURL(new Blob([generatedAvatar])),
+	);
 
 export const Header = () => {
 	const [fetching, setFetching] = useState(false);
 	const [userData, setUserData] = useState<IApiProfile | null>(null);
 	const [open, setOpen] = useState(false);
+	const [avatarLink, setAvatarLink] = useState("");
 	const signed = useStore($signed);
 
 	useEffect(() => {
 		setFetching(true);
+		setAvatarLink("");
+		URL.revokeObjectURL(avatarLink);
 
 		softCheck()
 			.then((isLoggedIn) => {
@@ -40,6 +49,12 @@ export const Header = () => {
 					return getMyProfile().then((res) => {
 						if (res) {
 							setUserData(res.payload);
+							return res.payload.avatar_link
+								? setAvatarLink(API_HOST + res.payload.avatar_link)
+								: generateAvatarLink(
+										/** @todo передавать userId */
+										String(res.payload.email),
+									).then(setAvatarLink);
 						}
 					});
 				}
@@ -62,7 +77,7 @@ export const Header = () => {
 							НРИ Календарь
 						</Link>
 						{!fetching &&
-							(signed ? (
+							(signed && avatarLink ? (
 								<PopoverRoot
 									open={open}
 									onOpenChange={(e) => {
@@ -79,7 +94,7 @@ export const Header = () => {
 													<Avatar.Fallback
 														name={userData?.nickname}
 													/>
-													<Avatar.Image src="https://gas-kvas.com/grafic/uploads/posts/2023-09/1695869715_gas-kvas-com-p-kartinki-bez-13.png" />
+													<Avatar.Image src={avatarLink} />
 												</Avatar.Root>
 												<Stack gap="0">
 													<Text fontWeight="medium">
