@@ -14,6 +14,7 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
+import { procetar } from "procetar";
 
 import {
 	PopoverArrow,
@@ -22,22 +23,33 @@ import {
 	PopoverRoot,
 	PopoverTrigger,
 } from "./ui/popover";
-import { IApiProfile, logout, softCheck } from "../api";
+import { API_HOST, IApiProfile, logout, softCheck } from "../api";
 import { $signed } from "../store/profile";
 
 export const Header = () => {
 	const [fetching, setFetching] = useState(false);
 	const [userData, setUserData] = useState<IApiProfile | null>(null);
 	const [open, setOpen] = useState(false);
+	const [avatarLink, setAvatarLink] = useState("");
 	const signed = useStore($signed);
 
 	useEffect(() => {
 		setFetching(true);
+		setAvatarLink("");
+		URL.revokeObjectURL(avatarLink);
 
 		softCheck()
-			.then((res) => {
-				if (res) {
-					setUserData(res.payload);
+			.then((isLoggedIn) => {
+				if (isLoggedIn) {
+					return softCheck().then(async (res) => {
+						if (res) {
+							setUserData(res.payload);
+							const avatar_link = res.payload.avatar_link
+								? API_HOST + res.payload.avatar_link
+								: await procetar(res.payload.id);
+							setAvatarLink(avatar_link);
+						}
+					});
 				}
 			})
 			.then(() => setFetching(false));
@@ -58,7 +70,7 @@ export const Header = () => {
 							НРИ Календарь
 						</Link>
 						{!fetching &&
-							(signed ? (
+							(signed && avatarLink ? (
 								<PopoverRoot
 									open={open}
 									onOpenChange={(e) => {
@@ -75,7 +87,7 @@ export const Header = () => {
 													<Avatar.Fallback
 														name={userData?.nickname}
 													/>
-													<Avatar.Image src="https://gas-kvas.com/grafic/uploads/posts/2023-09/1695869715_gas-kvas-com-p-kartinki-bez-13.png" />
+													<Avatar.Image src={avatarLink} />
 												</Avatar.Root>
 												<Stack gap="0">
 													<Text fontWeight="medium">
