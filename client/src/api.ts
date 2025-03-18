@@ -399,13 +399,12 @@ export const updateMyProfile = (
 	nickname: string,
 	about_me: string | null | undefined,
 	city: string | null | undefined,
-	/** @todo */
-	// timezone_offset: number | null;
-	// tz_variant: ETzVariant | null;
+	own_tz: number | null | undefined,
+	tz_variant: ETzVariant | null | undefined,
 ) => {
 	return ajax<null>(
 		`/api/profile/my`,
-		prepareAjax({ nickname, about_me, city }, PUT),
+		prepareAjax({ nickname, about_me, city, own_tz, tz_variant }, PUT),
 	);
 };
 

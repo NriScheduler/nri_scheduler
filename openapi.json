@@ -1561,6 +1561,29 @@
 						"type": "string",
 						"nullable": true,
 						"description": "Город пользователя"
+					},
+					"own_tz": {
+						"type": "integer",
+						"nullable": true,
+						"min": -11,
+						"max": 12,
+						"description": "Индивидуальное смещение временной зоны"
+					},
+					"tz_variant": {
+						"type": "string",
+						"nullable": true,
+						"enum": ["city", "device", "own"],
+						"description": "Варианты определения временной зоны",
+						"x-enum-descriptions": [
+							"По городу",
+							"По времени на устройстве",
+							"Точно указать"
+						],
+						"x-enum-varnames": [
+							"По городу",
+							"По времени на устройстве",
+							"Точно указать"
+						]
 					}
 				}
 			},

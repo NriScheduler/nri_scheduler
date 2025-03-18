@@ -127,10 +127,12 @@ impl Store for PostgresStore {
 	}
 
 	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult {
-		sqlx::query("update users set nickname = $1, about_me = $2, city = $3 where id = $4;")
+		sqlx::query("update users set nickname = $1, about_me = $2, city = $3, own_tz = $4, tz_variant = $5 where id = $6;")
 			.bind(profile.nickname)
 			.bind(profile.about_me)
 			.bind(profile.city)
+			.bind(profile.own_tz)
+			.bind(profile.tz_variant)
 			.bind(user_id)
 			.execute(&self.pool)
 			.await?;
