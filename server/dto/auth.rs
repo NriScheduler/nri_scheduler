@@ -97,8 +97,68 @@ impl<'de> Deserialize<'de> for SignInDto {
 	}
 }
 
-#[derive(Deserialize)]
 pub(crate) struct UpdateProfileDto {
 	pub nickname: String,
 	pub about_me: Option<String>,
+	pub city: Option<String>,
+	pub own_tz: Option<i16>,
+	pub tz_variant: Option<String>,
+}
+
+impl<'de> Deserialize<'de> for UpdateProfileDto {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		#[derive(Deserialize)]
+		struct PlainBody {
+			nickname: String,
+			about_me: Option<String>,
+			city: Option<String>,
+			own_tz: Option<i16>,
+			tz_variant: Option<String>,
+		}
+
+		let PlainBody {
+			nickname,
+			about_me,
+			city,
+			mut own_tz,
+			mut tz_variant,
+		} = PlainBody::deserialize(deserializer)?;
+
+		match tz_variant.as_deref() {
+			Some("own") => {
+				match own_tz {
+					Some(ref ot) => {
+						if !(-11..=12).contains(ot) {
+							return Err(D::Error::custom(
+								"Передано некорректное смещение временной зоны",
+							));
+						};
+					}
+					None => {
+						return Err(D::Error::custom(
+							"Не указано персональное смещение временной зоны",
+						));
+					}
+				};
+			}
+			Some("city") | Some("device") => {
+				own_tz = None;
+			}
+			_ => {
+				own_tz = None;
+				tz_variant = None
+			}
+		};
+
+		Ok(Self {
+			nickname,
+			about_me,
+			city,
+			own_tz,
+			tz_variant,
+		})
+	}
 }

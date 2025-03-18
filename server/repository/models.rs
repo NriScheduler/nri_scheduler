@@ -15,17 +15,20 @@ pub(crate) struct UserForAuth {
 pub(crate) struct User {
 	pub id: Uuid,
 	pub nickname: String,
-	pub phone: Option<String>,
 	pub email: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
 pub(crate) struct Profile {
+	pub id: Uuid,
 	pub nickname: String,
-	pub phone: Option<String>,
 	pub email: Option<String>,
 	pub about_me: Option<String>,
 	pub avatar_link: Option<String>,
+	pub city: Option<String>,
+	pub timezone_offset: Option<i16>,
+	pub tz_variant: Option<String>,
+	pub get_tz_from_device: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
@@ -88,4 +91,18 @@ pub(crate) struct EventForApplying {
 pub(crate) struct SelfInfo {
 	pub id: Uuid,
 	pub timezone_offset: Option<i16>,
+	pub get_tz_from_device: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct Region {
+	pub name: String,
+	pub timezone: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct City {
+	pub name: String,
+	pub region: String,
+	pub own_timezone: Option<String>,
 }

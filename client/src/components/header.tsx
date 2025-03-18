@@ -23,7 +23,7 @@ import {
 	PopoverRoot,
 	PopoverTrigger,
 } from "./ui/popover";
-import { API_HOST, getMyProfile, IApiProfile, logout, softCheck } from "../api";
+import { API_HOST, IApiProfile, logout, softCheck } from "../api";
 import { $signed } from "../store/profile";
 
 export const Header = () => {
@@ -41,15 +41,12 @@ export const Header = () => {
 		softCheck()
 			.then((isLoggedIn) => {
 				if (isLoggedIn) {
-					return getMyProfile().then(async (res) => {
+					return softCheck().then(async (res) => {
 						if (res) {
 							setUserData(res.payload);
 							const avatar_link = res.payload.avatar_link
 								? API_HOST + res.payload.avatar_link
-								: await procetar(
-										/** @todo передавать userId */
-										String(res.payload.email),
-									);
+								: await procetar(res.payload.id);
 							setAvatarLink(avatar_link);
 						}
 					});

@@ -3,6 +3,7 @@ mod common;
 pub(crate) mod company;
 pub(crate) mod event;
 pub(crate) mod location;
+pub(crate) mod region;
 
 pub(crate) use common::{Dto, FileLinkDto};
 

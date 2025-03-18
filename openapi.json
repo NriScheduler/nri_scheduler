@@ -86,31 +86,6 @@
 				}
 			}
 		},
-		"/api/check": {
-			"get": {
-				"tags": [
-					"profile"
-				],
-				"summary": "Проверка авторизации, получение минимальной информации о пользователе",
-				"responses": {
-					"200": {
-						"description": "Результат выполнения запроса",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/AppResponseWhoIAm"
-								}
-							}
-						}
-					}
-				},
-				"security": [
-					{
-						"cookieAuth": []
-					}
-				]
-			}
-		},
 		"/api/profile/my": {
 			"get": {
 				"tags": [
@@ -964,6 +939,90 @@
 					}
 				]
 			}
+		},
+		"/api/regions": {
+			"get": {
+				"tags": [
+					"regions"
+				],
+				"summary": "Получение списка регионов",
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponseWithRegionsList"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/cities": {
+			"get": {
+				"tags": [
+					"regions"
+				],
+				"summary": "Получение списка городов",
+				"parameters": [
+					{
+						"name": "region",
+						"in": "query",
+						"description": "Регион",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponseWithCitiesList"
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"tags": [
+					"regions"
+				],
+				"summary": "Добавление города",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/City"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
+			}
 		}
 	},
 	"components": {
@@ -1409,6 +1468,10 @@
 						"type": "integer",
 						"nullable": true,
 						"description": "Временная зона пользователя"
+					},
+					"get_tz_from_device": {
+						"type": "boolean",
+						"description": "Указание брать ли временную зону с устройства"
 					}
 				}
 			},
@@ -1432,14 +1495,14 @@
 				"type": "object",
 				"description": "Минимальная информация о пользователе",
 				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"description": "Идентификатор пользователя"
+					},
 					"nickname": {
 						"type": "string",
 						"description": "Имя пользователя"
-					},
-					"phone": {
-						"type": "string",
-						"nullable": true,
-						"description": "Номер телефона пользователя"
 					},
 					"email": {
 						"type": "string",
@@ -1458,6 +1521,26 @@
 						"example": "/avatar/1f0010e2-2ad8-6960-b794-1694f0da179f",
 						"nullable": true,
 						"description": "Ссылка на аватар"
+					},
+					"city": {
+						"type": "string",
+						"nullable": true,
+						"description": "Город пользователя"
+					},
+					"timezone_offset": {
+						"type": "integer",
+						"nullable": true,
+						"description": "Временная зона пользователя"
+					},
+					"tz_variant": {
+						"type": "string",
+						"enum": ["city", "device", "own"],
+						"nullable": true,
+						"description": "Указание брать ли временную зону с устройства"
+					},
+					"get_tz_from_device": {
+						"type": "boolean",
+						"description": "Указание брать ли временную зону с устройства"
 					}
 				}
 			},
@@ -1473,6 +1556,71 @@
 						"type": "string",
 						"nullable": true,
 						"description": "Информация о себе"
+					},
+					"city": {
+						"type": "string",
+						"nullable": true,
+						"description": "Город пользователя"
+					},
+					"own_tz": {
+						"type": "integer",
+						"nullable": true,
+						"min": -11,
+						"max": 12,
+						"description": "Индивидуальное смещение временной зоны"
+					},
+					"tz_variant": {
+						"type": "string",
+						"nullable": true,
+						"enum": ["city", "device", "own"],
+						"description": "Варианты определения временной зоны",
+						"x-enum-descriptions": [
+							"По городу",
+							"По времени на устройстве",
+							"Точно указать"
+						],
+						"x-enum-varnames": [
+							"По городу",
+							"По времени на устройстве",
+							"Точно указать"
+						]
+					}
+				}
+			},
+			"Region": {
+				"type": "object",
+				"description": "Информация о регионе",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Название региона"
+					},
+					"timezone": {
+						"type": "string",
+						"description": "Временная зона"
+					}
+				}
+			},
+			"City": {
+				"type": "object",
+				"description": "Информация о городе",
+				"required": [
+					"name",
+					"region"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Название города"
+					},
+					"region": {
+						"type": "string",
+						"description": "Название региона"
+					},
+					"own_timezone": {
+						"type": "string",
+						"nullable": true,
+						"description": "Временная зона, на случай если в регионе есть несколько временных зон"
 					}
 				}
 			},
@@ -1621,6 +1769,54 @@
 						"$ref": "#/components/schemas/CompanyInfo"
 					}
 				}
+			},
+			"AppResponseWithRegionsList": {
+				"type": "object",
+				"description": "Ответ приложения со списком регионов",
+				"required": [
+					"status",
+					"result",
+					"payload"
+				],
+				"properties": {
+					"status": {
+						"$ref": "#/components/schemas/EScenarioStatus"
+					},
+					"result": {
+						"type": "string",
+						"description": "Текстовое описание результата"
+					},
+					"payload": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Region"
+						}
+					}
+				}
+			},
+			"AppResponseWithCitiesList": {
+				"type": "object",
+				"description": "Ответ приложения со списком городов",
+				"required": [
+					"status",
+					"result",
+					"payload"
+				],
+				"properties": {
+					"status": {
+						"$ref": "#/components/schemas/EScenarioStatus"
+					},
+					"result": {
+						"type": "string",
+						"description": "Текстовое описание результата"
+					},
+					"payload": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/City"
+						}
+					}
+				}
 			}
 		},
 		"securitySchemes": {
@@ -1647,6 +1843,10 @@
 		{
 			"name": "companies",
 			"description": "Кампании"
+		},
+		{
+			"name": "regions",
+			"description": "Регионы и города"
 		}
 	]
 }

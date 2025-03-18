@@ -1,16 +1,13 @@
 import { atom, ReadableAtom, WritableAtom } from "nanostores";
 
 import { resetOffset, setOffset } from "./tz";
-import { IApiSelfInfo } from "../api";
+import { IApiProfile } from "../api";
 
 export const $signed: ReadableAtom<boolean> = atom(false);
 
-export const enter = ({ timezone_offset }: IApiSelfInfo) => {
+export const enter = ({ timezone_offset, get_tz_from_device }: IApiProfile) => {
 	($signed as WritableAtom<boolean>).set(true);
-
-	if (typeof timezone_offset === "number") {
-		setOffset(timezone_offset);
-	}
+	setOffset(timezone_offset, get_tz_from_device);
 };
 
 export const leave = () => {

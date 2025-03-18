@@ -15,7 +15,7 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
-import { addLocation, check, IApiLocation } from "../../../api";
+import { addLocation, getMyProfile, IApiLocation } from "../../../api";
 
 export const Location = () => {
 	const [open, setOpen] = useState(false);
@@ -60,7 +60,7 @@ export const Location = () => {
 			onOpenChange={(e) => {
 				if (e.open) {
 					setIsDisableCreateLocationButton(true);
-					check().then((res) => {
+					getMyProfile().then((res) => {
 						if (res !== null) {
 							setOpen(e.open);
 							setIsDisableCreateLocationButton(false);
