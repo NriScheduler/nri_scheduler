@@ -89,7 +89,7 @@ impl Store for PostgresStore {
 				, sq.about_me
 				, sq.city
 				, sq.avatar_link
-				, EXTRACT(HOUR FROM tz.utc_offset)::smallint as timezone_offset
+				, tz.offset as timezone_offset
 				, sq.tz_variant
 				, (sq.tz_variant is not null and sq.tz_variant = 'device') as get_tz_from_device
 			from (
@@ -116,7 +116,7 @@ impl Store for PostgresStore {
 					on r.name = c.region
 				WHERE u.id = $1
 			) sq
-			left join pg_timezone_names tz
+			left join timezone_offsets tz
 				on tz.name = sq.timezone_offset;",
 		)
 		.bind(user_id)
@@ -144,7 +144,7 @@ impl Store for PostgresStore {
 		let may_be_self_info = sqlx::query_as::<_, SelfInfo>(
 			"select
 				sq.id,
-				EXTRACT(HOUR FROM tz.utc_offset)::smallint as timezone_offset,
+				tz.offset as timezone_offset,
 				(sq.tz_variant = 'device') as get_tz_from_device
 			from (
 				select
@@ -162,7 +162,7 @@ impl Store for PostgresStore {
 					on r.name = c.region
 				WHERE u.id = $1
 			) sq
-			left join pg_timezone_names tz
+			left join timezone_offsets tz
 				on tz.name = sq.timezone_offset;",
 		)
 		.bind(user_id)
