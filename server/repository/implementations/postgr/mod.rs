@@ -145,7 +145,7 @@ impl Store for PostgresStore {
 			"select
 				sq.id,
 				tz.offset as timezone_offset,
-				(sq.tz_variant = 'device') as get_tz_from_device
+				(sq.tz_variant is not null and sq.tz_variant = 'device') as get_tz_from_device
 			from (
 				select
 					u.id,
