@@ -26,15 +26,6 @@ import {
 import { API_HOST, getMyProfile, IApiProfile, logout, softCheck } from "../api";
 import { $signed } from "../store/profile";
 
-const generateAvatarLink = (userId: string) =>
-	procetar(userId).then((generatedSvg) =>
-		URL.createObjectURL(
-			new Blob([generatedSvg], {
-				type: "image/svg+xml",
-			}),
-		),
-	);
-
 export const Header = () => {
 	const [fetching, setFetching] = useState(false);
 	const [userData, setUserData] = useState<IApiProfile | null>(null);
@@ -50,15 +41,16 @@ export const Header = () => {
 		softCheck()
 			.then((isLoggedIn) => {
 				if (isLoggedIn) {
-					return getMyProfile().then((res) => {
+					return getMyProfile().then(async (res) => {
 						if (res) {
 							setUserData(res.payload);
-							return res.payload.avatar_link
-								? setAvatarLink(API_HOST + res.payload.avatar_link)
-								: generateAvatarLink(
+							const avatar_link = res.payload.avatar_link
+								? API_HOST + res.payload.avatar_link
+								: await procetar(
 										/** @todo передавать userId */
 										String(res.payload.email),
-									).then(setAvatarLink);
+									);
+							setAvatarLink(avatar_link);
 						}
 					});
 				}
