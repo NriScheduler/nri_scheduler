@@ -91,7 +91,7 @@ impl Store for PostgresStore {
 				, sq.avatar_link
 				, EXTRACT(HOUR FROM tz.utc_offset)::smallint as timezone_offset
 				, sq.tz_variant
-				, (sq.tz_variant is not null and sq.tz_variant = 'device'sq.tz_variant = 'device') as get_tz_from_device
+				, (sq.tz_variant is not null and sq.tz_variant = 'device') as get_tz_from_device
 			from (
 				select
 					u.id
