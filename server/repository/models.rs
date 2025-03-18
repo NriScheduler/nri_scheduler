@@ -93,3 +93,16 @@ pub(crate) struct SelfInfo {
 	pub timezone_offset: Option<i16>,
 	pub get_tz_from_device: bool,
 }
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct Region {
+	pub name: String,
+	pub timezone: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct City {
+	pub name: String,
+	pub region: String,
+	pub own_timezone: Option<String>,
+}

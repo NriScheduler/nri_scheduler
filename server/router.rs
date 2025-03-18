@@ -29,6 +29,8 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 				.route("/profile/avatar/{id}", get(H::read_avatar)) // todo удалить
 				.route("/locations", get(H::locations::get_locations_list))
 				.route("/locations/{id}", get(H::locations::get_location_by_id))
+				.route("/regions", get(H::regions::read_regions_list))
+				.route("/cities", get(H::regions::read_cities_list))
 				.merge(
 					Router::new()
 						.route("/profile/{id}", get(H::read_another_profile))
@@ -54,6 +56,7 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 						.route("/events", post(H::events::add_event))
 						.route("/events/apply/{id}", post(H::events::apply_event))
 						.route("/events/{id}", put(H::events::update_event))
+						.route("/cities", post(H::regions::add_city))
 						.layer(middleware::from_fn(auth::auth_middleware)),
 				),
 		)

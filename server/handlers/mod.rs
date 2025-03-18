@@ -1,6 +1,7 @@
 pub(super) mod companies;
 pub(super) mod events;
 pub(super) mod locations;
+pub(super) mod regions;
 
 use ::std::sync::Arc;
 use axum::{

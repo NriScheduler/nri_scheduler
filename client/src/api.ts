@@ -411,3 +411,39 @@ export const updateMyProfile = (
 
 export const setAvatar = (url: string) =>
 	ajax<null>(`/api/profile/avatar`, prepareAjax({ url }, PUT));
+
+export interface IApiRegion {
+	readonly name: string;
+	readonly timezone: string;
+}
+
+export const readRegionsList = () => {
+	return ajax<IApiRegion[]>(`/api/regions`);
+};
+
+export interface IApiCity {
+	readonly name: string;
+	readonly region: string;
+	readonly own_timezone: string | null;
+}
+
+export const readCitiesList = (region?: string | null) => {
+	const query = new URLSearchParams();
+
+	if (region) {
+		query.set("region", region);
+	}
+
+	return ajax<IApiCity[]>(`/api/cities?${query}`);
+};
+
+export const addCity = (
+	name: string,
+	region: string,
+	own_timezone?: string | null,
+) => {
+	return ajax<null>(
+		`/api/cities`,
+		prepareAjax({ name, region, own_timezone }, POST),
+	);
+};

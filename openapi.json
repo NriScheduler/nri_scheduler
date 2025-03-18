@@ -939,6 +939,90 @@
 					}
 				]
 			}
+		},
+		"/api/regions": {
+			"get": {
+				"tags": [
+					"regions"
+				],
+				"summary": "Получение списка регионов",
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponseWithRegionsList"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/cities": {
+			"get": {
+				"tags": [
+					"regions"
+				],
+				"summary": "Получение списка городов",
+				"parameters": [
+					{
+						"name": "region",
+						"in": "query",
+						"description": "Регион",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponseWithCitiesList"
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"tags": [
+					"regions"
+				],
+				"summary": "Добавление города",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/City"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
+			}
 		}
 	},
 	"components": {
@@ -1480,6 +1564,43 @@
 					}
 				}
 			},
+			"Region": {
+				"type": "object",
+				"description": "Информация о регионе",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Название региона"
+					},
+					"timezone": {
+						"type": "string",
+						"description": "Временная зона"
+					}
+				}
+			},
+			"City": {
+				"type": "object",
+				"description": "Информация о городе",
+				"required": [
+					"name",
+					"region"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Название города"
+					},
+					"region": {
+						"type": "string",
+						"description": "Название региона"
+					},
+					"own_timezone": {
+						"type": "string",
+						"nullable": true,
+						"description": "Временная зона, на случай если в регионе есть несколько временных зон"
+					}
+				}
+			},
 			"AppResponseProfile": {
 				"type": "object",
 				"description": "Ответ приложения с идентификатором созданной сущности",
@@ -1625,6 +1746,54 @@
 						"$ref": "#/components/schemas/CompanyInfo"
 					}
 				}
+			},
+			"AppResponseWithRegionsList": {
+				"type": "object",
+				"description": "Ответ приложения со списком регионов",
+				"required": [
+					"status",
+					"result",
+					"payload"
+				],
+				"properties": {
+					"status": {
+						"$ref": "#/components/schemas/EScenarioStatus"
+					},
+					"result": {
+						"type": "string",
+						"description": "Текстовое описание результата"
+					},
+					"payload": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Region"
+						}
+					}
+				}
+			},
+			"AppResponseWithCitiesList": {
+				"type": "object",
+				"description": "Ответ приложения со списком городов",
+				"required": [
+					"status",
+					"result",
+					"payload"
+				],
+				"properties": {
+					"status": {
+						"$ref": "#/components/schemas/EScenarioStatus"
+					},
+					"result": {
+						"type": "string",
+						"description": "Текстовое описание результата"
+					},
+					"payload": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/City"
+						}
+					}
+				}
 			}
 		},
 		"securitySchemes": {
@@ -1651,6 +1820,10 @@
 		{
 			"name": "companies",
 			"description": "Кампании"
+		},
+		{
+			"name": "regions",
+			"description": "Регионы и города"
 		}
 	]
 }

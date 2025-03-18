@@ -14,7 +14,8 @@ use crate::{
 		location::ReadLocationDto,
 	},
 	repository::models::{
-		Company, CompanyInfo, Event, EventForApplying, Location, Profile, SelfInfo, UserForAuth,
+		City, Company, CompanyInfo, Event, EventForApplying, Location, Profile, Region, SelfInfo,
+		UserForAuth,
 	},
 	shared::RecordId,
 	system_models::{AppError, CoreResult},
@@ -653,6 +654,41 @@ impl Store for PostgresStore {
 		.unwrap_or_default();
 
 		Ok(was_updated)
+	}
+
+	async fn read_regions_list(&self) -> CoreResult<Vec<Region>> {
+		sqlx::query_as::<_, Region>("select name, timezone from regions order by name asc;")
+			.fetch_all(&self.pool)
+			.await
+			.map_err(AppError::from)
+	}
+
+	async fn read_cities_list(&self, region: Option<String>) -> CoreResult<Vec<City>> {
+		let mut qb: QueryBuilder<'_, Postgres> =
+			QueryBuilder::new("select name, region, own_timezone from cities");
+
+		if let Some(region) = region {
+			qb.push(" where region = ");
+			qb.push_bind(region);
+		}
+
+		qb.push(" order by name asc;");
+
+		qb.build_query_as::<City>()
+			.fetch_all(&self.pool)
+			.await
+			.map_err(AppError::from)
+	}
+
+	async fn add_city(&self, city: City) -> CoreResult {
+		sqlx::query("INSERT INTO cities (name, region, own_timezone) values ($1, $2, $3);")
+			.bind(city.name)
+			.bind(city.region)
+			.bind(city.own_timezone)
+			.execute(&self.pool)
+			.await?;
+
+		Ok(())
 	}
 
 	async fn close(&self) {

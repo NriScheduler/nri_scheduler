@@ -5,7 +5,8 @@ use ::std::error::Error;
 use chrono::{DateTime, FixedOffset};
 use implementations::PostgresStore;
 use models::{
-	Company, CompanyInfo, Event, EventForApplying, Location, Profile, SelfInfo, UserForAuth,
+	City, Company, CompanyInfo, Event, EventForApplying, Location, Profile, Region, SelfInfo,
+	UserForAuth,
 };
 use uuid::Uuid;
 
@@ -121,6 +122,10 @@ trait Store {
 		master: Uuid,
 		data: UpdateEventDto,
 	) -> CoreResult<bool>;
+
+	async fn read_regions_list(&self) -> CoreResult<Vec<Region>>;
+	async fn read_cities_list(&self, region: Option<String>) -> CoreResult<Vec<City>>;
+	async fn add_city(&self, city: City) -> CoreResult;
 
 	async fn close(&self);
 }
@@ -317,6 +322,18 @@ impl Repository {
 		data: UpdateEventDto,
 	) -> CoreResult<bool> {
 		return self.store.update_event(event_id, master, data).await;
+	}
+
+	pub(crate) async fn read_regions_list(&self) -> CoreResult<Vec<Region>> {
+		return self.store.read_regions_list().await;
+	}
+
+	pub(crate) async fn read_cities_list(&self, region: Option<String>) -> CoreResult<Vec<City>> {
+		return self.store.read_cities_list(region).await;
+	}
+
+	pub(crate) async fn add_city(&self, city: City) -> CoreResult {
+		return self.store.add_city(city).await;
 	}
 
 	pub async fn close(&self) {
