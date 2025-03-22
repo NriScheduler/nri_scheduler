@@ -1,6 +1,7 @@
-import { h, JSX, Fragment } from "preact";
+import { Fragment, h } from "preact";
 import { useRef, useState } from "preact/hooks";
-import { Avatar, Button, Group, HStack, Stack } from "@chakra-ui/react";
+
+import { Avatar, Button, Group, HStack } from "@chakra-ui/react";
 
 export const ProfilePicture = ({ register, username }: any) => {
 	const hiddenInputRef = useRef<HTMLInputElement>(null);
@@ -9,7 +10,7 @@ export const ProfilePicture = ({ register, username }: any) => {
 	const { ref: registerRef, ...rest } = register("avatar");
 
 	const handleUploadedFile = (
-		event: JSX.TargetedEvent<HTMLInputElement, Event>
+		event: h.JSX.TargetedEvent<HTMLInputElement, Event>,
 	) => {
 		const file = event.currentTarget.files?.[0];
 
@@ -49,7 +50,9 @@ export const ProfilePicture = ({ register, username }: any) => {
 					<Button variant="outline" onClick={onUpload}>
 						{uploadButtonLabel}
 					</Button>
-					<Button variant="surface" colorPalette="red">Удалить</Button>
+					<Button variant="surface" colorPalette="red">
+						Удалить
+					</Button>
 				</Group>
 			</HStack>
 		</>

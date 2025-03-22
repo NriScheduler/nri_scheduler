@@ -1,11 +1,10 @@
 import { h } from "preact";
-
+import { useState } from "preact/hooks";
 import { useForm } from "react-hook-form";
 
 import {
 	Button,
 	Checkbox,
-	createListCollection,
 	Group,
 	Heading,
 	HStack,
@@ -15,9 +14,9 @@ import {
 	Stack,
 	Textarea,
 } from "@chakra-ui/react";
-import { Field } from "../../ui/field";
+
 import { ProfilePicture } from "./profile-picture";
-import { useState } from "preact/hooks";
+import { Field } from "../../ui/field";
 
 interface IFormProfile {
 	nickname: string;
