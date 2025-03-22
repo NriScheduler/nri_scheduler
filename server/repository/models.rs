@@ -26,6 +26,7 @@ pub(crate) struct Profile {
 	pub about_me: Option<String>,
 	pub avatar_link: Option<String>,
 	pub city: Option<String>,
+	pub region: Option<String>,
 	pub timezone_offset: Option<i16>,
 	pub tz_variant: Option<String>,
 	pub get_tz_from_device: bool,

@@ -16,6 +16,7 @@ import {
 
 import { NotFoundPage } from "../not-found/not-found";
 import { IApiLocation, readLocationById } from "../../../api";
+import { navBack } from "../../../utils";
 
 const LocationCard = ({ location }: { location: IApiLocation }) => {
 	const stats = [
@@ -94,13 +95,9 @@ export const LocationPage = () => {
 		}
 	}, [locationId]);
 
-	const handleBackButton = () => {
-		window.history.back();
-	};
-
 	return (
 		<Container>
-			<Button mb={4} onClick={handleBackButton}>
+			<Button mb={4} onClick={navBack}>
 				Вернуться назад
 			</Button>
 			{fetching ? (

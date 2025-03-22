@@ -87,6 +87,7 @@ impl Store for PostgresStore {
 				, sq.email
 				, sq.about_me
 				, sq.city
+				, sq.region
 				, sq.avatar_link
 				, tz.offset as timezone_offset
 				, sq.tz_variant
@@ -98,6 +99,7 @@ impl Store for PostgresStore {
 					, u.email
 					, u.about_me
 					, u.city
+					, r.name as region
 					, CASE
 						WHEN avatar_link IS NOT NULL THEN ('/avatar/' || id)
 						ELSE NULL

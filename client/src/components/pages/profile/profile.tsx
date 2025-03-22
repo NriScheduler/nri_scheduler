@@ -1,4 +1,5 @@
 import { h } from "preact";
+import { route as navigate } from "preact-router";
 import { MdOutlineEvent } from "react-icons/md";
 
 import {
@@ -13,8 +14,10 @@ import {
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 
-import { ProfileUpdate } from "./profile-update";
+import { ProfileInfo } from "./profile-info";
+import { $profile } from "../../../store/profile";
 
+/** @todo сделать апишку для заявок */
 interface IEvent {
 	label?: string;
 	value?: string;
@@ -22,7 +25,12 @@ interface IEvent {
 }
 
 export const ProfilePage = () => {
-	const user: any = {};
+	const user = useStore($profile);
+	if (!user?.signed) {
+		navigate("/signin");
+		return;
+	}
+
 	const events: IEvent[] = [];
 
 	return (
@@ -34,7 +42,7 @@ export const ProfilePage = () => {
 					<Tabs.Trigger value="resetpass">Сброс пароля</Tabs.Trigger>
 				</Tabs.List>
 				<Tabs.Content value="user" maxW="2xl">
-					<ProfileUpdate user={user} />
+					<ProfileInfo user={user} />
 				</Tabs.Content>
 
 				<Tabs.Content value="events">
@@ -67,7 +75,7 @@ export const ProfilePage = () => {
 										Заявок на подтверждение нет
 									</EmptyState.Title>
 									<EmptyState.Description>
-										Как только ... так сразу
+										Как только... так сразу
 									</EmptyState.Description>
 								</VStack>
 							</EmptyState.Content>

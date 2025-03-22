@@ -3,66 +3,78 @@ import type { UUID } from "node:crypto";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { atom, computed, map } from "nanostores";
+import { computed, map, task } from "nanostores";
+import { procetar } from "procetar";
 
-import { IApiProfile } from "../api";
+import { API_HOST, ETzVariant, IApiProfile } from "../api";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// --== Mastery ==--
-const MASTERY_KEY = "nri_mastery";
-const TRUE = "true";
-
-const _mastery = atom(localStorage.getItem(MASTERY_KEY) === TRUE);
-export const $mastery = computed(_mastery, (m) => m);
-
-export const enableMastery = () => {
-	localStorage.setItem(MASTERY_KEY, TRUE);
-	_mastery.set(true);
-};
-
-export const disableMastery = () => {
-	localStorage.removeItem(MASTERY_KEY);
-	_mastery.set(false);
-};
-
 // --== User ==--
-
-const EMPTY_USER = {};
 
 export interface IStorePrifile {
 	readonly id: UUID;
 	readonly email: string | null;
 	readonly nickname: string;
 	readonly about_me: string | null;
-	readonly avatar_link: string | null;
+	readonly avatar_link: string;
 	readonly city: string | null;
+	readonly region: string | null;
+	readonly timezone_offset: number | null;
+	readonly tz_variant: ETzVariant | null;
+	readonly signed: true;
 }
 
-export type TStorePrifile = IStorePrifile | typeof EMPTY_USER;
+export interface IEmptyStorePrifile {
+	readonly id: undefined;
+	readonly email: undefined;
+	readonly nickname: undefined;
+	readonly about_me: undefined;
+	readonly avatar_link: undefined;
+	readonly city: undefined;
+	readonly region: undefined;
+	readonly timezone_offset: undefined;
+	readonly tz_variant: undefined;
+	readonly signed: false;
+}
+
+const EMPTY_USER = {};
+
+export type TStorePrifile = IStorePrifile | IEmptyStorePrifile;
 
 const _profile = map<IApiProfile | typeof EMPTY_USER>(EMPTY_USER);
-export const $profile = computed(_profile, (p) => {
-	if (!("id" in p)) {
-		return p as TStorePrifile;
-	}
 
-	return {
-		id: p.id,
-		email: p.email,
-		nickname: p.nickname,
-		about_me: p.about_me,
-		avatar_link: p.avatar_link,
-		city: p.city,
-	};
-});
+export const $profile = computed(_profile, (p) =>
+	task(async () => {
+		if (!("id" in p)) {
+			const { avatar_link } = _profile.get() as IApiProfile;
+			URL.revokeObjectURL(avatar_link as string);
+			return { signed: false } as TStorePrifile;
+		}
+
+		const avatar_link = p.avatar_link
+			? API_HOST + p.avatar_link
+			: await procetar(p.id);
+
+		const prof: IStorePrifile = {
+			id: p.id,
+			email: p.email,
+			nickname: p.nickname,
+			about_me: p.about_me,
+			avatar_link,
+			city: p.city,
+			region: p.region,
+			timezone_offset: p.timezone_offset,
+			tz_variant: p.tz_variant,
+			signed: true,
+		};
+
+		return prof;
+	}),
+);
 export const enter = (profile: IApiProfile) => _profile.set(profile);
 export const leave = () => _profile.set(EMPTY_USER);
-
-// --== Signed ==--
-
-export const $signed = computed(_profile, (p) => "id" in p);
 
 // --== TZ ==--
 export const TIMEZONES: ReadonlyMap<number, string> = new Map([
