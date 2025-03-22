@@ -1,6 +1,5 @@
 import { h } from "preact";
-
-import { ProfileUpdate } from "./profile-update";
+import { MdOutlineEvent } from "react-icons/md";
 
 import {
 	Button,
@@ -12,9 +11,9 @@ import {
 	Tabs,
 	VStack,
 } from "@chakra-ui/react";
-import { MdOutlineEvent } from "react-icons/md";
 import { useStore } from "@nanostores/preact";
-import { userStore } from "../../../store/profile";
+
+import { ProfileUpdate } from "./profile-update";
 
 interface IEvent {
 	label?: string;
@@ -23,7 +22,7 @@ interface IEvent {
 }
 
 export const ProfilePage = () => {
-	const user = useStore(userStore);
+	const user: any = {};
 	const events: IEvent[] = [];
 
 	return (
@@ -41,7 +40,7 @@ export const ProfilePage = () => {
 				<Tabs.Content value="events">
 					{events.length !== 0 ? (
 						events.map((item, index) => (
-							<Grid templateColumns="repeat(4, 1fr)" gap="4">
+							<Grid templateColumns="repeat(4, 1fr)" gap="4" key={index}>
 								<Card.Root>
 									<Card.Body gap="2">
 										<Card.Title mt="2">
