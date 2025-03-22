@@ -5,6 +5,8 @@ use axum::{
 };
 #[cfg(feature = "cors")]
 use axum::{http::StatusCode, routing::options};
+#[cfg(feature = "static")]
+use tower_http::services::{ServeDir, ServeFile};
 #[cfg(feature = "swagger")]
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -69,6 +71,11 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 
 	#[cfg(feature = "swagger")]
 	let router = router.merge(SwaggerUi::new("/swagger").url("/swagger.json", openapi::get_schema()));
+
+	#[cfg(feature = "static")]
+	let router = router
+		.nest_service("/assets", ServeDir::new("static/assets"))
+		.fallback_service(ServeFile::new("static/index.html"));
 
 	return router;
 }
