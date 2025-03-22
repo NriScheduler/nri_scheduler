@@ -54,8 +54,7 @@ import {
 	disableMastery,
 	enableMastery,
 } from "../../../store/mastery";
-import { $signed } from "../../../store/profile";
-import { $tz } from "../../../store/tz";
+import { $profile, $tz } from "../../../store/profile";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
@@ -84,7 +83,7 @@ export const CalendarPage = () => {
 
 	const tz = useStore($tz);
 	const mastery = useStore($mastery);
-	const signed = useStore($signed);
+	const profile = useStore($profile);
 
 	const {
 		register,
@@ -203,7 +202,7 @@ export const CalendarPage = () => {
 	}, [locationList]);
 
 	useEffect(() => {
-		setShowSwitch(signed);
+		setShowSwitch(Boolean(profile?.signed));
 
 		document.addEventListener("keydown", handleKeyDown);
 
@@ -211,7 +210,7 @@ export const CalendarPage = () => {
 			document.removeEventListener("keydown", handleKeyDown);
 			setOpenDraw(false);
 		};
-	}, [signed]);
+	}, [profile?.signed]);
 
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === "Escape") {

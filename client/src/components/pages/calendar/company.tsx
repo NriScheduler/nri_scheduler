@@ -11,6 +11,7 @@ import {
 	Text,
 	Textarea,
 } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
 
 import {
 	DrawerBackdrop,
@@ -23,7 +24,8 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
-import { addCompany, getMyProfile, IApiCompany } from "../../../api";
+import { addCompany, IApiCompany } from "../../../api";
+import { $profile } from "../../../store/profile";
 
 export interface ICompanyProps {
 	data: IApiCompany[];
@@ -31,8 +33,6 @@ export interface ICompanyProps {
 
 export const Company = ({ data }: ICompanyProps) => {
 	const [open, setOpen] = useState(false);
-	const [isDisableCreateCompanyButton, setIsDisableCreateCompanyButton] =
-		useState(false);
 	const {
 		register,
 		handleSubmit,
@@ -40,11 +40,7 @@ export const Company = ({ data }: ICompanyProps) => {
 		formState: { errors },
 	} = useForm<IApiCompany>();
 
-	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") {
-			setOpen(false);
-		}
-	}
+	const profile = useStore($profile);
 
 	const onSubmit = handleSubmit((companyData) => {
 		if (data) {
@@ -59,6 +55,12 @@ export const Company = ({ data }: ICompanyProps) => {
 	});
 
 	useEffect(() => {
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setOpen(false);
+			}
+		};
+
 		document.addEventListener("keydown", handleKeyDown);
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
@@ -67,25 +69,10 @@ export const Company = ({ data }: ICompanyProps) => {
 	}, []);
 
 	return (
-		<DrawerRoot
-			open={open}
-			onOpenChange={(e) => {
-				if (e.open) {
-					setIsDisableCreateCompanyButton(true);
-					getMyProfile().then((res) => {
-						if (res !== null) {
-							setOpen(e.open);
-							setIsDisableCreateCompanyButton(false);
-						}
-					});
-				} else {
-					setOpen(e.open);
-				}
-			}}
-		>
+		<DrawerRoot open={open} onOpenChange={(e) => setOpen(e.open)}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button disabled={isDisableCreateCompanyButton} variant="outline">
+				<Button disabled={!profile?.signed} variant="outline">
 					Создать кампанию
 				</Button>
 			</DrawerTrigger>

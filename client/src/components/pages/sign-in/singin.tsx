@@ -63,6 +63,7 @@ export const SignInPage = () => {
 					>
 						<Input
 							placeholder="me@example.ru"
+							autocomplete="email"
 							{...register("email", {
 								required: "Заполните поле",
 								pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -76,6 +77,7 @@ export const SignInPage = () => {
 					>
 						<PasswordInput
 							placeholder="******"
+							autocomplete="password"
 							{...register("password", {
 								required: "Заполните поле",
 							})}

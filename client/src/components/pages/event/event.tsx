@@ -47,14 +47,14 @@ import {
 	readLocations,
 	updateEvent,
 } from "../../../api";
-import { $signed } from "../../../store/profile";
-import { $tz } from "../../../store/tz";
+import { $profile, $tz } from "../../../store/profile";
+import { navBack } from "../../../utils";
 
 dayjs.locale("ru");
 
 const EventCard = ({ event }: { event: IApiEvent }) => {
 	const tz = useStore($tz);
-	const signed = useStore($signed);
+	const profile = useStore($profile);
 
 	const eventDate = dayjs(event.date).tz(tz);
 
@@ -139,7 +139,7 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 				</DataList.Root>
 			</Card.Body>
 			<Card.Footer>
-				{signed ? (
+				{profile?.signed ? (
 					!event.you_are_master ? (
 						<Button
 							variant="subtle"
@@ -327,16 +327,12 @@ export const EventPage = () => {
 		}
 	}, [route.matches?.id]);
 
-	function handleBackButton() {
-		window.history.back();
-	}
-
 	const eventDate = dayjs(event?.date).tz(tz);
 
 	return (
 		<section>
 			<Container>
-				<Button mb={4} onClick={handleBackButton}>
+				<Button mb={4} onClick={navBack}>
 					Вернуться назад
 				</Button>
 				{event?.you_are_master && (

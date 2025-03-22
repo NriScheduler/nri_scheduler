@@ -33,6 +33,7 @@ import {
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
 import { IApiCompanyInfo, readCompanyById, updateCompany } from "../../../api";
+import { navBack } from "../../../utils";
 
 const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 	const stats = [
@@ -161,13 +162,9 @@ export const CompanyPage = () => {
 		};
 	}, [companyId]);
 
-	const handleBackButton = () => {
-		window.history.back();
-	};
-
 	return (
 		<Container>
-			<Button mb={4} onClick={handleBackButton}>
+			<Button mb={4} onClick={navBack}>
 				Вернуться назад
 			</Button>
 			{company?.you_are_master && (

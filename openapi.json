@@ -182,60 +182,6 @@
 				]
 			}
 		},
-		"/api/profile/avatar/{id}": {
-			"get": {
-				"tags": [
-					"profile"
-				],
-				"summary": "Получение аватара пользователя",
-				"deprecated": true,
-				"parameters": [
-					{
-						"name": "id",
-						"in": "path",
-						"description": "Идентификатор пользователя",
-						"required": true,
-						"schema": {
-							"type": "string",
-							"format": "uuid"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "Файл аватара",
-						"content": {
-							"image/*": {
-								"schema": {
-									"type": "string",
-									"format": "binary"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Файл не найден",
-						"content": {
-							"text/plain": {
-								"schema": {
-									"type": "string"
-								}
-							}
-						}
-					},
-					"500": {
-						"description": "Ошибка получения файла",
-						"content": {
-							"text/plain": {
-								"schema": {
-									"type": "string"
-								}
-							}
-						}
-					}
-				}
-			}
-		},
 		"/avatar/{id}": {
 			"get": {
 				"tags": [
@@ -1526,6 +1472,11 @@
 						"type": "string",
 						"nullable": true,
 						"description": "Город пользователя"
+					},
+					"region": {
+						"type": "string",
+						"nullable": true,
+						"description": "Регион пользователя"
 					},
 					"timezone_offset": {
 						"type": "integer",

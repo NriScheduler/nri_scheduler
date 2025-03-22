@@ -2,16 +2,18 @@ import { h, render } from "preact";
 import AsyncRoute from "preact-async-route";
 import { Route, Router } from "preact-router";
 
+import { softCheck } from "./api";
 import { Layout } from "./components/layout";
 import {
 	CompanyPage,
 	EventPage,
 	HomePage,
 	LocationPage,
-	MasteryPage,
 	NotFoundPage,
+	ProfilePage,
 	SignInPage,
 } from "./components/pages";
+import { ProfileEdit } from "./components/pages/profile/profile-edit";
 
 const App = () => (
 	<Layout
@@ -38,12 +40,15 @@ const App = () => (
 				<Route path="/event/:id" component={EventPage} />
 				<Route path="/company/:id" component={CompanyPage} />
 				<Route path="/location/:id" component={LocationPage} />
-				<Route path="/mastery" component={MasteryPage} />
+				<Route path="/profile" component={ProfilePage} />
+				<Route path="/profile/edit" component={ProfileEdit} />
 
 				<Route default component={() => <NotFoundPage />} />
 			</Router>
 		}
 	/>
 );
+
+softCheck();
 
 render(<App />, document.body);

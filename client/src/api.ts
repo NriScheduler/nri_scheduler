@@ -369,6 +369,7 @@ export interface IApiProfile {
 	readonly about_me: string | null;
 	readonly avatar_link: string | null;
 	readonly city: string | null;
+	readonly region: string | null;
 	readonly timezone_offset: number | null;
 	readonly tz_variant: ETzVariant | null;
 	readonly get_tz_from_device: boolean;

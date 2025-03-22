@@ -3,6 +3,7 @@ import { useEffect, useState } from "preact/hooks";
 import { useForm } from "react-hook-form";
 
 import { Button, Input, Stack, Textarea } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
 
 import {
 	DrawerBackdrop,
@@ -15,18 +16,20 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
-import { addLocation, getMyProfile, IApiLocation } from "../../../api";
+import { addLocation, IApiLocation } from "../../../api";
+import { $profile } from "../../../store/profile";
 
 export const Location = () => {
 	const [open, setOpen] = useState(false);
-	const [isDisableCreateLocationButton, setIsDisableCreateLocationButton] =
-		useState(false);
+
 	const {
 		register,
 		handleSubmit,
 		reset,
 		formState: { errors },
 	} = useForm<IApiLocation>();
+
+	const profile = useStore($profile);
 
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === "Escape") {
@@ -55,25 +58,10 @@ export const Location = () => {
 	});
 
 	return (
-		<DrawerRoot
-			open={open}
-			onOpenChange={(e) => {
-				if (e.open) {
-					setIsDisableCreateLocationButton(true);
-					getMyProfile().then((res) => {
-						if (res !== null) {
-							setOpen(e.open);
-							setIsDisableCreateLocationButton(false);
-						}
-					});
-				} else {
-					setOpen(e.open);
-				}
-			}}
-		>
+		<DrawerRoot open={open} onOpenChange={(e) => setOpen(e.open)}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button disabled={isDisableCreateLocationButton} variant="outline">
+				<Button disabled={!profile?.signed} variant="outline">
 					Создать локацию
 				</Button>
 			</DrawerTrigger>
