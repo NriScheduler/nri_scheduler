@@ -1,6 +1,9 @@
+import { h } from "preact";
+import { useEffect, useState } from "preact/hooks";
+import { useForm } from "react-hook-form";
+
 import { Button, Input, Stack, Textarea } from "@chakra-ui/react";
-import { h } from "preact"; // eslint-disable-line
-import { Field } from "../../ui/field";
+
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -11,17 +14,24 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "../../ui/drawer";
-
-import { addLocation, IApiLocation } from "../../../api";
-import { useForm } from "react-hook-form";
-import { useEffect, useState } from "preact/hooks";
+import { Field } from "../../ui/field";
+import { addLocation, getMyProfile, IApiLocation } from "../../../api";
 
 export const Location = () => {
 	const [open, setOpen] = useState(false);
-	const { register, handleSubmit, reset } = useForm<IApiLocation>();
+	const [isDisableCreateLocationButton, setIsDisableCreateLocationButton] =
+		useState(false);
+	const {
+		register,
+		handleSubmit,
+		reset,
+		formState: { errors },
+	} = useForm<IApiLocation>();
 
 	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") setOpen(false);
+		if (event.key === "Escape") {
+			setOpen(false);
+		}
 	}
 
 	useEffect(() => {
@@ -37,7 +47,6 @@ export const Location = () => {
 		if (data) {
 			addLocation(name, address, description).then((res) => {
 				if (res !== null) {
-					console.log(res.payload);
 					reset();
 					setOpen(false);
 				}
@@ -46,10 +55,27 @@ export const Location = () => {
 	});
 
 	return (
-		<DrawerRoot open={open} onOpenChange={(e) => {if (e) {setOpen(e.open)}}}>
+		<DrawerRoot
+			open={open}
+			onOpenChange={(e) => {
+				if (e.open) {
+					setIsDisableCreateLocationButton(true);
+					getMyProfile().then((res) => {
+						if (res !== null) {
+							setOpen(e.open);
+							setIsDisableCreateLocationButton(false);
+						}
+					});
+				} else {
+					setOpen(e.open);
+				}
+			}}
+		>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button variant="outline">Создать локацию</Button>
+				<Button disabled={isDisableCreateLocationButton} variant="outline">
+					Создать локацию
+				</Button>
 			</DrawerTrigger>
 			<DrawerContent>
 				<DrawerHeader>
@@ -64,7 +90,11 @@ export const Location = () => {
 							w="full"
 							mx="auto"
 						>
-							<Field label="Название *">
+							<Field
+								label="Название *"
+								errorText={errors.name?.message}
+								invalid={!!errors.name?.message}
+							>
 								<Input
 									placeholder="Заполните поле"
 									{...register("name", { required: "Заполните поле" })}

@@ -1,8 +1,12 @@
-import { ComponentChild, h, VNode } from "preact"; // eslint-disable-line
+import { ComponentChild, h, VNode } from "preact";
 import { cloneElement, forwardRef } from "preact/compat";
 
-import type { BoxProps, InputElementProps } from "@chakra-ui/react";
-import { Group, InputElement } from "@chakra-ui/react";
+import {
+	BoxProps,
+	Group,
+	InputElement,
+	InputElementProps,
+} from "@chakra-ui/react";
 
 export interface IInputGroupProps extends BoxProps {
 	startElementProps?: InputElementProps;
@@ -27,8 +31,6 @@ export const InputGroup = forwardRef<HTMLDivElement, IInputGroupProps>(
 			...rest
 		} = props;
 
-		// const child = React.Children.only(children);
-
 		return (
 			<Group ref={ref} {...rest}>
 				{startElement && (
@@ -52,5 +54,5 @@ export const InputGroup = forwardRef<HTMLDivElement, IInputGroupProps>(
 				)}
 			</Group>
 		);
-	}
+	},
 );

@@ -29,7 +29,12 @@ pub(super) async fn cors_middleware(req: Request<Body>, next: Next) -> Response 
 
 					res.headers_mut().append(
 						header::ACCESS_CONTROL_ALLOW_METHODS,
-						HeaderValue::from_str("GET,POST").unwrap(),
+						HeaderValue::from_str("GET,POST,PUT,OPTIONS").unwrap(),
+					);
+
+					res.headers_mut().append(
+						header::ACCESS_CONTROL_ALLOW_HEADERS,
+						HeaderValue::from_str("content-type, origin").unwrap(),
 					);
 
 					res.headers_mut().append(

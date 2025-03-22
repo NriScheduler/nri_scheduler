@@ -1,31 +1,32 @@
-import { h } from "preact"; // eslint-disable-line
-import React from "preact/compat";
+import { h, RefObject } from "preact";
+import { forwardRef } from "preact/compat";
+
 import { Drawer as ChakraDrawer, Portal } from "@chakra-ui/react";
+
 import { CloseButton } from "./close-button";
 
-interface DrawerContentProps extends ChakraDrawer.ContentProps {
+interface IDrawerContentProps extends ChakraDrawer.ContentProps {
 	portalled?: boolean;
-	portalRef?: React.RefObject<HTMLElement>;
+	portalRef?: RefObject<HTMLElement>;
 	offset?: ChakraDrawer.ContentProps["padding"];
 }
 
-export const DrawerContent = React.forwardRef<
-	HTMLDivElement,
-	DrawerContentProps
->(function DrawerContent(props, ref) {
-	const { children, portalled = true, portalRef, offset, ...rest } = props;
-	return (
-		<Portal disabled={!portalled} container={portalRef}>
-			<ChakraDrawer.Positioner padding={offset}>
-				<ChakraDrawer.Content ref={ref} {...rest} asChild={false}>
-					{children}
-				</ChakraDrawer.Content>
-			</ChakraDrawer.Positioner>
-		</Portal>
-	);
-});
+export const DrawerContent = forwardRef<HTMLDivElement, IDrawerContentProps>(
+	function DrawerContent(props, ref) {
+		const { children, portalled = true, portalRef, offset, ...rest } = props;
+		return (
+			<Portal disabled={!portalled} container={portalRef}>
+				<ChakraDrawer.Positioner padding={offset}>
+					<ChakraDrawer.Content ref={ref} {...rest} asChild={false}>
+						{children}
+					</ChakraDrawer.Content>
+				</ChakraDrawer.Positioner>
+			</Portal>
+		);
+	},
+);
 
-export const DrawerCloseTrigger = React.forwardRef<
+export const DrawerCloseTrigger = forwardRef<
 	HTMLButtonElement,
 	ChakraDrawer.CloseTriggerProps
 >(function DrawerCloseTrigger(props, ref) {

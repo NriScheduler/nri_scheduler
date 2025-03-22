@@ -1,11 +1,12 @@
 pub(super) mod companies;
 pub(super) mod events;
 pub(super) mod locations;
+pub(super) mod regions;
 
 use ::std::sync::Arc;
 use axum::{
 	Extension,
-	extract::State,
+	extract::{Path, State},
 	response::{IntoResponse, Response},
 };
 use uuid::Uuid;
@@ -14,9 +15,10 @@ use crate::{
 	auth,
 	cookie::{remove_auth_cookie, set_auth_cookie},
 	dto::{
-		Dto,
-		auth::{RegistrationDto, SignInDto},
+		Dto, FileLinkDto,
+		auth::{RegistrationDto, SignInDto, UpdateProfileDto},
 	},
+	image,
 	repository::Repository,
 	system_models::{AppError, AppResponse, AppResult},
 };
@@ -76,11 +78,40 @@ pub(super) async fn logout() -> Response {
 	}
 }
 
-pub(super) async fn read_profile(
+pub(super) async fn read_my_profile(
 	State(repo): State<Arc<Repository>>,
 	Extension(user_id): Extension<Uuid>,
 ) -> AppResult {
 	let profile = repo.read_profile(user_id).await?;
+
+	Ok(match profile {
+		None => AppResponse::scenario_fail("Пользователь не найден", None),
+		Some(profile) => {
+			let payload = serde_json::to_value(profile)?;
+			AppResponse::scenario_success("Профиль получен", Some(payload))
+		}
+	})
+}
+
+pub(super) async fn update_my_profile(
+	State(repo): State<Arc<Repository>>,
+	Extension(user_id): Extension<Uuid>,
+	Dto(body): Dto<UpdateProfileDto>,
+) -> AppResult {
+	repo.update_profile(user_id, body).await?;
+
+	Ok(AppResponse::scenario_success(
+		"Данные пользователя обновлены",
+		None,
+	))
+}
+
+pub(super) async fn read_another_profile(
+	State(repo): State<Arc<Repository>>,
+	Extension(_user_id): Extension<Option<Uuid>>, // когда-нибудь пригодится для определения показывать ли контакты
+	Path(profile_id): Path<Uuid>,
+) -> AppResult {
+	let profile = repo.read_profile(profile_id).await?;
 
 	Ok(match profile {
 		None => AppResponse::scenario_fail("Пользователь не найден", None),
@@ -104,4 +135,22 @@ pub(super) async fn who_i_am(
 			AppResponse::scenario_success("I know who I am", Some(payload))
 		}
 	})
+}
+
+pub(super) async fn read_avatar(
+	State(repo): State<Arc<Repository>>,
+	Path(profile_id): Path<Uuid>,
+) -> Response {
+	image::serve(repo.get_avatar_link(profile_id)).await
+}
+
+pub(super) async fn set_avatar(
+	State(repo): State<Arc<Repository>>,
+	Extension(user_id): Extension<Uuid>,
+	Dto(body): Dto<FileLinkDto>,
+) -> AppResult {
+	image::check_remote_file(&body.url).await?;
+	repo.set_avatar(user_id, &body.url).await?;
+
+	Ok(AppResponse::scenario_success("Установлен аватар", None))
 }

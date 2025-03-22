@@ -1,8 +1,5 @@
-import { h } from 'preact'; // eslint-disable-line
-
+import { h } from "preact";
 
 export const ProfilePage = () => {
-	return (
-		<h1>ProfilePage</h1>
-	);
+	return <h1>ProfilePage</h1>;
 };

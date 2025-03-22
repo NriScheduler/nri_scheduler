@@ -1,27 +1,14 @@
-import { h } from "preact"; // eslint-disable-line
-
 import "@schedule-x/theme-default/dist/index.css";
 import "./calendar.css";
 
-import dayjs from "dayjs";
+import type { UUID } from "node:crypto";
 
-import { useCalendarApp, ScheduleXCalendar } from "@schedule-x/preact";
-import { createViewMonthGrid } from "@schedule-x/calendar";
-
+import { h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
-import { useStore } from "@nanostores/preact";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
-import {
-	createEvent,
-	IApiCompany,
-	IApiLocation,
-	readEvent,
-	readEventsList,
-	readLocations,
-	readMyCompanies,
-} from "../../../api";
-import { $tz } from "../../../store/tz";
 import {
 	Button,
 	Container,
@@ -32,8 +19,16 @@ import {
 	InputAddon,
 	NativeSelect,
 	Stack,
+	Switch,
 } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
+import { CalendarApp, createViewMonthGrid } from "@schedule-x/calendar";
+import { ScheduleXCalendar, useCalendarApp } from "@schedule-x/preact";
+import { CalendarAppSingleton } from "@schedule-x/shared";
+import dayjs from "dayjs";
 
+import { Company } from "./company";
+import { Location } from "./location";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -44,13 +39,23 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "../../ui/drawer";
-
 import { Field } from "../../ui/field";
-import { useForm } from "react-hook-form";
-import { Company } from "./company";
-import { Location } from "./location";
-import { UUID } from "crypto";
-import toast from "react-hot-toast";
+import {
+	createEvent,
+	IApiCompany,
+	IApiLocation,
+	readEvent,
+	readEventsList,
+	readLocations,
+	readMyCompanies,
+} from "../../../api";
+import {
+	$mastery,
+	disableMastery,
+	enableMastery,
+} from "../../../store/mastery";
+import { $signed } from "../../../store/profile";
+import { $tz } from "../../../store/tz";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
@@ -61,18 +66,66 @@ interface IFormCreateEvent {
 	readonly location: UUID;
 	readonly start: string;
 	readonly startTime: string;
-	readonly max_slots: string,
-	readonly plan_duration: string,
+	readonly max_slots: string;
+	readonly plan_duration: string;
 }
 
 export const CalendarPage = () => {
+	const [
+		isDisableCreateEventSubmitButton,
+		setIsDisableCreateEventSubmitButton,
+	] = useState(false);
+	const [showSwitch, setShowSwitch] = useState(false);
 	const [openDraw, setOpenDraw] = useState(false);
+	const [isDisableCreateEventButton, setIsDisableCreateEventButton] =
+		useState(false);
 	const [companyList, setCompanyList] = useState<IApiCompany[]>([]);
 	const [locationList, setLocationList] = useState<IApiLocation[]>([]);
 
 	const tz = useStore($tz);
-	const { register, handleSubmit, reset } =
-		useForm<IFormCreateEvent>();
+	const mastery = useStore($mastery);
+	const signed = useStore($signed);
+
+	const {
+		register,
+		handleSubmit,
+		reset,
+		watch,
+		clearErrors,
+		formState: { errors },
+	} = useForm<IFormCreateEvent>();
+	const addDataEventToCalendar = (
+		dateStart: string,
+		dateEnd: string,
+		calendar: CalendarApp,
+	) => {
+		const dateStartWithTz = dayjs(dateStart).tz(tz, KEEP_LOCAL_TIME).format();
+		const dateEndWithTz = dayjs(dateEnd).tz(tz, KEEP_LOCAL_TIME).format();
+		readEventsList(dateStartWithTz, dateEndWithTz, {
+			imamaster: $mastery.get(),
+		}).then((res) => {
+			if (res !== null) {
+				calendar.events.set(
+					res.payload.map((apiEv) => {
+						const start = dayjs(apiEv.date);
+						const end = start.add(
+							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
+							"h",
+						);
+
+						return {
+							id: apiEv.id,
+							title: apiEv.company,
+							location: apiEv.location,
+							people: apiEv.players,
+							start: start.format(EVENT_FORMAT),
+							end: end.format(EVENT_FORMAT),
+						};
+					}),
+				);
+			}
+		});
+	};
 
 	const calendar = useCalendarApp({
 		locale: "ru-RU",
@@ -81,22 +134,35 @@ export const CalendarPage = () => {
 			onEventClick(event) {
 				navigate(`/event/${event.id}`);
 			},
+			onRangeUpdate(range) {
+				addDataEventToCalendar(range.start, range.end, calendar);
+			},
 		},
 	});
 
+	useEffect(() => {
+		const app = calendar["$app"] as CalendarAppSingleton;
+		const range = app.calendarState.range.value;
+		if (range !== null) {
+			addDataEventToCalendar(range.start, range.end, calendar);
+		}
+	}, [mastery]);
+
 	const getCompanies = () => {
-		readMyCompanies().then((responce) => {
+		return readMyCompanies().then((responce) => {
 			if (responce?.payload) {
 				setCompanyList(responce.payload);
 			}
+			return responce?.payload || null;
 		});
 	};
 
 	const getLocations = () => {
-		readLocations().then((responce) => {
+		return readLocations().then((responce) => {
 			if (responce?.payload) {
 				setLocationList(responce.payload);
 			}
+			return responce?.payload || null;
 		});
 	};
 
@@ -107,7 +173,7 @@ export const CalendarPage = () => {
 				const start = dayjs(data.date);
 				const end = start.add(
 					data.plan_duration || DEFAULT_EVENT_DURATION,
-					"h"
+					"h",
 				);
 
 				calendar.events.add({
@@ -137,47 +203,20 @@ export const CalendarPage = () => {
 	}, [locationList]);
 
 	useEffect(() => {
-		const now = dayjs().tz(tz);
-		const monthStart = now.startOf("M").format();
-		const monthEnd = now.endOf("M").format();
-
-		getCompanies();
-		getLocations();
+		setShowSwitch(signed);
 
 		document.addEventListener("keydown", handleKeyDown);
-
-		/** @todo передавать таймзону, возвращать в нужной таймзоне, присылать название кампании, локации, список людей */
-		readEventsList(monthStart, monthEnd).then((res) => {
-			if (res !== null) {
-				calendar.events.set(
-					res.payload.map((apiEv) => {
-						const start = dayjs(apiEv.date);
-						const end = start.add(
-							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
-							"h"
-						);
-
-						return {
-							id: apiEv.id,
-							title: apiEv.company,
-							location: apiEv.location,
-							people: apiEv.players,
-							start: start.format(EVENT_FORMAT),
-							end: end.format(EVENT_FORMAT),
-						};
-					})
-				);
-			}
-		});
 
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
 			setOpenDraw(false);
 		};
-	}, []);
+	}, [signed]);
 
 	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") setOpenDraw(false);
+		if (event.key === "Escape") {
+			setOpenDraw(false);
+		}
 	}
 
 	const onSubmit = handleSubmit((data) => {
@@ -186,142 +225,250 @@ export const CalendarPage = () => {
 
 		if (data) {
 			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
-
+			setIsDisableCreateEventSubmitButton(true);
 			createEvent(
 				company,
 				date.toISOString(),
 				location,
 				Number(max_slots) || null,
-				Number(plan_duration) || null
-			).then((res) => {
-				if (res) {
-					toast.success("Событие успешно создано");
-					setOpenDraw(false);
-					getNewEvent(res.payload);
-					reset();
-				}
-			});
+				Number(plan_duration) || null,
+			)
+				.then((res) => {
+					if (res) {
+						toast.success("Событие успешно создано");
+						setOpenDraw(false);
+						getNewEvent(res.payload);
+						reset();
+					}
+				})
+				.finally(() => {
+					setIsDisableCreateEventSubmitButton(false);
+				});
 		}
 	});
+	const [start] = watch(["start"]);
+	const validateDate = (value: string) => {
+		clearErrors("startTime");
+		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
+		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+		if (
+			nowDate.isSame(fieldDate, "day") ||
+			fieldDate.isAfter(nowDate, "day")
+		) {
+			return true;
+		} else {
+			return "Вы указали прошлый день";
+		}
+	};
+
+	const validateTime = (value: string) => {
+		if (!start) {
+			return "Укажите дату";
+		}
+		const fultime = dayjs(`${start} ${value}`).tz(tz, KEEP_LOCAL_TIME);
+		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+		if (
+			nowDate.isSame(fultime, "minute") ||
+			fultime.isAfter(nowDate, "minute")
+		) {
+			return true;
+		} else {
+			return "Вы указали прошлое время";
+		}
+	};
 
 	return (
 		<section>
 			<Container>
-				<Stack mb={4} direction="row" gap={4}>
-					<DrawerRoot
-						open={openDraw}
-						onOpenChange={(e) => {
-							if (e) {
-								setOpenDraw(e.open);
+				<HStack flexWrap="wrap" mb="5" minHeight="40px" gap={10}>
+					{showSwitch && (
+						<Switch.Root
+							size="lg"
+							checked={mastery}
+							onCheckedChange={() =>
+								mastery ? disableMastery() : enableMastery()
 							}
-						}}
-					>
-						<DrawerBackdrop />
-						<DrawerTrigger asChild>
-							<Button variant="outline">Добавить событие</Button>
-						</DrawerTrigger>
-						<DrawerContent>
-							<DrawerHeader>
-								<DrawerTitle>Создание события</DrawerTitle>
-							</DrawerHeader>
-							<DrawerBody>
-								<form onSubmit={onSubmit}>
-									<Stack gap="4" w="full">
-										<Field label="Кампания">
-											<NativeSelect.Root>
-												<NativeSelect.Field
-													placeholder="Выберите из списка"
-													{...register("company", {
-														required: "Заполните",
-													})}
-													defaultValue={companyList?.[0]?.id}
-												>
-													{companies.items.map((company) => (
-														<option
-															value={company.id}
-															key={company.name}
-														>
-															{company.name}
-														</option>
-													))}
-												</NativeSelect.Field>
-												<NativeSelect.Indicator />
-											</NativeSelect.Root>
-										</Field>
-										<HStack gap={2} width="full">
-											<Field label="Начало">
-												<Input
-													type="date"
-													{...register("start", {
-														required: "Заполните поле",
-													})}
-												/>
-											</Field>
-											<Field label="Время">
-												<Input
-													type="time"
-													{...register("startTime", {
-														required: "Заполните поле",
-													})}
-												/>
-											</Field>
-										</HStack>
-										<Field label="Локация">
-											<NativeSelect.Root>
-												<NativeSelect.Field
-													placeholder="Выберите из списка"
-													{...register("location", {
-														required: "Заполните",
-													})}
-													defaultValue={locationList?.[0]?.id}
-												>
-													{locations.items.map((location) => (
-														<option
-															value={location.id}
-															key={location.name}
-														>
-															{location.name}
-														</option>
-													))}
-												</NativeSelect.Field>
-												<NativeSelect.Indicator />
-											</NativeSelect.Root>
-										</Field>
-
-										<Field label="Максимальное количество игроков">
-											<Input
-												type="number"
-												min="1"
-												step="1"
-												defaultValue="1"
-												{...register("max_slots")}
-											/>
-										</Field>
-
-										<Field label="Планируемая длительность">
-											<Group attached w="full">
-												<Input
-													type="number"
-													min="1"
-													step="1"
-													defaultValue="1"
-													{...register("plan_duration")}
-												/>
-												<InputAddon>час</InputAddon>
-											</Group>
-										</Field>
-									</Stack>
-									<Button type="submit" w="full" mt={6}>
-										Создать
+						>
+							<Switch.HiddenInput />
+							<Switch.Control>
+								<Switch.Thumb />
+							</Switch.Control>
+							<Switch.Label>Режим мастера</Switch.Label>
+						</Switch.Root>
+					)}
+					{mastery && showSwitch && (
+						<Stack direction="row" gap={4}>
+							<DrawerRoot
+								open={openDraw}
+								onOpenChange={(e) => {
+									if (e.open) {
+										setIsDisableCreateEventButton(true);
+										Promise.all([
+											getCompanies(),
+											getLocations(),
+										]).then(([companiesResult, locationsResult]) => {
+											if (
+												companiesResult === null ||
+												locationsResult === null
+											) {
+												setIsDisableCreateEventButton(false);
+												return;
+											}
+											setOpenDraw(e.open);
+											setIsDisableCreateEventButton(false);
+										});
+									} else {
+										setOpenDraw(e.open);
+									}
+								}}
+							>
+								<DrawerBackdrop />
+								<DrawerTrigger asChild>
+									<Button
+										disabled={isDisableCreateEventButton}
+										variant="outline"
+									>
+										Добавить событие
 									</Button>
-								</form>
-							</DrawerBody>
-							<DrawerCloseTrigger />
-						</DrawerContent>
-					</DrawerRoot>
-					<Company data={companyList} />
-					<Location />
-				</Stack>
+								</DrawerTrigger>
+								<DrawerContent>
+									<DrawerHeader>
+										<DrawerTitle>Создание события</DrawerTitle>
+									</DrawerHeader>
+									<DrawerBody>
+										<form onSubmit={onSubmit}>
+											<Stack gap="4" w="full">
+												<Field
+													label="Кампания"
+													errorText={errors.company?.message}
+													invalid={!!errors.company?.message}
+												>
+													<NativeSelect.Root>
+														<NativeSelect.Field
+															placeholder="Выберите из списка"
+															{...register("company", {
+																required: "Заполните",
+															})}
+															defaultValue={companyList?.[0]?.id}
+														>
+															{companies.items.map((company) => (
+																<option
+																	value={company.id}
+																	key={company.name}
+																>
+																	{company.name}
+																</option>
+															))}
+														</NativeSelect.Field>
+														<NativeSelect.Indicator />
+													</NativeSelect.Root>
+												</Field>
+												<HStack
+													alignItems="start"
+													gap={2}
+													width="full"
+												>
+													<Field
+														label="Начало"
+														errorText={errors.start?.message}
+														invalid={!!errors.start?.message}
+													>
+														<Input
+															type="date"
+															min={dayjs()
+																.tz(tz, KEEP_LOCAL_TIME)
+																.format("YYYY-MM-DD")}
+															{...register("start", {
+																required: "Заполните поле",
+																validate: validateDate,
+															})}
+														/>
+													</Field>
+													<Field
+														label="Время"
+														errorText={errors.startTime?.message}
+														invalid={!!errors.startTime?.message}
+													>
+														<Input
+															type="time"
+															{...register("startTime", {
+																required: "Заполните поле",
+																validate: validateTime,
+															})}
+														/>
+													</Field>
+												</HStack>
+												<Field
+													label="Локация"
+													errorText={errors.location?.message}
+													invalid={!!errors.location?.message}
+												>
+													<NativeSelect.Root>
+														<NativeSelect.Field
+															placeholder="Выберите из списка"
+															{...register("location", {
+																required: "Заполните",
+															})}
+															defaultValue={
+																locationList?.[0]?.id
+															}
+														>
+															{locations.items.map(
+																(location) => (
+																	<option
+																		value={location.id}
+																		key={location.name}
+																	>
+																		{location.name}
+																	</option>
+																),
+															)}
+														</NativeSelect.Field>
+														<NativeSelect.Indicator />
+													</NativeSelect.Root>
+												</Field>
+
+												<Field label="Максимальное количество игроков">
+													<Input
+														type="number"
+														min="1"
+														step="1"
+														defaultValue="1"
+														{...register("max_slots")}
+													/>
+												</Field>
+
+												<Field label="Планируемая длительность">
+													<Group attached w="full">
+														<Input
+															type="number"
+															min="1"
+															step="1"
+															defaultValue="1"
+															{...register("plan_duration")}
+														/>
+														<InputAddon>час</InputAddon>
+													</Group>
+												</Field>
+											</Stack>
+											<Button
+												disabled={isDisableCreateEventSubmitButton}
+												type="submit"
+												w="full"
+												mt={6}
+											>
+												Создать
+											</Button>
+										</form>
+									</DrawerBody>
+									<DrawerCloseTrigger />
+								</DrawerContent>
+							</DrawerRoot>
+							<Company data={companyList} />
+							<Location />
+						</Stack>
+					)}
+				</HStack>
 				<ScheduleXCalendar calendarApp={calendar} />
 			</Container>
 		</section>

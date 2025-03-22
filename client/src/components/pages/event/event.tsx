@@ -1,109 +1,324 @@
 import type { UUID } from "node:crypto";
 
-import { h, Fragment } from "preact"; // eslint-disable-line
-import { useEffect, useState } from "preact/hooks";
+import { h } from "preact";
+import { useEffect, useMemo, useState } from "preact/hooks";
 import { useRouter } from "preact-router";
-import { useStore } from "@nanostores/preact";
-
-import dayjs from "dayjs";
-import "dayjs/locale/ru";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
 import {
-	Box,
 	Button,
 	Card,
 	Container,
+	createListCollection,
+	DataList,
+	Group,
 	Heading,
 	HStack,
+	Input,
+	InputAddon,
 	Link,
+	NativeSelect,
+	Skeleton,
 	Stack,
-	Strong,
-	Text,
 } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
+import "dayjs/locale/ru";
+import dayjs from "dayjs";
+
+import { NotFoundPage } from "../not-found/not-found";
+import {
+	DrawerBackdrop,
+	DrawerBody,
+	DrawerCloseTrigger,
+	DrawerContent,
+	DrawerHeader,
+	DrawerRoot,
+	DrawerTitle,
+	DrawerTrigger,
+} from "../../ui/drawer";
+import { Field } from "../../ui/field";
+import {
+	applyEvent,
+	EScenarioStatus,
+	IApiEvent,
+	IApiLocation,
+	readEvent,
+	readLocations,
+	updateEvent,
+} from "../../../api";
+import { $signed } from "../../../store/profile";
 import { $tz } from "../../../store/tz";
-import { IApiEvent, readEvent } from "../../../api";
 
 dayjs.locale("ru");
 
 const EventCard = ({ event }: { event: IApiEvent }) => {
 	const tz = useStore($tz);
+	const signed = useStore($signed);
 
 	const eventDate = dayjs(event.date).tz(tz);
-	const customDay = eventDate.format("DD MMMM");
+
+	const [isLoading, setIsLoading] = useState(false);
+	const [youApplied, setYouApplied] = useState(event.you_applied);
+
+	const stats = [
+		{ label: "Мастер игры", value: event.master, href: "#" },
+		{
+			label: "Место проведения",
+			value: event.location,
+			href: `/location/${event.location_id}`,
+		},
+		{ label: "Дата", value: eventDate.format("DD MMMM") },
+		{ label: "Время", value: eventDate.format("HH:mm") },
+		{
+			label: "Количество игроков",
+			value: event.max_slots
+				? `${event.players.length} из ${event.max_slots}`
+				: "Без ограничений",
+		},
+		{
+			label: "Записаны",
+			value: event?.players?.length
+				? event.players.join(", ")
+				: "Пока никто не записался",
+		},
+		{
+			label: "Продолжительность",
+			value: event.plan_duration
+				? `${event.plan_duration} ч`
+				: "Не строим планов",
+		},
+	];
+
+	const handleSubscribe = () => {
+		setIsLoading(true);
+		applyEvent(event.id)
+			.then((responce) => {
+				if (responce?.status === EScenarioStatus.SCENARIO_SUCCESS) {
+					setYouApplied(true);
+					toast.success("Успех. Запись оформлена");
+				}
+			})
+			.finally(() => {
+				setIsLoading(false);
+			});
+	};
 
 	return (
-		<>
-			<Card.Root width="full">
-				<Card.Body>
-					<HStack mb="6" gap="3">
-						<Heading size="3xl">{event.company}</Heading>
-					</HStack>
-					<Card.Description>
-						<Stack gap={4}>
-							<Box display="flex" alignItems="center" gap={2}>
-								<Strong color="fg">Мастер игры: </Strong>
-								<Link href="#" variant="underline" colorPalette="blue">
-									{event.master}
-								</Link>
-							</Box>
-							<Box display="flex" alignItems="center" gap={2}>
-								<Strong color="fg">Место проведения: </Strong>
-								<Text>{event.location}</Text>
-							</Box>
-							<Box display="flex" alignItems="center" gap={2}>
-								<Strong color="fg">Дата: </Strong>
-								<Text>{customDay}</Text>
-							</Box>
-							<Box display="flex" alignItems="center" gap={2}>
-								<Strong color="fg">Время: </Strong>
-								<Text>{eventDate.format("HH:mm")}</Text>
-							</Box>
-							<Box display="flex" alignItems="center" gap={2}>
-								<Strong color="fg">Всего игроков: </Strong>
-								<Link href="#">{event.max_slots || 0}</Link>
-							</Box>
-							<Box display="flex" alignItems="center" gap={2}>
-								<Box display="flex" alignItems="center" gap={2}>
-									<Strong color="fg">Записаны: -</Strong>
-									{event.players.map((item, index) => (
-										<Link href="#" key={index} variant="underline" colorPalette="blue">
-											{`Игрок ${index + 1}`}
-										</Link>
-									))}
-								</Box>
-							</Box>
-							<Box display="flex" alignItems="center" gap={2}>
-								<Strong color="fg">Продолжительность: </Strong>
-								<Link href="#">{event.plan_duration || 0}</Link>
-							</Box>
-						</Stack>
-					</Card.Description>
-				</Card.Body>
-				<Card.Footer>
-					<Button variant="subtle" colorPalette="blue">
-						{event.you_applied ? "Ожидание" : "Записаться"}
-					</Button>
-				</Card.Footer>
-			</Card.Root>
-		</>
+		<Card.Root width="full">
+			<Card.Body>
+				<HStack mb="6" gap="3">
+					<Heading size="3xl">
+						Игра по компании:&nbsp;
+						<Link
+							colorPalette="cyan"
+							variant="underline"
+							href={`/company/${event.company_id}`}
+						>
+							{event.company}
+						</Link>
+					</Heading>
+				</HStack>
+				<DataList.Root orientation="horizontal">
+					{stats.map((item) => (
+						<DataList.Item key={item.label}>
+							<DataList.ItemLabel minW="150px">
+								{item.label}
+							</DataList.ItemLabel>
+							<DataList.ItemValue color="black" fontWeight="500">
+								{item.href ? (
+									<Link href={item.href} colorPalette="blue">
+										{item.value}
+									</Link>
+								) : (
+									<p>{item.value}</p>
+								)}
+							</DataList.ItemValue>
+						</DataList.Item>
+					))}
+				</DataList.Root>
+			</Card.Body>
+			<Card.Footer>
+				{signed ? (
+					!event.you_are_master ? (
+						<Button
+							variant="subtle"
+							colorPalette="blue"
+							minW="115px"
+							onClick={handleSubscribe}
+							disabled={isLoading || youApplied}
+						>
+							{isLoading
+								? "..."
+								: youApplied
+									? "Вы записаны"
+									: "Записаться"}
+						</Button>
+					) : null
+				) : (
+					"необходимо авторизоваться для записи на игру"
+				)}
+			</Card.Footer>
+		</Card.Root>
 	);
 };
 
+const EventCardSkeleton = () => {
+	const stats = [
+		{ label: "Мастер игры" },
+		{ label: "Место проведения" },
+		{ label: "Дата" },
+		{ label: "Время" },
+		{ label: "Количество игроков" },
+		{ label: "Записаны" },
+		{ label: "Продолжительность" },
+	];
+
+	return (
+		<Card.Root width="full">
+			<Card.Body>
+				<HStack mb="6" gap="3">
+					<Skeleton height="38px" w="30%" />
+				</HStack>
+				<DataList.Root orientation="horizontal">
+					{stats.map((item, index) => (
+						<DataList.Item key={index}>
+							<DataList.ItemLabel minW="150px">
+								{item.label}
+							</DataList.ItemLabel>
+							<DataList.ItemValue color="black" fontWeight="500">
+								<Skeleton height="20px" w="30%" />
+							</DataList.ItemValue>
+						</DataList.Item>
+					))}
+				</DataList.Root>
+			</Card.Body>
+		</Card.Root>
+	);
+};
+
+interface IFormEditEvent {
+	readonly company: UUID;
+	readonly location: UUID;
+	readonly start: string;
+	readonly startTime: string;
+	readonly max_slots: string;
+	readonly plan_duration: string;
+}
+
+const KEEP_LOCAL_TIME = true;
+
 export const EventPage = () => {
-
 	const [route] = useRouter();
-
+	const eventId = route.matches?.id as UUID | undefined;
 	const [fetching, setFetching] = useState(false);
 	const [event, setEvent] = useState<IApiEvent | null>(null);
+	const [open, setOpen] = useState(false);
+	const [locationList, setLocationList] = useState<IApiLocation[]>([]);
+	const [isDisableEditEventSubmitButton, setIsDisableEditEventSubmitButton] =
+		useState(false);
+	const tz = useStore($tz);
 
+	const getLocations = () => {
+		return readLocations().then((responce) => {
+			if (responce?.payload) {
+				setLocationList(responce.payload);
+			}
+			return responce?.payload || null;
+		});
+	};
+
+	const locations = useMemo(() => {
+		return createListCollection({
+			items: locationList,
+			itemToString: (item) => item.name,
+			itemToValue: (item) => item.id,
+		});
+	}, [locationList]);
+	const {
+		register,
+		handleSubmit,
+		watch,
+		clearErrors,
+		formState: { errors },
+	} = useForm<IFormEditEvent>();
+	const onSubmit = handleSubmit((data) => {
+		const { location, start, startTime, max_slots, plan_duration } = data;
+
+		if (data) {
+			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
+			setIsDisableEditEventSubmitButton(true);
+			if (!eventId) {
+				return;
+			}
+			updateEvent(
+				eventId,
+				date.toISOString(),
+				location,
+				Number(max_slots) || null,
+				Number(plan_duration) || null,
+			)
+				.then((res) => {
+					if (res !== null) {
+						setOpen(false);
+					}
+				})
+				.then(() =>
+					readEvent(eventId).then((res) => {
+						if (res !== null) {
+							setEvent(res.payload);
+							return res?.payload;
+						}
+					}),
+				)
+				.finally(() => {
+					setIsDisableEditEventSubmitButton(false);
+				});
+		}
+	});
+	const [start] = watch(["start"]);
+	const validateDate = (value: string) => {
+		clearErrors("startTime");
+		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
+		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+		if (
+			nowDate.isSame(fieldDate, "day") ||
+			fieldDate.isAfter(nowDate, "day")
+		) {
+			return true;
+		} else {
+			return "Вы указали прошлый день";
+		}
+	};
+
+	const validateTime = (value: string) => {
+		if (!start) {
+			return "Укажите дату";
+		}
+		const fultime = dayjs(`${start} ${value}`).tz(tz, KEEP_LOCAL_TIME);
+		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+		if (
+			nowDate.isSame(fultime, "minute") ||
+			fultime.isAfter(nowDate, "minute")
+		) {
+			return true;
+		} else {
+			return "Вы указали прошлое время";
+		}
+	};
 	useEffect(() => {
-		const eventId = route.matches?.id as UUID | undefined;
 		if (eventId) {
 			setFetching(true);
 			readEvent(eventId)
 				.then((res) => {
 					if (res !== null) {
 						setEvent(res.payload);
+						return res?.payload;
+					}
+				})
+				.then((eventData) => {
+					if (eventData?.you_are_master) {
+						return getLocations();
 					}
 				})
 				.finally(() => {
@@ -116,18 +331,161 @@ export const EventPage = () => {
 		window.history.back();
 	}
 
+	const eventDate = dayjs(event?.date).tz(tz);
+
 	return (
 		<section>
 			<Container>
 				<Button mb={4} onClick={handleBackButton}>
 					Вернуться назад
 				</Button>
+				{event?.you_are_master && (
+					<HStack alignItems="top">
+						<DrawerRoot
+							open={open}
+							onOpenChange={(e) => {
+								setOpen(e.open);
+							}}
+						>
+							<DrawerBackdrop />
+							<DrawerTrigger asChild>
+								<Button
+									colorPalette="cyan"
+									mt="4"
+									mb="4"
+									variant="solid"
+								>
+									Редактировать событие
+								</Button>
+							</DrawerTrigger>
+							<DrawerContent>
+								<DrawerHeader>
+									<DrawerTitle>Редактирование события</DrawerTitle>
+								</DrawerHeader>
+								<DrawerBody>
+									<form onSubmit={onSubmit}>
+										<Stack gap="4" w="full">
+											<HStack
+												alignItems="start"
+												gap={2}
+												width="full"
+											>
+												<Field
+													label="Начало"
+													errorText={errors.start?.message}
+													invalid={!!errors.start?.message}
+												>
+													<Input
+														type="date"
+														defaultValue={eventDate.format(
+															"YYYY-MM-DD",
+														)}
+														min={dayjs()
+															.tz(tz, KEEP_LOCAL_TIME)
+															.format("YYYY-MM-DD")}
+														{...register("start", {
+															required: "Заполните поле",
+															validate: validateDate,
+														})}
+													/>
+												</Field>
+												<Field
+													label="Время"
+													errorText={errors.startTime?.message}
+													invalid={!!errors.startTime?.message}
+												>
+													<Input
+														type="time"
+														defaultValue={eventDate.format(
+															"HH:mm",
+														)}
+														{...register("startTime", {
+															required: "Заполните поле",
+															validate: validateTime,
+														})}
+													/>
+												</Field>
+											</HStack>
+											<Field
+												label="Локация"
+												errorText={errors.location?.message}
+												invalid={!!errors.location?.message}
+											>
+												<NativeSelect.Root>
+													<NativeSelect.Field
+														placeholder="Выберите из списка"
+														{...register("location", {
+															required: "Заполните",
+														})}
+														defaultValue={event.location_id}
+													>
+														{locations.items.map((location) => (
+															<option
+																value={location.id}
+																key={location.name}
+															>
+																{location.name}
+															</option>
+														))}
+													</NativeSelect.Field>
+													<NativeSelect.Indicator />
+												</NativeSelect.Root>
+											</Field>
+
+											<Field label="Максимальное количество игроков">
+												<Input
+													type="number"
+													min="1"
+													step="1"
+													defaultValue={event?.max_slots || 0}
+													{...register("max_slots")}
+												/>
+											</Field>
+
+											<Field label="Планируемая длительность">
+												<Group attached w="full">
+													<Input
+														type="number"
+														min="1"
+														step="1"
+														defaultValue={
+															event?.plan_duration || 0
+														}
+														{...register("plan_duration")}
+													/>
+													<InputAddon>час</InputAddon>
+												</Group>
+											</Field>
+										</Stack>
+										<Button
+											disabled={isDisableEditEventSubmitButton}
+											type="submit"
+											w="full"
+											mt={6}
+										>
+											Редактировать
+										</Button>
+										<DrawerTrigger asChild>
+											<Button type="button" w="full" mt={6}>
+												Отмена
+											</Button>
+										</DrawerTrigger>
+									</form>
+								</DrawerBody>
+								<DrawerCloseTrigger />
+							</DrawerContent>
+						</DrawerRoot>
+					</HStack>
+				)}
 				{fetching ? (
-					"Загрузка..."
+					<EventCardSkeleton />
 				) : event !== null ? (
 					<EventCard event={event} />
 				) : (
-					"Ошибка загрузки"
+					<NotFoundPage
+						checkButton={false}
+						title="Событие не найдено, попробуйте еще раз!"
+					/>
 				)}
 			</Container>
 		</section>

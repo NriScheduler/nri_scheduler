@@ -3,15 +3,15 @@ import type { UUID } from "node:crypto";
 import { route as navigate } from "preact-router";
 import { toast } from "react-hot-toast";
 
-import { startFetching, stopFetching } from "./store/fetching";
 import { enter, leave } from "./store/profile";
 
-const API_HOST = import.meta.env.PROD
+export const API_HOST = import.meta.env.PROD
 	? ""
 	: (import.meta.env.CLIENT_API_HOST as string | undefined) || "";
 const CREDENTIALS = import.meta.env.PROD ? undefined : "include";
 
 const POST = "POST";
+const PUT = "PUT";
 const URL_ENCODED = true;
 
 export const enum EScenarioStatus {
@@ -38,7 +38,7 @@ export interface IRequestInit {
 const ajax = <T>(
 	input: string,
 	init?: IRequestInit,
-	isSoft = false
+	isSoft = false,
 ): Promise<IApiResponse<T> | null> => {
 	let controller: AbortController | undefined;
 	let timeoutId: ReturnType<typeof setTimeout>;
@@ -47,11 +47,9 @@ const ajax = <T>(
 		controller = new AbortController();
 		timeoutId = setTimeout(
 			() => controller!.abort(),
-			init.timeoutMilliseconds
+			init.timeoutMilliseconds,
 		);
 	}
-
-	startFetching();
 
 	return fetch(API_HOST + input, {
 		body: init?.body,
@@ -64,7 +62,6 @@ const ajax = <T>(
 		.then((res) => checkResponse<T>(res, isSoft))
 		.finally(() => {
 			clearTimeout(timeoutId);
-			stopFetching();
 		});
 };
 
@@ -131,9 +128,13 @@ const checkResponse = async <T>(
 
 		return null;
 	} catch (err) {
-		toast.error("Неизвестная ошибка");
-		console.info("Хрень какая-то...");
-		console.error(err);
+		if (err instanceof Error && err.name === "AbortError") {
+			toast.error("Истекло время ожидания ответа сервера");
+		} else {
+			toast.error("Неизвестная ошибка");
+			console.info("Хрень какая-то...");
+			console.error(err);
+		}
 
 		return null;
 	}
@@ -142,7 +143,7 @@ const checkResponse = async <T>(
 const prepareAjax = (
 	payload?: object,
 	method?: string,
-	urlencoded = false
+	urlencoded = false,
 ): IRequestInit => {
 	return {
 		body: payload
@@ -155,7 +156,7 @@ const prepareAjax = (
 					"Content-Type":
 						"application/" +
 						(urlencoded ? "x-www-form-urlencoded" : "json"),
-			  }
+				}
 			: undefined,
 		method,
 	};
@@ -164,18 +165,18 @@ const prepareAjax = (
 export const registration = (
 	nickname: string,
 	email: string,
-	password: string
+	password: string,
 ) => {
 	return ajax<null>(
 		"/api/registration",
-		prepareAjax({ nickname, email, password }, POST, URL_ENCODED)
+		prepareAjax({ nickname, email, password }, POST, URL_ENCODED),
 	);
 };
 
 export const signIn = (email: string, password: string) => {
 	return ajax<null>(
 		"/api/signin",
-		prepareAjax({ email, password }, POST, URL_ENCODED)
+		prepareAjax({ email, password }, POST, URL_ENCODED),
 	);
 };
 
@@ -195,7 +196,14 @@ export interface IApiLocation {
 	readonly description: string | null;
 }
 
-export const readLocations = () => ajax<IApiLocation[]>("/api/locations");
+export const readLocations = (nameFilter?: string | null) => {
+	const query = new URLSearchParams();
+	if (nameFilter) {
+		query.append("name", nameFilter);
+	}
+
+	return ajax<IApiLocation[]>(`/api/locations?${query}`);
+};
 
 export const readLocationById = (locId: UUID) =>
 	ajax<IApiLocation>(`/api/locations/${locId}`);
@@ -203,11 +211,11 @@ export const readLocationById = (locId: UUID) =>
 export const addLocation = (
 	name: string,
 	address?: string | null,
-	description?: string | null
+	description?: string | null,
 ) =>
 	ajax<UUID>(
 		"/api/locations",
-		prepareAjax({ name, address, description }, POST)
+		prepareAjax({ name, address, description }, POST),
 	);
 
 export interface IApiCompany {
@@ -216,22 +224,57 @@ export interface IApiCompany {
 	readonly name: string;
 	readonly system: string;
 	readonly description: string | null;
+	readonly cover_link: string | null;
 }
 
-export const readMyCompanies = () => ajax<IApiCompany[]>("/api/companies/my");
+export interface IApiCompanyInfo {
+	readonly id: UUID;
+	readonly master: UUID;
+	readonly name: string;
+	readonly master_name: string;
+	readonly system: string;
+	readonly description: string | null;
+	readonly cover_link: string | null;
+	readonly you_are_master: boolean;
+}
 
-export const readCompanyById = (compId: UUID) =>
-	ajax<IApiCompany>(`/api/companies/${compId}`);
+export const readMyCompanies = (nameFilter?: string | null) => {
+	const query = new URLSearchParams();
+	if (nameFilter) {
+		query.append("name", nameFilter);
+	}
+
+	return ajax<IApiCompany[]>(`/api/companies/my?${query}`);
+};
+
+export const readCompanyById = (companyId: UUID) =>
+	ajax<IApiCompanyInfo>(`/api/companies/${companyId}`);
 
 export const addCompany = (
 	name: string,
 	system: string,
-	description?: string | null
+	description?: string | null,
+	cover_link?: string | null,
 ) =>
 	ajax<UUID>(
 		"/api/companies",
-		prepareAjax({ name, system, description }, POST)
+		prepareAjax({ name, system, description, cover_link }, POST),
 	);
+
+export const updateCompany = (
+	companyId: UUID,
+	name: string,
+	system: string,
+	description?: string | null,
+) => {
+	return ajax<null>(
+		`/api/companies/${companyId}`,
+		prepareAjax({ name, system, description }, PUT),
+	);
+};
+
+export const setCompanyCover = (companyId: UUID, url: string) =>
+	ajax<null>(`/api/companies/${companyId}/cover`, prepareAjax({ url }, PUT));
 
 export interface IApiEvent {
 	readonly id: UUID;
@@ -246,15 +289,34 @@ export interface IApiEvent {
 	readonly plan_duration: number | null;
 	readonly players: string[];
 	readonly you_applied: boolean;
+	readonly you_are_master: boolean;
 	readonly your_approval: boolean | null;
 }
 
-export const readEventsList = (from: string, to: string) => {
-	return ajax<IApiEvent[]>(
-		`/api/events?date_from=${encodeURIComponent(
-			from
-		)}&date_to=${encodeURIComponent(to)}`
-	);
+export interface IEventsFilter {
+	master?: UUID | null;
+	location?: UUID | null;
+	applied?: boolean | null;
+	not_rejected?: boolean | null;
+	imamaster?: boolean | null;
+}
+
+export const readEventsList = (
+	date_from: string,
+	date_to: string,
+	filters?: IEventsFilter | null,
+) => {
+	const query: Record<string, string> = { date_from, date_to };
+
+	if (filters) {
+		Object.entries(filters).forEach(([key, val]) => {
+			if (val !== null && val !== undefined) {
+				query[key] = val;
+			}
+		});
+	}
+
+	return ajax<IApiEvent[]>(`/api/events?${new URLSearchParams(query)}`);
 };
 
 export const readEvent = (eventId: UUID) => {
@@ -266,51 +328,121 @@ export const createEvent = (
 	date: string,
 	location: UUID,
 	max_slots: number | null,
-	plan_duration: number | null
+	plan_duration: number | null,
 ) => {
 	return ajax<UUID>(
 		"/api/events",
-		prepareAjax(
-			{ company, date, location, max_slots, plan_duration },
-			POST,
-		)
+		prepareAjax({ company, date, location, max_slots, plan_duration }, POST),
 	);
 };
 
 export const applyEvent = (eventId: UUID) => {
 	return ajax<UUID>(
 		`/api/events/apply/${eventId}`,
-		prepareAjax(undefined, POST)
+		prepareAjax(undefined, POST),
 	);
 };
 
-export interface IApiSelfInfo {
-	readonly id: UUID;
-	readonly timezone_offset: number | null;
+export const updateEvent = (
+	eventId: UUID,
+	date: string,
+	location: UUID,
+	max_slots: number | null,
+	plan_duration: number | null,
+) => {
+	return ajax<null>(
+		`/api/events/${eventId}`,
+		prepareAjax({ date, location, max_slots, plan_duration }, PUT),
+	);
+};
+
+export const enum ETzVariant {
+	CITY = "city",
+	DEVICE = "device",
+	OWN = "own",
 }
 
-export const check = async (isSoft = false): Promise<boolean> => {
-	const res = await ajax<IApiSelfInfo>("/api/check", undefined, isSoft);
-
-	if (res !== null) {
-		enter(res.payload);
-	}
-
-	return res !== null;
-};
-
-export const softCheck = (): Promise<boolean> => {
-	const SOFT_CHECK = true;
-	return check(SOFT_CHECK);
-};
-
-export interface IApiUserInfo {
+export interface IApiProfile {
+	readonly id: UUID;
 	readonly email: string | null;
 	readonly nickname: string;
-	readonly phone: string | null;
-	readonly avatar: string | null;
+	readonly about_me: string | null;
+	readonly avatar_link: string | null;
+	readonly city: string | null;
+	readonly timezone_offset: number | null;
+	readonly tz_variant: ETzVariant | null;
+	readonly get_tz_from_device: boolean;
 }
 
-export const getUserProfile = () => {
-	return ajax<IApiUserInfo>(`/api/profile`);
+export const getMyProfile: () => Promise<IApiResponse<IApiProfile> | null> =
+	async (isSoft = false) => {
+		const res = await ajax<IApiProfile>(`/api/profile/my`, undefined, isSoft);
+
+		if (res !== null) {
+			enter(res.payload);
+		}
+		return res;
+	};
+
+export const softCheck = () =>
+	(
+		getMyProfile as unknown as (
+			isSoft: boolean,
+		) => Promise<IApiResponse<IApiProfile> | null>
+	)(true);
+
+export const getAnotherUserProfile = (userId: UUID) => {
+	return ajax<IApiProfile>(`/api/profile/${userId}`);
+};
+
+export const updateMyProfile = (
+	nickname: string,
+	about_me: string | null | undefined,
+	city: string | null | undefined,
+	own_tz: number | null | undefined,
+	tz_variant: ETzVariant | null | undefined,
+) => {
+	return ajax<null>(
+		`/api/profile/my`,
+		prepareAjax({ nickname, about_me, city, own_tz, tz_variant }, PUT),
+	);
+};
+
+export const setAvatar = (url: string) =>
+	ajax<null>(`/api/profile/avatar`, prepareAjax({ url }, PUT));
+
+export interface IApiRegion {
+	readonly name: string;
+	readonly timezone: string;
+}
+
+export const readRegionsList = () => {
+	return ajax<IApiRegion[]>(`/api/regions`);
+};
+
+export interface IApiCity {
+	readonly name: string;
+	readonly region: string;
+	readonly own_timezone: string | null;
+}
+
+export const readCitiesList = (region?: string | null) => {
+	const query = new URLSearchParams();
+
+	if (region) {
+		query.set("region", region);
+	}
+
+	return ajax<IApiCity[]>(`/api/cities?${query}`);
+};
+
+export const addCity = (
+	name: string,
+	region: string,
+	own_timezone?: string | null,
+) => {
+	return ajax<null>(
+		`/api/cities`,
+		prepareAjax({ name, region, own_timezone }, POST),
+	);
 };

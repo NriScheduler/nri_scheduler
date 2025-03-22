@@ -1,4 +1,5 @@
-import { h } from "preact"; // eslint-disable-line
+import { h } from "preact";
+
 import { Button, Container, Heading, Link, Text } from "@chakra-ui/react";
 
 export const HomePage = () => {

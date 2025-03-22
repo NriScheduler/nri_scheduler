@@ -1,12 +1,13 @@
-import { h, render } from "preact"; // eslint-disable-line
-import { Router, Route } from "preact-router";
+import { h, render } from "preact";
 import AsyncRoute from "preact-async-route";
+import { Route, Router } from "preact-router";
 
 import { Layout } from "./components/layout";
 import {
-	CreateEventPage,
+	CompanyPage,
 	EventPage,
 	HomePage,
+	LocationPage,
 	MasteryPage,
 	NotFoundPage,
 	ProfilePage,
@@ -22,7 +23,7 @@ const App = () => (
 					path="/signup"
 					getComponent={() =>
 						import("./components/pages/sign-up/signup").then(
-							(module) => module.SingUpPage
+							(module) => module.SingUpPage,
 						)
 					}
 				/>
@@ -31,12 +32,13 @@ const App = () => (
 					path="/calendar"
 					getComponent={() =>
 						import("./components/pages/calendar/calendar").then(
-							(module) => module.CalendarPage
+							(module) => module.CalendarPage,
 						)
 					}
 				/>
-				<Route path="/event/create" component={CreateEventPage} />
 				<Route path="/event/:id" component={EventPage} />
+				<Route path="/company/:id" component={CompanyPage} />
+				<Route path="/location/:id" component={LocationPage} />
 				<Route path="/mastery" component={MasteryPage} />
 				<Route path="/profile" component={ProfilePage} />
 
