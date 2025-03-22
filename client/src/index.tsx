@@ -8,7 +8,6 @@ import {
 	EventPage,
 	HomePage,
 	LocationPage,
-	MasteryPage,
 	NotFoundPage,
 	ProfilePage,
 	SignInPage,
@@ -39,7 +38,6 @@ const App = () => (
 				<Route path="/event/:id" component={EventPage} />
 				<Route path="/company/:id" component={CompanyPage} />
 				<Route path="/location/:id" component={LocationPage} />
-				<Route path="/mastery" component={MasteryPage} />
 				<Route path="/profile" component={ProfilePage} />
 
 				<Route default component={() => <NotFoundPage />} />
