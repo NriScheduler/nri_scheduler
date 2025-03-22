@@ -83,6 +83,7 @@ export const SingUpPage = () => {
 					>
 						<PasswordInput
 							placeholder="******"
+							autocomplete="off"
 							{...register("password", {
 								required: "Заполните поле",
 							})}
@@ -95,6 +96,7 @@ export const SingUpPage = () => {
 					>
 						<PasswordInput
 							placeholder="******"
+							autocomplete="off"
 							{...register("repassword", {
 								required: "Заполните поле",
 								validate: (value) =>
