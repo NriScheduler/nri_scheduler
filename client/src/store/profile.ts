@@ -10,14 +10,12 @@ import { IApiProfile } from "../api";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const proxy = <T>(v: T) => v;
-
 // --== Mastery ==--
 const MASTERY_KEY = "nri_mastery";
 const TRUE = "true";
 
 const _mastery = atom(localStorage.getItem(MASTERY_KEY) === TRUE);
-export const $mastery = computed(_mastery, proxy);
+export const $mastery = computed(_mastery, (m) => m);
 
 export const enableMastery = () => {
 	localStorage.setItem(MASTERY_KEY, TRUE);
