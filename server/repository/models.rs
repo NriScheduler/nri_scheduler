@@ -88,13 +88,6 @@ pub(crate) struct EventForApplying {
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
-pub(crate) struct SelfInfo {
-	pub id: Uuid,
-	pub timezone_offset: Option<i16>,
-	pub get_tz_from_device: bool,
-}
-
-#[derive(Debug, Deserialize, Serialize, FromRow)]
 pub(crate) struct Region {
 	pub name: String,
 	pub timezone: String,

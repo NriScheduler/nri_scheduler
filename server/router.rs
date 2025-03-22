@@ -26,7 +26,6 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 				.route("/registration", post(H::registration))
 				.route("/signin", post(H::sign_in))
 				.route("/logout", post(H::logout))
-				.route("/profile/avatar/{id}", get(H::read_avatar)) // todo удалить
 				.route("/locations", get(H::locations::get_locations_list))
 				.route("/locations/{id}", get(H::locations::get_location_by_id))
 				.route("/regions", get(H::regions::read_regions_list))
@@ -41,8 +40,6 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 				)
 				.merge(
 					Router::new()
-						.route("/check", get(H::who_i_am))
-						.route("/profile", get(H::read_my_profile)) // todo удалить
 						.route(
 							"/profile/my",
 							get(H::read_my_profile).put(H::update_my_profile),

@@ -14,8 +14,7 @@ use crate::{
 		location::ReadLocationDto,
 	},
 	repository::models::{
-		City, Company, CompanyInfo, Event, EventForApplying, Location, Profile, Region, SelfInfo,
-		UserForAuth,
+		City, Company, CompanyInfo, Event, EventForApplying, Location, Profile, Region, UserForAuth,
 	},
 	shared::RecordId,
 	system_models::{AppError, CoreResult},
@@ -138,38 +137,6 @@ impl Store for PostgresStore {
 			.await?;
 
 		Ok(())
-	}
-
-	async fn who_i_am(&self, user_id: Uuid) -> CoreResult<Option<SelfInfo>> {
-		let may_be_self_info = sqlx::query_as::<_, SelfInfo>(
-			"select
-				sq.id,
-				tz.offset as timezone_offset,
-				(sq.tz_variant is not null and sq.tz_variant = 'device') as get_tz_from_device
-			from (
-				select
-					u.id,
-					case
-						when u.tz_variant = 'own' and u.own_tz is not null then u.own_tz
-						when u.tz_variant = 'city' then coalesce(c.own_timezone, r.timezone)
-						else null
-					end as timezone_offset,
-					u.tz_variant
-				FROM users u
-				left join cities c
-					on c.name = u.city
-				left join regions r
-					on r.name = c.region
-				WHERE u.id = $1
-			) sq
-			left join timezone_offsets tz
-				on tz.name = sq.timezone_offset;",
-		)
-		.bind(user_id)
-		.fetch_optional(&self.pool)
-		.await?;
-
-		Ok(may_be_self_info)
 	}
 
 	async fn get_avatar_link(&self, user_id: Uuid) -> CoreResult<Option<String>> {

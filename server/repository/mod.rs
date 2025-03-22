@@ -5,8 +5,7 @@ use ::std::error::Error;
 use chrono::{DateTime, FixedOffset};
 use implementations::PostgresStore;
 use models::{
-	City, Company, CompanyInfo, Event, EventForApplying, Location, Profile, Region, SelfInfo,
-	UserForAuth,
+	City, Company, CompanyInfo, Event, EventForApplying, Location, Profile, Region, UserForAuth,
 };
 use uuid::Uuid;
 
@@ -34,7 +33,6 @@ trait Store {
 	async fn get_user_for_signing_in(&self, email: &str) -> CoreResult<Option<UserForAuth>>;
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>>;
 	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult;
-	async fn who_i_am(&self, user_id: Uuid) -> CoreResult<Option<SelfInfo>>;
 	async fn get_avatar_link(&self, user_id: Uuid) -> CoreResult<Option<String>>;
 	async fn set_avatar(&self, user_id: Uuid, url: &str) -> CoreResult;
 
@@ -181,10 +179,6 @@ impl Repository {
 
 	pub(crate) async fn set_avatar(&self, user_id: Uuid, url: &str) -> CoreResult {
 		return self.store.set_avatar(user_id, url).await;
-	}
-
-	pub(crate) async fn who_i_am(&self, user_id: Uuid) -> CoreResult<Option<SelfInfo>> {
-		return self.store.who_i_am(user_id).await;
 	}
 
 	pub(crate) async fn get_locations_list(

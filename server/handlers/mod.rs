@@ -122,21 +122,6 @@ pub(super) async fn read_another_profile(
 	})
 }
 
-pub(super) async fn who_i_am(
-	State(repo): State<Arc<Repository>>,
-	Extension(user_id): Extension<Uuid>,
-) -> AppResult {
-	let self_info = repo.who_i_am(user_id).await?;
-
-	Ok(match self_info {
-		None => AppResponse::system_error("Какая-то ерунда, не смогли найти пользователя", None),
-		Some(self_info) => {
-			let payload = serde_json::to_value(self_info)?;
-			AppResponse::scenario_success("I know who I am", Some(payload))
-		}
-	})
-}
-
 pub(super) async fn read_avatar(
 	State(repo): State<Arc<Repository>>,
 	Path(profile_id): Path<Uuid>,
