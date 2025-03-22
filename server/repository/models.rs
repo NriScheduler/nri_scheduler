@@ -15,15 +15,21 @@ pub(crate) struct UserForAuth {
 pub(crate) struct User {
 	pub id: Uuid,
 	pub nickname: String,
-	pub phone: Option<String>,
 	pub email: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
 pub(crate) struct Profile {
+	pub id: Uuid,
 	pub nickname: String,
-	pub phone: Option<String>,
 	pub email: Option<String>,
+	pub about_me: Option<String>,
+	pub avatar_link: Option<String>,
+	pub city: Option<String>,
+	pub region: Option<String>,
+	pub timezone_offset: Option<i16>,
+	pub tz_variant: Option<String>,
+	pub get_tz_from_device: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
@@ -33,6 +39,19 @@ pub(crate) struct Company {
 	pub name: String,
 	pub system: String,
 	pub description: Option<String>,
+	pub cover_link: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct CompanyInfo {
+	pub id: Uuid,
+	pub master: Uuid,
+	pub master_name: String,
+	pub name: String,
+	pub system: String,
+	pub description: Option<String>,
+	pub cover_link: Option<String>,
+	pub you_are_master: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
@@ -57,6 +76,7 @@ pub(crate) struct Event {
 	pub max_slots: Option<i16>,
 	pub plan_duration: Option<i16>,
 	pub you_applied: bool,
+	pub you_are_master: bool,
 	pub your_approval: Option<bool>,
 }
 
@@ -69,7 +89,14 @@ pub(crate) struct EventForApplying {
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
-pub(crate) struct SelfInfo {
-	pub id: Uuid,
-	pub timezone_offset: Option<i16>,
+pub(crate) struct Region {
+	pub name: String,
+	pub timezone: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct City {
+	pub name: String,
+	pub region: String,
+	pub own_timezone: Option<String>,
 }

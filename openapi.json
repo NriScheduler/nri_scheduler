@@ -86,19 +86,52 @@
 				}
 			}
 		},
-		"/api/check": {
+		"/api/profile/my": {
 			"get": {
 				"tags": [
 					"profile"
 				],
-				"summary": "Проверка авторизации, получение минимальной информации о пользователе",
+				"summary": "Получение профиля авторизованного пользователя",
 				"responses": {
 					"200": {
 						"description": "Результат выполнения запроса",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/AppResponseWhoIAm"
+									"$ref": "#/components/schemas/AppResponseProfile"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
+			},
+			"put": {
+				"tags": [
+					"profile"
+				],
+				"summary": "Обновление информации о пользователе",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateProfileDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
 								}
 							}
 						}
@@ -111,12 +144,24 @@
 				]
 			}
 		},
-		"/api/profile": {
+		"/api/profile/{id}": {
 			"get": {
 				"tags": [
 					"profile"
 				],
-				"summary": "Получение профиля пользователя",
+				"summary": "Получение профиля пользователя по его идентификатору",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор пользователя",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
 				"responses": {
 					"200": {
 						"description": "Результат выполнения запроса",
@@ -124,6 +169,159 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/AppResponseProfile"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{},
+					{
+						"cookieAuth": []
+					}
+				]
+			}
+		},
+		"/avatar/{id}": {
+			"get": {
+				"tags": [
+					"profile"
+				],
+				"summary": "Получение аватара пользователя",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор пользователя",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Файл аватара",
+						"content": {
+							"image/*": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Файл не найден",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Ошибка получения файла",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/cover/{id}": {
+			"get": {
+				"tags": [
+					"companies"
+				],
+				"summary": "Получение обложки кампании",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор кампании",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Файл обложки кампании",
+						"content": {
+							"image/*": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Файл не найден",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Ошибка получения файла",
+						"content": {
+							"text/plain": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/profile/avatar": {
+			"put": {
+				"tags": [
+					"profile"
+				],
+				"summary": "Передача ссылки на файл аватара",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"description": "Данные для установки авара",
+								"required": [
+									"url"
+								],
+								"properties": {
+									"url": {
+										"type": "string",
+										"format": "uri",
+										"description": "Ссылка на файл аватара"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
 								}
 							}
 						}
@@ -302,6 +500,51 @@
 						"cookieAuth": []
 					}
 				]
+			},
+			"put": {
+				"tags": [
+					"events"
+				],
+				"summary": "Обновление информации о событии",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор события",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateEventDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
 			}
 		},
 		"/api/events/apply/{id}": {
@@ -347,6 +590,17 @@
 					"locations"
 				],
 				"summary": "Получение списка локаций",
+				"parameters": [
+					{
+						"name": "name",
+						"in": "query",
+						"description": "Фильтр названия локации",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
 				"responses": {
 					"200": {
 						"description": "Результат выполнения запроса",
@@ -437,7 +691,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/NewCompanyDto"
+								"$ref": "#/components/schemas/ApiCompanyDto"
 							}
 						}
 					}
@@ -485,12 +739,115 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/AppResponseWithCompany"
+									"$ref": "#/components/schemas/AppResponseWithCompanyInfo"
 								}
 							}
 						}
 					}
 				}
+			},
+			"put": {
+				"tags": [
+					"companies"
+				],
+				"summary": "Обновление информации о кампании",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор кампании",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ApiUpdateCompanyDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
+			}
+		},
+		"/api/companies/{id}/cover": {
+			"put": {
+				"tags": [
+					"companies"
+				],
+				"summary": "Передача ссылки на файл обложки кампании",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор кампании",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"description": "Данные для установки обложки кампании",
+								"required": [
+									"url"
+								],
+								"properties": {
+									"url": {
+										"type": "string",
+										"format": "uri",
+										"description": "Ссылка на файл обложки кампании"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
 			}
 		},
 		"/api/companies/my": {
@@ -499,6 +856,17 @@
 					"companies"
 				],
 				"summary": "Получение списка кампаний которые ведёт пользователь",
+				"parameters": [
+					{
+						"name": "name",
+						"in": "query",
+						"description": "Фильтр названия кампании",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
 				"responses": {
 					"200": {
 						"description": "Результат выполнения запроса",
@@ -506,6 +874,90 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/AppResponseWithCompanyList"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
+			}
+		},
+		"/api/regions": {
+			"get": {
+				"tags": [
+					"regions"
+				],
+				"summary": "Получение списка регионов",
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponseWithRegionsList"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/cities": {
+			"get": {
+				"tags": [
+					"regions"
+				],
+				"summary": "Получение списка городов",
+				"parameters": [
+					{
+						"name": "region",
+						"in": "query",
+						"description": "Регион",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponseWithCitiesList"
+								}
+							}
+						}
+					}
+				}
+			},
+			"post": {
+				"tags": [
+					"regions"
+				],
+				"summary": "Добавление города",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/City"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
 								}
 							}
 						}
@@ -652,6 +1104,10 @@
 						"type": "boolean",
 						"description": "Подал ли уже пользователь заявку на данную игру"
 					},
+					"you_are_master": {
+						"type": "boolean",
+						"description": "Является ли пользователь мастером на игре"
+					},
 					"your_approval": {
 						"type": "boolean",
 						"nullable": true,
@@ -672,6 +1128,40 @@
 						"format": "uuid",
 						"description": "Идентификатор кампании"
 					},
+					"location": {
+						"type": "string",
+						"format": "uuid",
+						"nullable": true,
+						"description": "Идентификатор места проведения"
+					},
+					"date": {
+						"type": "string",
+						"format": "date-time",
+						"example": "2025-02-28T17:00:00+03:00",
+						"description": "Дата и время проведения игры"
+					},
+					"max_slots": {
+						"type": "integer",
+						"nullable": true,
+						"description": "Максимальное количество игроков"
+					},
+					"plan_duration": {
+						"type": "integer",
+						"nullable": true,
+						"description": "Планируемая продолжительность игры в часах"
+					}
+				}
+			},
+			"UpdateEventDto": {
+				"type": "object",
+				"description": "Данные для обновления события",
+				"required": [
+					"location",
+					"date",
+					"max_slots",
+					"plan_duration"
+				],
+				"properties": {
 					"location": {
 						"type": "string",
 						"format": "uuid",
@@ -744,7 +1234,36 @@
 					}
 				}
 			},
-			"NewCompanyDto": {
+			"ApiCompanyDto": {
+				"type": "object",
+				"description": "Данные для создания кампании",
+				"required": [
+					"name",
+					"system"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Название кампании"
+					},
+					"system": {
+						"type": "string",
+						"description": "Система правил"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Описание локации"
+					},
+					"cover_link": {
+						"type": "string",
+						"format": "uri-reference",
+						"nullable": true,
+						"description": "Ссылка на обложку"
+					}
+				}
+			},
+			"ApiUpdateCompanyDto": {
 				"type": "object",
 				"description": "Данные для создания кампании",
 				"required": [
@@ -793,6 +1312,57 @@
 						"type": "string",
 						"nullable": true,
 						"description": "Описание локации"
+					},
+					"cover_link": {
+						"type": "string",
+						"format": "uri-reference",
+						"example": "/cover/1f0010e2-2ad8-6960-b794-1694f0da179f",
+						"nullable": true,
+						"description": "Ссылка на обложку"
+					}
+				}
+			},
+			"CompanyInfo": {
+				"type": "object",
+				"description": "Описание кампании",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"description": "Идентификатор кампании"
+					},
+					"master": {
+						"type": "string",
+						"format": "uuid",
+						"description": "Идентификатор мастера кампании"
+					},
+					"master_name": {
+						"type": "string",
+						"description": "Имя мастера кампании"
+					},
+					"name": {
+						"type": "string",
+						"description": "Название кампании"
+					},
+					"system": {
+						"type": "string",
+						"description": "Система правил"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Описание локации"
+					},
+					"cover_link": {
+						"type": "string",
+						"format": "uri-reference",
+						"example": "/cover/1f0010e2-2ad8-6960-b794-1694f0da179f",
+						"nullable": true,
+						"description": "Ссылка на обложку"
+					},
+					"you_are_master": {
+						"type": "boolean",
+						"description": "Является ли пользователь мастером кампании"
 					}
 				}
 			},
@@ -844,6 +1414,10 @@
 						"type": "integer",
 						"nullable": true,
 						"description": "Временная зона пользователя"
+					},
+					"get_tz_from_device": {
+						"type": "boolean",
+						"description": "Указание брать ли временную зону с устройства"
 					}
 				}
 			},
@@ -867,20 +1441,137 @@
 				"type": "object",
 				"description": "Минимальная информация о пользователе",
 				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"description": "Идентификатор пользователя"
+					},
 					"nickname": {
 						"type": "string",
 						"description": "Имя пользователя"
-					},
-					"phone": {
-						"type": "string",
-						"nullable": true,
-						"description": "Номер телефона пользователя"
 					},
 					"email": {
 						"type": "string",
 						"format": "email",
 						"nullable": true,
 						"description": "Электронная почта пользователя"
+					},
+					"about_me": {
+						"type": "string",
+						"nullable": true,
+						"description": "Информация о себе"
+					},
+					"avatar_link": {
+						"type": "string",
+						"format": "uri-reference",
+						"example": "/avatar/1f0010e2-2ad8-6960-b794-1694f0da179f",
+						"nullable": true,
+						"description": "Ссылка на аватар"
+					},
+					"city": {
+						"type": "string",
+						"nullable": true,
+						"description": "Город пользователя"
+					},
+					"region": {
+						"type": "string",
+						"nullable": true,
+						"description": "Регион пользователя"
+					},
+					"timezone_offset": {
+						"type": "integer",
+						"nullable": true,
+						"description": "Временная зона пользователя"
+					},
+					"tz_variant": {
+						"type": "string",
+						"enum": ["city", "device", "own"],
+						"nullable": true,
+						"description": "Указание брать ли временную зону с устройства"
+					},
+					"get_tz_from_device": {
+						"type": "boolean",
+						"description": "Указание брать ли временную зону с устройства"
+					}
+				}
+			},
+			"UpdateProfileDto": {
+				"type": "object",
+				"description": "Информация для обновления данных пользователя",
+				"properties": {
+					"nickname": {
+						"type": "string",
+						"description": "Имя пользователя"
+					},
+					"about_me": {
+						"type": "string",
+						"nullable": true,
+						"description": "Информация о себе"
+					},
+					"city": {
+						"type": "string",
+						"nullable": true,
+						"description": "Город пользователя"
+					},
+					"own_tz": {
+						"type": "integer",
+						"nullable": true,
+						"min": -11,
+						"max": 12,
+						"description": "Индивидуальное смещение временной зоны"
+					},
+					"tz_variant": {
+						"type": "string",
+						"nullable": true,
+						"enum": ["city", "device", "own"],
+						"description": "Варианты определения временной зоны",
+						"x-enum-descriptions": [
+							"По городу",
+							"По времени на устройстве",
+							"Точно указать"
+						],
+						"x-enum-varnames": [
+							"По городу",
+							"По времени на устройстве",
+							"Точно указать"
+						]
+					}
+				}
+			},
+			"Region": {
+				"type": "object",
+				"description": "Информация о регионе",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Название региона"
+					},
+					"timezone": {
+						"type": "string",
+						"description": "Временная зона"
+					}
+				}
+			},
+			"City": {
+				"type": "object",
+				"description": "Информация о городе",
+				"required": [
+					"name",
+					"region"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Название города"
+					},
+					"region": {
+						"type": "string",
+						"description": "Название региона"
+					},
+					"own_timezone": {
+						"type": "string",
+						"nullable": true,
+						"description": "Временная зона, на случай если в регионе есть несколько временных зон"
 					}
 				}
 			},
@@ -1009,7 +1700,7 @@
 					}
 				}
 			},
-			"AppResponseWithCompany": {
+			"AppResponseWithCompanyInfo": {
 				"type": "object",
 				"description": "Ответ приложения с информацией о кампании",
 				"required": [
@@ -1026,7 +1717,55 @@
 						"description": "Текстовое описание результата"
 					},
 					"payload": {
-						"$ref": "#/components/schemas/Company"
+						"$ref": "#/components/schemas/CompanyInfo"
+					}
+				}
+			},
+			"AppResponseWithRegionsList": {
+				"type": "object",
+				"description": "Ответ приложения со списком регионов",
+				"required": [
+					"status",
+					"result",
+					"payload"
+				],
+				"properties": {
+					"status": {
+						"$ref": "#/components/schemas/EScenarioStatus"
+					},
+					"result": {
+						"type": "string",
+						"description": "Текстовое описание результата"
+					},
+					"payload": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Region"
+						}
+					}
+				}
+			},
+			"AppResponseWithCitiesList": {
+				"type": "object",
+				"description": "Ответ приложения со списком городов",
+				"required": [
+					"status",
+					"result",
+					"payload"
+				],
+				"properties": {
+					"status": {
+						"$ref": "#/components/schemas/EScenarioStatus"
+					},
+					"result": {
+						"type": "string",
+						"description": "Текстовое описание результата"
+					},
+					"payload": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/City"
+						}
 					}
 				}
 			}
@@ -1055,6 +1794,10 @@
 		{
 			"name": "companies",
 			"description": "Кампании"
+		},
+		{
+			"name": "regions",
+			"description": "Регионы и города"
 		}
 	]
 }

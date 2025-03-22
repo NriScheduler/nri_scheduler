@@ -1,0 +1,14 @@
+ALTER TABLE "users"
+ADD COLUMN "city" VARCHAR(32) DEFAULT NULL;
+
+ALTER TABLE "users"
+ADD CONSTRAINT "FK_users_cities" FOREIGN KEY ("city")
+	REFERENCES "cities"("name")
+	ON DELETE NO ACTION;
+
+ALTER TABLE "users"
+DROP COLUMN "timezone_offset",
+ADD COLUMN "own_tz" VARCHAR(32) DEFAULT NULL;
+
+ALTER TABLE "users"
+ADD COLUMN "tz_variant" VARCHAR(6) DEFAULT NULL;

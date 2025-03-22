@@ -1,16 +1,17 @@
-import { atom, ReadableAtom, WritableAtom } from 'nanostores';
+import { atom, computed } from "nanostores";
 
-const MASTERY_KEY = 'nri_mastery';
-const TRUE = 'true'
+const MASTERY_KEY = "nri_mastery";
+const TRUE = "true";
 
-export const $mastery: ReadableAtom<boolean> = atom(localStorage.getItem(MASTERY_KEY) === TRUE);
+const _mastery = atom(localStorage.getItem(MASTERY_KEY) === TRUE);
+export const $mastery = computed(_mastery, (m) => m);
 
 export const enableMastery = () => {
 	localStorage.setItem(MASTERY_KEY, TRUE);
-	($mastery as WritableAtom<boolean>).set(true);
-}
+	_mastery.set(true);
+};
 
 export const disableMastery = () => {
 	localStorage.removeItem(MASTERY_KEY);
-	($mastery as WritableAtom<boolean>).set(false);
-}
+	_mastery.set(false);
+};

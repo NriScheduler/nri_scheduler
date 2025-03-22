@@ -1,8 +1,8 @@
 import { h } from "preact";
-import { Provider } from "./ui/provider";
-
 import { Toaster } from "react-hot-toast";
+
 import { Header } from "./header";
+import { Provider } from "./ui/provider";
 
 export const Layout = ({ page }: { page: h.JSX.Element }) => (
 	<Provider>

@@ -1,6 +1,6 @@
 import { h } from "preact";
-
-import { ProfileUpdate } from "./profile-update";
+import { route as navigate } from "preact-router";
+import { MdOutlineEvent } from "react-icons/md";
 
 import {
 	Button,
@@ -12,10 +12,12 @@ import {
 	Tabs,
 	VStack,
 } from "@chakra-ui/react";
-import { MdOutlineEvent } from "react-icons/md";
 import { useStore } from "@nanostores/preact";
-import { userStore } from "../../../store/profile";
 
+import { ProfileInfo } from "./profile-info";
+import { $profile } from "../../../store/profile";
+
+/** @todo сделать апишку для заявок */
 interface IEvent {
 	label?: string;
 	value?: string;
@@ -23,7 +25,12 @@ interface IEvent {
 }
 
 export const ProfilePage = () => {
-	const user = useStore(userStore);
+	const user = useStore($profile);
+	if (!user?.signed) {
+		navigate("/signin");
+		return;
+	}
+
 	const events: IEvent[] = [];
 
 	return (
@@ -35,13 +42,13 @@ export const ProfilePage = () => {
 					<Tabs.Trigger value="resetpass">Сброс пароля</Tabs.Trigger>
 				</Tabs.List>
 				<Tabs.Content value="user" maxW="2xl">
-					<ProfileUpdate user={user} />
+					<ProfileInfo user={user} />
 				</Tabs.Content>
 
 				<Tabs.Content value="events">
 					{events.length !== 0 ? (
 						events.map((item, index) => (
-							<Grid templateColumns="repeat(4, 1fr)" gap="4">
+							<Grid templateColumns="repeat(4, 1fr)" gap="4" key={index}>
 								<Card.Root>
 									<Card.Body gap="2">
 										<Card.Title mt="2">
@@ -68,7 +75,7 @@ export const ProfilePage = () => {
 										Заявок на подтверждение нет
 									</EmptyState.Title>
 									<EmptyState.Description>
-										Как только ... так сразу
+										Как только... так сразу
 									</EmptyState.Description>
 								</VStack>
 							</EmptyState.Content>

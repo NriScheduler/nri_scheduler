@@ -1,17 +1,17 @@
-import { CreateEventPage } from "./event/create_event";
+import { CompanyPage } from "./company/company";
 import { EventPage } from "./event/event";
-import { MasteryPage } from "./mastery";
-import { SignInPage } from "./sign-in/singin";
 import { HomePage } from "./home/home";
+import { LocationPage } from "./location/location";
 import { NotFoundPage } from "./not-found/not-found";
 import { ProfilePage } from "./profile/profile";
+import { SignInPage } from "./sign-in/singin";
 
 export {
-	CreateEventPage,
+	CompanyPage,
 	EventPage,
-	MasteryPage,
-	SignInPage,
 	HomePage,
+	LocationPage,
 	NotFoundPage,
 	ProfilePage,
+	SignInPage,
 };

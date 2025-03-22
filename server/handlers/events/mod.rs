@@ -9,7 +9,7 @@ use uuid::Uuid;
 use crate::{
 	dto::{
 		Dto,
-		event::{NewEventDto, ReadEventsDto},
+		event::{NewEventDto, ReadEventsDto, UpdateEventDto},
 	},
 	repository::Repository,
 	system_models::{AppError, AppResponse, AppResult},
@@ -118,13 +118,25 @@ pub(crate) async fn apply_event(
 	))
 }
 
+pub(crate) async fn update_event(
+	State(repo): State<Arc<Repository>>,
+	Extension(master_id): Extension<Uuid>,
+	Path(event_id): Path<Uuid>,
+	Dto(body): Dto<UpdateEventDto>,
+) -> AppResult {
+	match repo.update_event(event_id, master_id, body).await? {
+		false => Err(AppError::scenario_error("Игра не найдена", None::<&str>)),
+		true => Ok(AppResponse::scenario_success("Данные игры обновлены", None)),
+	}
+}
+
 async fn check_company(
 	company_id: Uuid,
 	user_id: Uuid,
 	repo: Arc<Repository>,
 ) -> Result<(), AppError> {
-	let Some(company) = repo.get_company_by_id(company_id).await? else {
-		return AppError::scenario_error("Компания не найдена", Some(company_id.to_string())).into();
+	let Some(company) = repo.get_company_by_id(company_id, Some(user_id)).await? else {
+		return AppError::scenario_error("Кампания не найдена", Some(company_id.to_string())).into();
 	};
 
 	if company.master != user_id {

@@ -15,7 +15,7 @@ path = "server/lib.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [profile.release]
 strip = true
-opt-level = "z"
+opt-level = 3
 lto = true
 codegen-units = 1
 panic = 'abort'
@@ -24,29 +24,29 @@ panic = 'abort'
 argon2 = "0.5.3"
 axum = "0.8.1"
 axum-extra = { version = "0.10.0", features = ["cookie"] }
-axum-server = { version = "0.7.1", features = ["tls-rustls"], optional = true }
-chrono = { version = "0.4.39", features = ["serde"] }
+axum-server = { version = "0.7.2", features = ["tls-rustls"], optional = true }
+chrono = { version = "0.4.40", features = ["serde"] }
 derive-masked = "0.1.0"
 futures = "0.3.31"
 jsonwebtoken = "9.3.1"
 rand = "0.9.0"
 regex = "1.11.1"
-reqwest = { version = "0.12.12", features = ["stream"], optional = true }
-serde = { version = "1.0.218", features = ["derive"] }
-serde_json = "1.0.139"
+reqwest = { version = "0.12.15", features = ["stream"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
 serde_urlencoded = "0.7.1"
 sqlx = { version = "0.8.3", features = ["runtime-tokio", "tls-none", "postgres", "chrono", "uuid"] }
-tokio = { version = "1.43.0", features = ["full"] }
+tokio = { version = "1.44.1", features = ["full"] }
 utoipa = { version = "5.3.1", features = ["uuid", "chrono"], optional = true }
 utoipa-swagger-ui = { version = "9.0.0", features = ["axum"], optional = true }
-uuid = { version = "1.14.0", features = ["serde"] }
+uuid = { version = "1.16.0", features = ["serde"] }
 
 [features]
 default = []
 cors = []
 https = ["axum-server"]
 swagger = ["utoipa", "utoipa-swagger-ui"]
-vite = ["reqwest"]
+vite = []
 
 [dev-dependencies]
 cargo-husky = { version = "^1.5.0", default-features = false, features = ["user-hooks"] }

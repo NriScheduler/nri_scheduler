@@ -3,13 +3,19 @@ use axum::extract::{Path, State};
 use uuid::Uuid;
 
 use crate::{
-	dto::{Dto, location::NewLocationDto},
+	dto::{
+		Dto,
+		location::{NewLocationDto, ReadLocationDto},
+	},
 	repository::Repository,
 	system_models::{AppResponse, AppResult},
 };
 
-pub(crate) async fn get_locations_list(State(repo): State<Arc<Repository>>) -> AppResult {
-	let locations = repo.get_locations_list().await?;
+pub(crate) async fn get_locations_list(
+	State(repo): State<Arc<Repository>>,
+	Dto(query): Dto<ReadLocationDto>,
+) -> AppResult {
+	let locations = repo.get_locations_list(query).await?;
 
 	let json_value = serde_json::to_value(locations)?;
 

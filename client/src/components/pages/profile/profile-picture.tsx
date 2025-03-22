@@ -1,57 +1,45 @@
-import { h, JSX, Fragment } from "preact";
-import { useRef, useState } from "preact/hooks";
-import { Avatar, Button, Group, HStack, Stack } from "@chakra-ui/react";
+import { h } from "preact";
+import { useState } from "preact/hooks";
+import toast from "react-hot-toast";
 
-export const ProfilePicture = ({ register, username }: any) => {
-	const hiddenInputRef = useRef<HTMLInputElement>(null);
-	const [preview, setPreview] = useState<string | null>(null);
+import { Avatar, Button, HStack, Input, Stack } from "@chakra-ui/react";
 
-	const { ref: registerRef, ...rest } = register("avatar");
+import { getMyProfile, setAvatar } from "../../../api";
 
-	const handleUploadedFile = (
-		event: JSX.TargetedEvent<HTMLInputElement, Event>
-	) => {
-		const file = event.currentTarget.files?.[0];
-
-		if (file && file.type.startsWith("image/")) {
-			const urlImage = URL.createObjectURL(file);
-			setPreview(urlImage);
-		} else {
-			alert("Пожалуйста, выберите изображение.");
-		}
-	};
-	const onUpload = () => {
-		hiddenInputRef.current?.click();
-	};
-
-	const uploadButtonLabel = preview ? "Выбрать другое фото" : "Загрузить фото";
+export const ProfilePicture = ({ link }: { link: string }) => {
+	const [isGenerated] = useState(link.startsWith("blob:"));
+	const [newLink, setNewLink] = useState("");
 
 	return (
-		<>
-			<input
-				type="file"
-				name="profilePicture"
-				{...rest}
-				onChange={handleUploadedFile}
-				ref={(e) => {
-					registerRef(e);
-					hiddenInputRef.current = e;
-				}}
-				style={{ display: "none" }}
-				accept="image/*"
-			/>
-			<HStack>
-				<Avatar.Root w="100px" h="100px">
-					<Avatar.Fallback name={username} />
-					<Avatar.Image src={preview || undefined} />
-				</Avatar.Root>
-				<Group>
-					<Button variant="outline" onClick={onUpload}>
-						{uploadButtonLabel}
+		<HStack>
+			<Avatar.Root w="100px" h="100px">
+				<Avatar.Image src={link} />
+			</Avatar.Root>
+			<Stack>
+				{isGenerated && "Сгенерированный аватар"}
+				<HStack>
+					<Input
+						placeholder="Заполните поле"
+						value={newLink}
+						onChange={(e) => setNewLink(e.currentTarget.value)}
+					/>
+					<Button
+						type="button"
+						disabled={!newLink}
+						onClick={() =>
+							setAvatar(newLink)
+								.then((res) => res && getMyProfile())
+								.then(
+									(res) =>
+										res &&
+										toast.success("Ссылка на аватар обновлена"),
+								)
+						}
+					>
+						Обновить ссылку
 					</Button>
-					<Button variant="surface" colorPalette="red">Удалить</Button>
-				</Group>
-			</HStack>
-		</>
+				</HStack>
+			</Stack>
+		</HStack>
 	);
 };
