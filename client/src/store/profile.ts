@@ -96,7 +96,7 @@ export const TIMEZONES: ReadonlyMap<number, string> = new Map([
 ]);
 
 export const $tz = computed(_profile, (p: Partial<IApiProfile>) => {
-	if (p.get_tz_from_device) {
+	if (p.get_tz_from_device || typeof p.timezone_offset !== "number") {
 		return dayjs.tz.guess();
 	}
 
