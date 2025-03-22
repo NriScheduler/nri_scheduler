@@ -47,8 +47,7 @@ import {
 	readLocations,
 	updateEvent,
 } from "../../../api";
-import { $signed } from "../../../store/profile";
-import { $tz } from "../../../store/tz";
+import { $signed, $tz } from "../../../store/profile";
 
 dayjs.locale("ru");
 

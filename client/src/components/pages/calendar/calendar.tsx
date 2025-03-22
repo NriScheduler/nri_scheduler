@@ -51,11 +51,11 @@ import {
 } from "../../../api";
 import {
 	$mastery,
+	$signed,
+	$tz,
 	disableMastery,
 	enableMastery,
-} from "../../../store/mastery";
-import { $signed } from "../../../store/profile";
-import { $tz } from "../../../store/tz";
+} from "../../../store/profile";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
