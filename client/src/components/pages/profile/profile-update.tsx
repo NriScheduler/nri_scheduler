@@ -3,9 +3,9 @@ import { h } from "preact";
 import { useForm } from "react-hook-form";
 
 import {
+	Avatar,
 	Button,
 	Checkbox,
-	createListCollection,
 	Group,
 	Heading,
 	HStack,
@@ -16,8 +16,9 @@ import {
 	Textarea,
 } from "@chakra-ui/react";
 import { Field } from "../../ui/field";
-import { ProfilePicture } from "./profile-picture";
 import { useState } from "preact/hooks";
+import { API_HOST, setUserAvatar } from "../../../api";
+import toast from "react-hot-toast";
 
 interface IFormProfile {
 	nickname: string;
@@ -37,7 +38,7 @@ export const ProfileUpdate = ({ user }: any) => {
 			nickname: user?.nickname,
 			location: "",
 			bio: "",
-			avatar: user?.avatar,
+			avatar: "",
 			email: user?.email,
 		},
 	});
@@ -70,7 +71,21 @@ export const ProfileUpdate = ({ user }: any) => {
 		regions.find((r) => r.region === selectedRegion)?.timezone || "";
 
 	const onSubmit = handleSubmit((data) => {
-		console.log(data);
+		// console.log(data);
+		const userAvatar = data.avatar;
+
+		if (userAvatar) {
+			setUserAvatar(userAvatar)
+				.then((res) => {
+					if (res != null) {
+						toast.success("Фото профиля успешно обновлено!");
+					}
+				})
+				.catch((error) => {
+					toast.error("Не удалось обновить фото");
+					console.log(error);
+				});
+		}
 	});
 
 	return (
@@ -83,10 +98,25 @@ export const ProfileUpdate = ({ user }: any) => {
 				<Separator flex="1" />
 			</HStack>
 			<Stack>
-				<ProfilePicture register={register} username={user?.nickname} />
-				<Field label="Имя пользователя" invalid={!!errors.nickname}>
-					<Input placeholder="Заполните поле" {...register("nickname")} />
-				</Field>
+				<Avatar.Root w="100px" h="100px">
+					<Avatar.Fallback name={user?.nickname} />
+					<Avatar.Image src={`${API_HOST + "/api" + user?.avatar_link}`} />
+				</Avatar.Root>
+
+				<Group w="full">
+					<Field label="Фото профиля" invalid={!!errors.avatar}>
+						<Input
+							placeholder="Вставьте ссылку"
+							{...register("avatar")}
+						/>
+					</Field>
+					<Field label="Имя пользователя" invalid={!!errors.nickname}>
+						<Input
+							placeholder="Заполните поле"
+							{...register("nickname")}
+						/>
+					</Field>
+				</Group>
 				<Field label="О себе" invalid={!!errors.location}>
 					<Textarea
 						variant="outline"
@@ -113,12 +143,6 @@ export const ProfileUpdate = ({ user }: any) => {
 								required: "Заполните поле",
 								pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
 							})}
-						/>
-					</Field>
-					<Field label="Телефон">
-						<Input
-							placeholder="Заполните поле"
-							// {...register("phone")}
 						/>
 					</Field>
 				</Group>

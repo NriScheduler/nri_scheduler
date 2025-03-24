@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 import { startFetching, stopFetching } from "./store/fetching";
 import { enter, leave } from "./store/profile";
 
-const API_HOST = import.meta.env.PROD
+export const API_HOST = import.meta.env.PROD
 	? ""
 	: (import.meta.env.CLIENT_API_HOST as string | undefined) || "";
 const CREDENTIALS = import.meta.env.PROD ? undefined : "include";
@@ -70,7 +70,7 @@ const ajax = <T>(
 
 const checkResponse = async <T>(
 	response: Response,
-	isSoft: boolean,
+	isSoft: boolean
 ): Promise<IApiResponse<T> | null> => {
 	if (response.ok === false) {
 		let body: object | string | null = null;
@@ -270,10 +270,7 @@ export const createEvent = (
 ) => {
 	return ajax<UUID>(
 		"/api/events",
-		prepareAjax(
-			{ company, date, location, max_slots, plan_duration },
-			POST,
-		)
+		prepareAjax({ company, date, location, max_slots, plan_duration }, POST)
 	);
 };
 
@@ -308,9 +305,20 @@ export interface IApiUserInfo {
 	readonly email: string | null;
 	readonly nickname: string;
 	readonly phone: string | null;
-	readonly avatar: string | null;
+	readonly avatar_link: UUID;
 }
 
 export const getUserProfile = () => {
 	return ajax<IApiUserInfo>(`/api/profile`);
+};
+
+export const setUserAvatar = (url: string) => {
+	return ajax<IApiUserInfo>(
+		"/api/profile/avatar",
+		prepareAjax({ url }, "PUT")
+	);
+};
+
+export const getUserAvatar = (id: UUID) => {
+	return ajax<UUID>(`/api/profile/avatar/${id}`);
 };

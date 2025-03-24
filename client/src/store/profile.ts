@@ -21,8 +21,6 @@ export const leave = () => {
 
 export const userStore = atom<IApiUserInfo | null>(null);
 
-export const DEFAULT_PROFILE_IMAGE = "https://i.pinimg.com/736x/89/2a/2a/892a2a5f035f9e4a05e7861003f762a0.jpg";
-
 export const fetchUserData = () => {
 	softCheck()
 		.then((isLoggedIn) => {

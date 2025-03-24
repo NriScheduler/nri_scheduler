@@ -22,8 +22,8 @@ import {
 	PopoverTrigger,
 } from "./ui/popover";
 import { useStore } from "@nanostores/preact";
-import { $signed, DEFAULT_PROFILE_IMAGE, fetchUserData, userStore } from "../store/profile";
-import { logout } from "../api";
+import { $signed, fetchUserData, userStore } from "../store/profile";
+import { API_HOST, logout } from "../api";
 import { useEffect } from "react";
 
 export const Header = () => {
@@ -63,14 +63,15 @@ export const Header = () => {
 										<HStack key={user?.email} gap="4">
 											<Avatar.Root>
 												<Avatar.Fallback name={user?.nickname} />
-												<Avatar.Image src={user?.avatar || DEFAULT_PROFILE_IMAGE} />
+												<Avatar.Image
+													src={`${
+														API_HOST + "/api" + user?.avatar_link
+													}`}
+												/>
 											</Avatar.Root>
 											<Stack gap="0">
 												<Text fontWeight="medium">
 													{user?.nickname}
-												</Text>
-												<Text color="fg.muted" textStyle="sm">
-													{user?.email}
 												</Text>
 											</Stack>
 										</HStack>
