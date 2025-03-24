@@ -1,7 +1,6 @@
 import type { UUID } from "node:crypto";
 
 import { route as navigate } from "preact-router";
-import { toast } from "react-hot-toast";
 
 import { toaster } from "./components/ui/toaster";
 import { enter, leave } from "./store/profile";
