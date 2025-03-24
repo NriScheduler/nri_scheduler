@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
-import toast from "react-hot-toast";
+
 
 import {
 	Button,
@@ -29,6 +29,7 @@ import {
 } from "../../../api";
 import { $profile, TIMEZONES } from "../../../store/profile";
 import { navBack } from "../../../utils";
+import { toaster } from "../../ui/toaster";
 
 export const ProfileEdit = () => {
 	const user = useStore($profile);
@@ -264,7 +265,10 @@ export const ProfileEdit = () => {
 								(res) =>
 									res &&
 									(navBack(),
-									toast.success("Данные профиля обновлены")),
+									toaster.create({
+										title: "Данные профиля обновлены",
+										type: "success"
+									}))
 							);
 					}}
 				>

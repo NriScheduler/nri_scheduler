@@ -7,7 +7,7 @@ import { h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+
 
 import {
 	Button,
@@ -55,6 +55,7 @@ import {
 	enableMastery,
 } from "../../../store/mastery";
 import { $profile, $tz } from "../../../store/profile";
+import { toaster } from "../../ui/toaster";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
@@ -234,7 +235,10 @@ export const CalendarPage = () => {
 			)
 				.then((res) => {
 					if (res) {
-						toast.success("Событие успешно создано");
+						toaster.create({
+							title: "Событие успешно создано",
+							type: "success"
+						})
 						setOpenDraw(false);
 						getNewEvent(res.payload);
 						reset();
