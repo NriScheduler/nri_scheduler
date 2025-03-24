@@ -4,7 +4,6 @@ import { h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { useRouter } from "preact-router";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import {
 	Button,
@@ -38,6 +37,7 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
+import { toaster } from "../../ui/toaster";
 import {
 	applyEvent,
 	EScenarioStatus,
@@ -96,7 +96,10 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 			.then((responce) => {
 				if (responce?.status === EScenarioStatus.SCENARIO_SUCCESS) {
 					setYouApplied(true);
-					toast.success("Успех. Запись оформлена");
+					toaster.create({
+						title: "Успех. Запись оформлена",
+						type: "success",
+					});
 				}
 			})
 			.finally(() => {

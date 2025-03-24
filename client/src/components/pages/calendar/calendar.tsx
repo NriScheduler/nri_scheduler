@@ -7,7 +7,6 @@ import { h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import {
 	Button,
@@ -40,6 +39,7 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
+import { toaster } from "../../ui/toaster";
 import {
 	createEvent,
 	IApiCompany,
@@ -234,7 +234,10 @@ export const CalendarPage = () => {
 			)
 				.then((res) => {
 					if (res) {
-						toast.success("Событие успешно создано");
+						toaster.create({
+							title: "Событие успешно создано",
+							type: "success",
+						});
 						setOpenDraw(false);
 						getNewEvent(res.payload);
 						reset();

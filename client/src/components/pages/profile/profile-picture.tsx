@@ -1,9 +1,9 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
-import toast from "react-hot-toast";
 
 import { Avatar, Button, HStack, Input, Stack } from "@chakra-ui/react";
 
+import { toaster } from "../../ui/toaster";
 import { getMyProfile, setAvatar } from "../../../api";
 
 export const ProfilePicture = ({ link }: { link: string }) => {
@@ -32,7 +32,10 @@ export const ProfilePicture = ({ link }: { link: string }) => {
 								.then(
 									(res) =>
 										res &&
-										toast.success("Ссылка на аватар обновлена"),
+										toaster.create({
+											title: "Ссылка на аватар обновлена",
+											type: "success",
+										}),
 								)
 						}
 					>
