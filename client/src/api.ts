@@ -3,8 +3,8 @@ import type { UUID } from "node:crypto";
 import { route as navigate } from "preact-router";
 import { toast } from "react-hot-toast";
 
-import { enter, leave } from "./store/profile";
 import { toaster } from "./components/ui/toaster";
+import { enter, leave } from "./store/profile";
 
 export const API_HOST = import.meta.env.PROD
 	? ""
@@ -87,8 +87,8 @@ const checkResponse = async <T>(
 		}
 		toaster.create({
 			title: "Ошибка обращения к серверу",
-			type: "warning"
-		})
+			type: "warning",
+		});
 		console.info("Http response is not ok");
 		console.error({
 			status: response.status,
@@ -113,8 +113,8 @@ const checkResponse = async <T>(
 				if (!isSoft) {
 					toaster.create({
 						title: apiRes.result,
-						type: "error"
-					})
+						type: "error",
+					});
 					navigate("/signin");
 				}
 
@@ -124,15 +124,15 @@ const checkResponse = async <T>(
 			case EScenarioStatus.SYSTEM_ERROR:
 				toaster.create({
 					title: apiRes.result,
-					type: "error"
-				})
+					type: "error",
+				});
 				break;
 
 			default:
 				toaster.create({
 					title: "Неизвестный статус ответа",
-					type: "warning"
-				})
+					type: "warning",
+				});
 				console.info("Неизвестный статус");
 				console.error(apiRes);
 				break;
@@ -143,13 +143,13 @@ const checkResponse = async <T>(
 		if (err instanceof Error && err.name === "AbortError") {
 			toaster.create({
 				title: "Истекло время ожидания ответа сервера",
-				type: "warning"
-			})
+				type: "warning",
+			});
 		} else {
 			toaster.create({
 				title: "Неизвестная ошибка",
-				type: "error"
-			})
+				type: "error",
+			});
 			console.info("Хрень какая-то...");
 			console.error(err);
 		}

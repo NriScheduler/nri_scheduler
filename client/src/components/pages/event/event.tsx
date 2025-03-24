@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { useRouter } from "preact-router";
 import { useForm } from "react-hook-form";
 
-
 import {
 	Button,
 	Card,
@@ -38,6 +37,7 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
+import { toaster } from "../../ui/toaster";
 import {
 	applyEvent,
 	EScenarioStatus,
@@ -49,7 +49,6 @@ import {
 } from "../../../api";
 import { $profile, $tz } from "../../../store/profile";
 import { navBack } from "../../../utils";
-import { toaster } from "../../ui/toaster";
 
 dayjs.locale("ru");
 
@@ -99,8 +98,8 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 					setYouApplied(true);
 					toaster.create({
 						title: "Успех. Запись оформлена",
-						type: "success"
-					})
+						type: "success",
+					});
 				}
 			})
 			.finally(() => {

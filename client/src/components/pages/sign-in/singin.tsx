@@ -3,7 +3,6 @@ import { useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { useForm } from "react-hook-form";
 
-
 import {
 	Button,
 	Container,
@@ -16,8 +15,8 @@ import {
 
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
-import { getMyProfile, signIn } from "../../../api";
 import { toaster } from "../../ui/toaster";
+import { getMyProfile, signIn } from "../../../api";
 
 interface IFormSignin {
 	readonly email: string;
@@ -46,8 +45,8 @@ export const SignInPage = () => {
 					reset();
 					toaster.create({
 						title: "Успешная авторизация",
-						type: "success"
-					})
+						type: "success",
+					});
 					navigate("/calendar");
 				} else {
 					setFetching(false);

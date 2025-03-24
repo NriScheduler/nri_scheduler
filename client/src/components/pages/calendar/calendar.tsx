@@ -8,7 +8,6 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { useForm } from "react-hook-form";
 
-
 import {
 	Button,
 	Container,
@@ -40,6 +39,7 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
+import { toaster } from "../../ui/toaster";
 import {
 	createEvent,
 	IApiCompany,
@@ -55,7 +55,6 @@ import {
 	enableMastery,
 } from "../../../store/mastery";
 import { $profile, $tz } from "../../../store/profile";
-import { toaster } from "../../ui/toaster";
 
 const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
@@ -237,8 +236,8 @@ export const CalendarPage = () => {
 					if (res) {
 						toaster.create({
 							title: "Событие успешно создано",
-							type: "success"
-						})
+							type: "success",
+						});
 						setOpenDraw(false);
 						getNewEvent(res.payload);
 						reset();

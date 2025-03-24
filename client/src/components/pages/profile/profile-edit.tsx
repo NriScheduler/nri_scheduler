@@ -2,7 +2,6 @@ import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 
-
 import {
 	Button,
 	Container,
@@ -20,6 +19,7 @@ import { useStore } from "@nanostores/preact";
 
 import { ProfilePicture } from "./profile-picture";
 import { Field } from "../../ui/field";
+import { toaster } from "../../ui/toaster";
 import {
 	ETzVariant,
 	getMyProfile,
@@ -29,7 +29,6 @@ import {
 } from "../../../api";
 import { $profile, TIMEZONES } from "../../../store/profile";
 import { navBack } from "../../../utils";
-import { toaster } from "../../ui/toaster";
 
 export const ProfileEdit = () => {
 	const user = useStore($profile);
@@ -267,8 +266,8 @@ export const ProfileEdit = () => {
 									(navBack(),
 									toaster.create({
 										title: "Данные профиля обновлены",
-										type: "success"
-									}))
+										type: "success",
+									})),
 							);
 					}}
 				>

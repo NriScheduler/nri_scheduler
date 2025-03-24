@@ -1,11 +1,10 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
 
-
 import { Avatar, Button, HStack, Input, Stack } from "@chakra-ui/react";
 
-import { getMyProfile, setAvatar } from "../../../api";
 import { toaster } from "../../ui/toaster";
+import { getMyProfile, setAvatar } from "../../../api";
 
 export const ProfilePicture = ({ link }: { link: string }) => {
 	const [isGenerated] = useState(link.startsWith("blob:"));
@@ -35,7 +34,7 @@ export const ProfilePicture = ({ link }: { link: string }) => {
 										res &&
 										toaster.create({
 											title: "Ссылка на аватар обновлена",
-											type: "success"
+											type: "success",
 										}),
 								)
 						}
