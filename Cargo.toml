@@ -29,7 +29,7 @@ chrono = { version = "0.4.40", features = ["serde"] }
 derive-masked = "0.1.0"
 futures = "0.3.31"
 jsonwebtoken = "9.3.1"
-lettre = { version = "0.11.14", optional = true }
+lettre = { version = "0.11.15", optional = true }
 rand = "0.9.0"
 regex = "1.11.1"
 reqwest = { version = "0.12.15", features = ["stream"] }
