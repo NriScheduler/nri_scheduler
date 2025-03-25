@@ -1,8 +1,9 @@
-import { h, RefObject } from "preact"; // eslint-disable-line
+import { h, RefObject } from "preact";
 import { forwardRef } from "preact/compat";
+
 import {
-	Popover as ChakraPopover,
 	CloseButton,
+	Popover as ChakraPopover,
 	Portal,
 } from "@chakra-ui/react";
 
@@ -11,19 +12,18 @@ interface IPopoverContentProps extends ChakraPopover.ContentProps {
 	portalRef?: RefObject<HTMLElement>;
 }
 
-export const PopoverContent = forwardRef<
-	HTMLDivElement,
-	IPopoverContentProps
->(function PopoverContent(props, ref) {
-	const { portalled = true, portalRef, ...rest } = props;
-	return (
-		<Portal disabled={!portalled} container={portalRef}>
-			<ChakraPopover.Positioner>
-				<ChakraPopover.Content ref={ref} {...rest} />
-			</ChakraPopover.Positioner>
-		</Portal>
-	);
-});
+export const PopoverContent = forwardRef<HTMLDivElement, IPopoverContentProps>(
+	function PopoverContent(props, ref) {
+		const { portalled = true, portalRef, ...rest } = props;
+		return (
+			<Portal disabled={!portalled} container={portalRef}>
+				<ChakraPopover.Positioner>
+					<ChakraPopover.Content ref={ref} {...rest} />
+				</ChakraPopover.Positioner>
+			</Portal>
+		);
+	},
+);
 
 export const PopoverArrow = forwardRef<
 	HTMLDivElement,

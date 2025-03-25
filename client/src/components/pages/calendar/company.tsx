@@ -1,3 +1,7 @@
+import { h } from "preact";
+import { useEffect, useState } from "preact/compat";
+import { useForm } from "react-hook-form";
+
 import {
 	Button,
 	Heading,
@@ -7,8 +11,8 @@ import {
 	Text,
 	Textarea,
 } from "@chakra-ui/react";
-import { h } from "preact"; // eslint-disable-line
-import { Field } from "../../ui/field";
+import { useStore } from "@nanostores/preact";
+
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -19,10 +23,9 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "../../ui/drawer";
-
+import { Field } from "../../ui/field";
 import { addCompany, IApiCompany } from "../../../api";
-import { useForm } from "react-hook-form";
-import { useEffect, useState } from "preact/compat";
+import { $profile } from "../../../store/profile";
 
 export interface ICompanyProps {
 	data: IApiCompany[];
@@ -30,11 +33,14 @@ export interface ICompanyProps {
 
 export const Company = ({ data }: ICompanyProps) => {
 	const [open, setOpen] = useState(false);
-	const { register, handleSubmit, reset } = useForm<IApiCompany>();
+	const {
+		register,
+		handleSubmit,
+		reset,
+		formState: { errors },
+	} = useForm<IApiCompany>();
 
-	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") setOpen(false);
-	}
+	const profile = useStore($profile);
 
 	const onSubmit = handleSubmit((companyData) => {
 		if (data) {
@@ -49,6 +55,12 @@ export const Company = ({ data }: ICompanyProps) => {
 	});
 
 	useEffect(() => {
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setOpen(false);
+			}
+		};
+
 		document.addEventListener("keydown", handleKeyDown);
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
@@ -57,10 +69,12 @@ export const Company = ({ data }: ICompanyProps) => {
 	}, []);
 
 	return (
-		<DrawerRoot open={open} onOpenChange={(e) => {if (e) {setOpen(e.open)}}}>
+		<DrawerRoot open={open} onOpenChange={(e) => setOpen(e.open)}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button variant="outline">Создать кампанию</Button>
+				<Button disabled={!profile?.signed} variant="outline">
+					Создать кампанию
+				</Button>
 			</DrawerTrigger>
 			<DrawerContent>
 				<DrawerHeader>
@@ -75,13 +89,21 @@ export const Company = ({ data }: ICompanyProps) => {
 							w="full"
 							mx="auto"
 						>
-							<Field label="Название *">
+							<Field
+								label="Название *"
+								errorText={errors.name?.message}
+								invalid={!!errors.name?.message}
+							>
 								<Input
 									placeholder="Заполните поле"
 									{...register("name", { required: "Заполните поле" })}
 								/>
 							</Field>
-							<Field label="Система *">
+							<Field
+								label="Система *"
+								errorText={errors.system?.message}
+								invalid={!!errors.system?.message}
+							>
 								<Input
 									placeholder="Заполните поле"
 									{...register("system", {

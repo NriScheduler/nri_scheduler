@@ -7,7 +7,7 @@ use axum::{
 	},
 	http::{HeaderValue, Method, header},
 };
-use serde::de::DeserializeOwned;
+use serde::{Deserialize, de::DeserializeOwned};
 
 use crate::system_models::AppError;
 
@@ -113,4 +113,9 @@ fn handle_form_rejection(err: FormRejection) -> AppError {
 
 		non_exhaustive => AppError::system_error(non_exhaustive),
 	};
+}
+
+#[derive(Deserialize)]
+pub(crate) struct FileLinkDto {
+	pub url: String,
 }

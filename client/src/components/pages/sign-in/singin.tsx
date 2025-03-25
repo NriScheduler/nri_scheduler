@@ -1,8 +1,7 @@
-import { h } from "preact"; // eslint-disable-line
+import { h } from "preact";
+import { useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { useForm } from "react-hook-form";
-
-import { signIn, check } from "../../../api";
 
 import {
 	Button,
@@ -13,16 +12,15 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
+
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
-
-import { useStore } from "@nanostores/preact";
-import { $fetching } from "../../../store/fetching";
-import toast from "react-hot-toast";
+import { toaster } from "../../ui/toaster";
+import { getMyProfile, signIn } from "../../../api";
 
 interface IFormSignin {
-	email: string;
-	password: string;
+	readonly email: string;
+	readonly password: string;
 }
 
 export const SignInPage = () => {
@@ -33,20 +31,25 @@ export const SignInPage = () => {
 		formState: { errors },
 	} = useForm<IFormSignin>();
 
-	const fetching = useStore($fetching);
+	const [fetching, setFetching] = useState(false);
 
-	const onSubmit = handleSubmit((data) => {
-		const { email, password } = data;
+	const onSubmit = handleSubmit(({ email, password }) => {
+		setFetching(true);
 
 		signIn(email, password)
 			.then((res) => {
-				return res === null ? null : check();
+				return res === null ? null : getMyProfile();
 			})
-			.then((success) => {
-				if (success) {
+			.then((res) => {
+				if (res !== null) {
 					reset();
-					toast.success("Успешная авторизация");
+					toaster.create({
+						title: "Успешная авторизация",
+						type: "success",
+					});
 					navigate("/calendar");
+				} else {
+					setFetching(false);
 				}
 			});
 	});
@@ -58,11 +61,12 @@ export const SignInPage = () => {
 					<Heading>Авторизация</Heading>
 					<Field
 						label="Электронная почта"
-						invalid={!!errors.email}
+						invalid={Boolean(errors.email)}
 						errorText={errors.email?.message}
 					>
 						<Input
 							placeholder="me@example.ru"
+							autocomplete="email"
 							{...register("email", {
 								required: "Заполните поле",
 								pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -71,11 +75,12 @@ export const SignInPage = () => {
 					</Field>
 					<Field
 						label="Пароль"
-						invalid={!!errors.password}
+						invalid={Boolean(errors.password)}
 						errorText={errors.password?.message}
 					>
 						<PasswordInput
 							placeholder="******"
+							autocomplete="password"
 							{...register("password", {
 								required: "Заполните поле",
 							})}

@@ -1,3 +1,6 @@
+import { h } from "preact";
+import { useState } from "preact/hooks";
+
 import {
 	Avatar,
 	Box,
@@ -9,10 +12,7 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
-import { h } from "preact"; // eslint-disable-line
-import { route as navigate } from "preact-router";
-
-import { useState } from "preact/hooks";
+import { useStore } from "@nanostores/preact";
 
 import {
 	PopoverArrow,
@@ -21,27 +21,13 @@ import {
 	PopoverRoot,
 	PopoverTrigger,
 } from "./ui/popover";
-import { useStore } from "@nanostores/preact";
-import { $signed } from "../store/profile";
-import { getUserProfile, IApiUserInfo, logout, softCheck } from "../api";
-import { useEffect } from "react";
+import { logout } from "../api";
+import { $profile } from "../store/profile";
 
 export const Header = () => {
-	const [userData, setUserData] = useState<IApiUserInfo | null>(null);
 	const [open, setOpen] = useState(false);
-	const auth = useStore($signed);
 
-	useEffect(() => {
-		softCheck().then((isLoggedIn) => {
-			if (isLoggedIn) {
-				getUserProfile().then((res) => {
-					if (res) {
-						setUserData(res.payload);
-					}
-				});
-			}
-		});
-	}, [auth]);
+	const profile = useStore($profile);
 
 	return (
 		<header>
@@ -53,10 +39,11 @@ export const Header = () => {
 							href="/calendar"
 							fontWeight={600}
 							fontSize={24}
+							minHeight="44px"
 						>
 							НРИ Календарь
 						</Link>
-						{auth ? (
+						{profile?.signed ? (
 							<PopoverRoot
 								open={open}
 								onOpenChange={(e) => {
@@ -68,19 +55,17 @@ export const Header = () => {
 							>
 								<PopoverTrigger asChild cursor="pointer">
 									<Stack gap="8">
-										<HStack key={userData?.email} gap="4">
+										<HStack key={profile?.email} gap="4">
 											<Avatar.Root>
-												<Avatar.Fallback
-													name={userData?.nickname}
-												/>
-												<Avatar.Image src="https://gas-kvas.com/grafic/uploads/posts/2023-09/1695869715_gas-kvas-com-p-kartinki-bez-13.png" />
+												<Avatar.Fallback name={profile?.nickname} />
+												<Avatar.Image src={profile.avatar_link} />
 											</Avatar.Root>
 											<Stack gap="0">
 												<Text fontWeight="medium">
-													{userData?.nickname}
+													{profile?.nickname}
 												</Text>
 												<Text color="fg.muted" textStyle="sm">
-													{userData?.email}
+													{profile?.email}
 												</Text>
 											</Stack>
 										</HStack>
@@ -90,13 +75,18 @@ export const Header = () => {
 									<PopoverArrow />
 									<PopoverBody>
 										<Stack gapY={2}>
-											<Link href="#">Профиль</Link>
 											<Link
-												href="#"
+												href="/profile"
+												onClick={() => setOpen(false)}
+											>
+												Профиль
+											</Link>
+											<Link
+												href="/signin"
 												colorPalette="red"
 												onClick={() => {
 													logout();
-													navigate("/signin");
+													setOpen(false);
 												}}
 											>
 												Выйти
@@ -107,7 +97,9 @@ export const Header = () => {
 							</PopoverRoot>
 						) : (
 							<Link href="/signin" ml="auto">
-								<Button type="button">Вход и регистрация</Button>
+								<Button type="button" h="44px">
+									Вход и регистрация
+								</Button>
 							</Link>
 						)}
 					</Flex>
