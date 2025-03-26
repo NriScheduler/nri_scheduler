@@ -2,13 +2,15 @@ pub(super) mod companies;
 pub(super) mod events;
 pub(super) mod locations;
 pub(super) mod regions;
+pub(super) mod verify;
 
-use ::std::sync::Arc;
+use ::std::{str::FromStr as _, sync::Arc};
 use axum::{
 	Extension,
 	extract::{Path, State},
 	response::{IntoResponse, Response},
 };
+use lettre::message::Mailbox;
 use uuid::Uuid;
 
 use crate::{
@@ -27,7 +29,10 @@ pub(super) async fn registration(
 	State(repo): State<Arc<Repository>>,
 	Dto(body): Dto<RegistrationDto>,
 ) -> AppResult {
-	repo
+	let to = Mailbox::from_str(&body.email)
+		.map_err(|err| AppError::scenario_error("Введен некорректный email", Some(err)))?;
+
+	let verification_id = repo
 		.registration(
 			&body.nickname,
 			&body.email,
@@ -35,6 +40,15 @@ pub(super) async fn registration(
 			body.timezone_offset,
 		)
 		.await?;
+
+	crate::email::send(to, verification_id)
+		.await
+		.map_err(|err| {
+			AppError::scenario_error(
+				"Не удалось отправить сообщение для подтверждения email",
+				Some(err),
+			)
+		})?;
 
 	return AppResponse::user_registered();
 }
@@ -56,7 +70,7 @@ pub(super) async fn sign_in(
 		return AppError::unauthorized("Неверный пароль").into_response();
 	};
 
-	let jwt = match auth::generate_jwt(user.id) {
+	let jwt = match auth::generate_jwt(user.id, user.verified) {
 		Err(err) => return err.into_response(),
 		Ok(jwt) => jwt,
 	};

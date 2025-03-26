@@ -18,7 +18,7 @@ static URL_ENCODED: LazyLock<HeaderValue> = LazyLock::new(|| {
 
 pub(super) fn init_static() {
 	let _ = *URL_ENCODED;
-	println!("+ an urlencoded header values is ok");
+	println!("+ an urlencoded header value is ok");
 }
 
 pub(crate) struct Dto<T>(pub(crate) T);

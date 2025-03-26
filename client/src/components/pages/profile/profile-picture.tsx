@@ -1,8 +1,9 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
 
-import { Avatar, Button, HStack, Input, Stack } from "@chakra-ui/react";
+import { Button, HStack, Input, Stack } from "@chakra-ui/react";
 
+import { Avatar } from "../../ui/avatar";
 import { toaster } from "../../ui/toaster";
 import { getMyProfile, setAvatar } from "../../../api";
 
@@ -12,9 +13,7 @@ export const ProfilePicture = ({ link }: { link: string }) => {
 
 	return (
 		<HStack>
-			<Avatar.Root w="100px" h="100px">
-				<Avatar.Image src={link} />
-			</Avatar.Root>
+			<Avatar src={link} w="100px" h="100px" />
 			<Stack>
 				{isGenerated && "Сгенерированный аватар"}
 				<HStack>
@@ -32,9 +31,8 @@ export const ProfilePicture = ({ link }: { link: string }) => {
 								.then(
 									(res) =>
 										res &&
-										toaster.create({
+										toaster.success({
 											title: "Ссылка на аватар обновлена",
-											type: "success",
 										}),
 								)
 						}

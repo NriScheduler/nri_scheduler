@@ -54,6 +54,14 @@ const App = () => (
 						)
 					}
 				/>
+				<AsyncRoute
+					path="/verification"
+					getComponent={() =>
+						import("./components/pages/verification/verification").then(
+							(module) => module.VerificationPage,
+						)
+					}
+				/>
 
 				<Route default component={() => <NotFoundPage />} />
 			</Router>

@@ -15,6 +15,7 @@ import {
 
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
+import { toaster } from "../../ui/toaster";
 import { registration } from "../../../api";
 
 interface IFormValues {
@@ -39,6 +40,9 @@ export const SingUpPage = () => {
 
 		registration(name, email, password).then((res) => {
 			if (res !== null) {
+				toaster.success({
+					title: "Вам отправлено письмо для подтверждения email",
+				});
 				navigate("/signin", true);
 			} else {
 				setFetching(false);

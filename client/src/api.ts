@@ -84,10 +84,7 @@ const checkResponse = async <T>(
 			console.info("http response body parsing error");
 			console.error(err);
 		}
-		toaster.create({
-			title: "Ошибка обращения к серверу",
-			type: "warning",
-		});
+		toaster.warning({ title: "Ошибка обращения к серверу" });
 		console.info("Http response is not ok");
 		console.error({
 			status: response.status,
@@ -110,10 +107,7 @@ const checkResponse = async <T>(
 				/** @todo добавить refresh */
 				leave();
 				if (!isSoft) {
-					toaster.create({
-						title: apiRes.result,
-						type: "error",
-					});
+					toaster.error({ title: apiRes.result });
 					navigate("/signin");
 				}
 
@@ -121,17 +115,11 @@ const checkResponse = async <T>(
 
 			case EScenarioStatus.SCENARIO_FAIL:
 			case EScenarioStatus.SYSTEM_ERROR:
-				toaster.create({
-					title: apiRes.result,
-					type: "error",
-				});
+				toaster.error({ title: apiRes.result });
 				break;
 
 			default:
-				toaster.create({
-					title: "Неизвестный статус ответа",
-					type: "warning",
-				});
+				toaster.warning({ title: "Неизвестный статус ответа" });
 				console.info("Неизвестный статус");
 				console.error(apiRes);
 				break;
@@ -140,15 +128,9 @@ const checkResponse = async <T>(
 		return null;
 	} catch (err) {
 		if (err instanceof Error && err.name === "AbortError") {
-			toaster.create({
-				title: "Истекло время ожидания ответа сервера",
-				type: "warning",
-			});
+			toaster.warning({ title: "Истекло время ожидания ответа сервера" });
 		} else {
-			toaster.create({
-				title: "Неизвестная ошибка",
-				type: "error",
-			});
+			toaster.error({ title: "Неизвестная ошибка" });
 			console.info("Хрень какая-то...");
 			console.error(err);
 		}
@@ -205,6 +187,23 @@ export const logout = () =>
 
 		return res;
 	});
+
+export const enum EVerificationChannel {
+	EMAIL = "email",
+}
+
+export const verifyEmail = (code: string) => {
+	return ajax<null>(
+		"/api/verify",
+		prepareAjax({ code, channel: EVerificationChannel.EMAIL }, POST),
+	);
+};
+
+export const sendVerificationLink = () =>
+	ajax<null>(
+		"/api/profile/send-email-verification",
+		prepareAjax(undefined, POST),
+	);
 
 export interface IApiLocation {
 	readonly id: UUID;
@@ -382,6 +381,7 @@ export const enum ETzVariant {
 export interface IApiProfile {
 	readonly id: UUID;
 	readonly email: string | null;
+	readonly email_verified: boolean;
 	readonly nickname: string;
 	readonly about_me: string | null;
 	readonly avatar_link: string | null;

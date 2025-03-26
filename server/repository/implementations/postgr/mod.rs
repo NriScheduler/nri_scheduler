@@ -46,18 +46,31 @@ impl Store for PostgresStore {
 		email: &str,
 		hashed_pass: &str,
 		timezone_offset: Option<i16>,
-	) -> CoreResult {
-		let query_result = sqlx::query(
-			"INSERT INTO users (nickname, email, pw_hash, own_tz) values ($1, $2, $3, $4);",
+	) -> CoreResult<Uuid> {
+		let (_, verification_id) = sqlx::query_as::<_, (Uuid, Uuid)>(
+			"WITH new_user AS (
+				INSERT INTO users (nickname, email, pw_hash, own_tz)
+				values ($1, $2, $3, $4)
+				returning id as user_id
+			),
+			new_verification AS (
+				INSERT INTO verifications (user_id)
+				select user_id from new_user
+				returning id as verification_id
+			)
+			select
+				new_user.user_id,
+				new_verification.verification_id
+			from new_user
+			cross join new_verification;",
 		)
 		.bind(nickname)
 		.bind(email)
 		.bind(hashed_pass)
 		.bind(timezone_offset)
-		.execute(&self.pool)
-		.await;
-
-		query_result.map_err(|err| {
+		.fetch_one(&self.pool)
+		.await
+		.map_err(|err| {
 			let err_str = err.to_string();
 			if err_str.contains(DUPLICATE_KEY) {
 				AppError::scenario_error("Пользователь с данным email уже существует", email.into())
@@ -66,15 +79,16 @@ impl Store for PostgresStore {
 			}
 		})?;
 
-		Ok(())
+		Ok(verification_id)
 	}
 
 	async fn get_user_for_signing_in(&self, email: &str) -> CoreResult<Option<UserForAuth>> {
-		let may_be_user =
-			sqlx::query_as::<_, UserForAuth>("SELECT id, pw_hash FROM users WHERE email = $1;")
-				.bind(email)
-				.fetch_optional(&self.pool)
-				.await?;
+		let may_be_user = sqlx::query_as::<_, UserForAuth>(
+			"SELECT id, pw_hash, email_verified as verified FROM users WHERE email = $1;",
+		)
+		.bind(email)
+		.fetch_optional(&self.pool)
+		.await?;
 
 		Ok(may_be_user)
 	}
@@ -85,6 +99,7 @@ impl Store for PostgresStore {
 				sq.id
 				, sq.nickname
 				, sq.email
+				, sq.email_verified
 				, sq.about_me
 				, sq.city
 				, sq.region
@@ -97,6 +112,7 @@ impl Store for PostgresStore {
 					u.id
 					, u.nickname
 					, u.email
+					, u.email_verified
 					, u.about_me
 					, u.city
 					, r.name as region
@@ -159,6 +175,66 @@ impl Store for PostgresStore {
 			.await?;
 
 		Ok(())
+	}
+
+	async fn verify_email(&self, verification_id: Uuid) -> CoreResult<Option<(bool, bool)>> {
+		sqlx::query_as::<_, (bool, bool)>(
+			"WITH existing_verification AS (
+				DELETE FROM verifications
+				WHERE id = $1
+				RETURNING id, user_id
+			),
+			verification_status AS (
+				SELECT
+					v.user_id,
+					(EXTRACT(HOUR FROM (CURRENT_TIMESTAMP - restore_timestamp_from_uuid_v6(v.id))) >= 1) AS expired
+				FROM verifications v
+				INNER JOIN existing_verification ev ON v.id = ev.id
+			),
+			update_result AS (
+				UPDATE users
+				SET email_verified = true
+				FROM verification_status vs
+				WHERE
+					users.id = vs.user_id
+					AND vs.expired = false
+					AND users.email_verified = false
+				RETURNING users.id, true AS was_updated
+			)
+			SELECT
+				vs.expired,
+				COALESCE(ur.was_updated, false) AS was_updated
+			FROM verification_status vs
+			LEFT JOIN update_result ur ON ur.id = vs.user_id;",
+		)
+		.bind(verification_id)
+		.fetch_optional(&self.pool)
+		.await
+		.map_err(AppError::from)
+	}
+
+	async fn send_email_verification(&self, user_id: Uuid) -> CoreResult<(Uuid, String)> {
+		sqlx::query_as::<_, (Uuid, String)>(
+			"WITH delete_old AS (
+				DELETE FROM verifications
+				WHERE user_id = $1
+			),
+			existing_user AS (
+				select id, email from users where id = $1
+			),
+			new_verification AS (
+				INSERT INTO verifications (user_id) values ($1) returning id
+			)
+			select
+				new_verification.id,
+				existing_user.email
+			from new_verification
+			cross join existing_user;",
+		)
+		.bind(user_id)
+		.fetch_one(&self.pool)
+		.await
+		.map_err(AppError::from)
 	}
 
 	async fn get_locations_list(&self, query_args: ReadLocationDto) -> CoreResult<Vec<Location>> {
