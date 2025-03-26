@@ -9,6 +9,7 @@ pub(crate) struct UserForAuth {
 	pub id: Uuid,
 	#[masked]
 	pub pw_hash: String,
+	pub verified: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
@@ -30,6 +31,7 @@ pub(crate) struct Profile {
 	pub timezone_offset: Option<i16>,
 	pub tz_variant: Option<String>,
 	pub get_tz_from_device: bool,
+	pub email_verified: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]

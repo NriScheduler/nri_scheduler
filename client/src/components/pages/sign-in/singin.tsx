@@ -43,10 +43,7 @@ export const SignInPage = () => {
 			.then((res) => {
 				if (res !== null) {
 					reset();
-					toaster.create({
-						title: "Успешная авторизация",
-						type: "success",
-					});
+					toaster.success({ title: "Успешная авторизация" });
 					navigate("/calendar");
 				} else {
 					setFetching(false);

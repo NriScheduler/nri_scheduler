@@ -16,6 +16,7 @@ dayjs.extend(timezone);
 export interface IStorePrifile {
 	readonly id: UUID;
 	readonly email: string | null;
+	readonly email_verified: boolean;
 	readonly nickname: string;
 	readonly about_me: string | null;
 	readonly avatar_link: string;
@@ -29,6 +30,7 @@ export interface IStorePrifile {
 export interface IEmptyStorePrifile {
 	readonly id: undefined;
 	readonly email: undefined;
+	readonly email_verified: undefined;
 	readonly nickname: undefined;
 	readonly about_me: undefined;
 	readonly avatar_link: undefined;
@@ -60,6 +62,7 @@ export const $profile = computed(_profile, (p) =>
 		const prof: IStorePrifile = {
 			id: p.id,
 			email: p.email,
+			email_verified: p.email_verified,
 			nickname: p.nickname,
 			about_me: p.about_me,
 			avatar_link,

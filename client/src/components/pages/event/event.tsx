@@ -1,6 +1,6 @@
 import type { UUID } from "node:crypto";
 
-import { h } from "preact";
+import { Fragment, h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { useRouter } from "preact-router";
 import { useForm } from "react-hook-form";
@@ -37,6 +37,8 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
+import { HoverCard } from "../../ui/hover-card";
+import { Warning } from "../../ui/icons";
 import { toaster } from "../../ui/toaster";
 import {
 	applyEvent,
@@ -96,10 +98,7 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 			.then((responce) => {
 				if (responce?.status === EScenarioStatus.SCENARIO_SUCCESS) {
 					setYouApplied(true);
-					toaster.create({
-						title: "Успех. Запись оформлена",
-						type: "success",
-					});
+					toaster.success({ title: "Успех. Запись оформлена" });
 				}
 			})
 			.finally(() => {
@@ -144,19 +143,28 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 			<Card.Footer>
 				{profile?.signed ? (
 					!event.you_are_master ? (
-						<Button
-							variant="subtle"
-							colorPalette="blue"
-							minW="115px"
-							onClick={handleSubscribe}
-							disabled={isLoading || youApplied}
-						>
-							{isLoading
-								? "..."
-								: youApplied
-									? "Вы записаны"
-									: "Записаться"}
-						</Button>
+						<>
+							<Button
+								variant="subtle"
+								colorPalette="blue"
+								minW="115px"
+								onClick={handleSubscribe}
+								disabled={
+									isLoading || youApplied || !profile.email_verified
+								}
+							>
+								{isLoading
+									? "..."
+									: youApplied
+										? "Вы записаны"
+										: "Записаться"}
+							</Button>
+							{!profile.email_verified && (
+								<HoverCard content="Нельзя записаться на событие - электронная почта не подтверждена">
+									<Warning />
+								</HoverCard>
+							)}
+						</>
 					) : null
 				) : (
 					"необходимо авторизоваться для записи на игру"

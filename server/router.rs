@@ -28,6 +28,7 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 				.route("/registration", post(H::registration))
 				.route("/signin", post(H::sign_in))
 				.route("/logout", post(H::logout))
+				.route("/verify", post(H::verify::verify))
 				.route("/locations", get(H::locations::get_locations_list))
 				.route("/locations/{id}", get(H::locations::get_location_by_id))
 				.route("/regions", get(H::regions::read_regions_list))
@@ -46,6 +47,14 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 							"/profile/my",
 							get(H::read_my_profile).put(H::update_my_profile),
 						)
+						.route(
+							"/profile/send-email-verification",
+							post(H::verify::send_email_verification),
+						)
+						.layer(middleware::from_fn(auth::auth_middleware)),
+				)
+				.merge(
+					Router::new()
 						.route("/profile/avatar", put(H::set_avatar))
 						.route("/locations", post(H::locations::add_location))
 						.route("/companies", post(H::companies::add_company))
@@ -56,7 +65,7 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 						.route("/events/apply/{id}", post(H::events::apply_event))
 						.route("/events/{id}", put(H::events::update_event))
 						.route("/cities", post(H::regions::add_city))
-						.layer(middleware::from_fn(auth::auth_middleware)),
+						.layer(middleware::from_fn(auth::auth_and_verified_middleware)),
 				),
 		)
 		.with_state(repo);

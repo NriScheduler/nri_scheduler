@@ -264,9 +264,8 @@ export const ProfileEdit = () => {
 								(res) =>
 									res &&
 									(navBack(),
-									toaster.create({
+									toaster.success({
 										title: "Данные профиля обновлены",
-										type: "success",
 									})),
 							);
 					}}
