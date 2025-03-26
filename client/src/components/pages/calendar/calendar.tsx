@@ -206,7 +206,7 @@ export const CalendarPage = () => {
 	useEffect(() => {
 		setShowSwitch(Boolean(profile?.signed));
 
-		document.addEventListener("keydown", handleKeyDown);
+		document.addEventListener("keydown", handleKeyDown, { passive: true });
 
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);

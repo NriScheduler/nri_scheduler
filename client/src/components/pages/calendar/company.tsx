@@ -61,7 +61,7 @@ export const Company = ({ data }: ICompanyProps) => {
 			}
 		};
 
-		document.addEventListener("keydown", handleKeyDown);
+		document.addEventListener("keydown", handleKeyDown, { passive: true });
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
 			setOpen(false);

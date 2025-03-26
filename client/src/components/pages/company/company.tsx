@@ -144,7 +144,7 @@ export const CompanyPage = () => {
 				setOpen(false);
 			}
 		};
-		document.addEventListener("keydown", onEscClose);
+		document.addEventListener("keydown", onEscClose, { passive: true });
 		if (companyId) {
 			setFetching(true);
 			readCompanyById(companyId)
