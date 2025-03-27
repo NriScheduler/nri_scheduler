@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 
 import {
 	Button,
+	Card,
 	Container,
 	createListCollection,
 	Group,
@@ -28,6 +29,7 @@ import dayjs from "dayjs";
 
 import { Company } from "./company";
 import { Location } from "./location";
+import { Checkbox } from "../../ui/checkbox";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -83,6 +85,9 @@ export const CalendarPage = () => {
 	const [companyList, setCompanyList] = useState<IApiCompany[]>([]);
 	const [locationList, setLocationList] = useState<IApiLocation[]>([]);
 
+	const [noPlayersLimit, setPlayersLimit] = useState(false);
+	const [noDurationLimit, setDurationLimi] = useState(false);
+
 	const tz = useStore($tz);
 	const mastery = useStore($mastery);
 	const profile = useStore($profile);
@@ -95,6 +100,7 @@ export const CalendarPage = () => {
 		clearErrors,
 		formState: { errors },
 	} = useForm<IFormCreateEvent>();
+
 	const addDataEventToCalendar = (
 		dateStart: string,
 		dateEnd: string,
@@ -206,6 +212,12 @@ export const CalendarPage = () => {
 	useEffect(() => {
 		setShowSwitch(Boolean(profile?.signed));
 
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setOpenDraw(false);
+			}
+		};
+
 		document.addEventListener("keydown", handleKeyDown, { passive: true });
 
 		return () => {
@@ -213,12 +225,6 @@ export const CalendarPage = () => {
 			setOpenDraw(false);
 		};
 	}, [profile?.signed]);
-
-	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") {
-			setOpenDraw(false);
-		}
-	}
 
 	const onSubmit = handleSubmit((data) => {
 		const { company, location, start, startTime, max_slots, plan_duration } =
@@ -231,8 +237,8 @@ export const CalendarPage = () => {
 				company,
 				date.toISOString(),
 				location,
-				Number(max_slots) || null,
-				Number(plan_duration) || null,
+				noPlayersLimit ? null : Number(max_slots) || null,
+				noDurationLimit ? null : Number(plan_duration) || null,
 			)
 				.then((res) => {
 					if (res) {
@@ -436,28 +442,66 @@ export const CalendarPage = () => {
 													</NativeSelect.Root>
 												</Field>
 
-												<Field label="Максимальное количество игроков">
-													<Input
-														type="number"
-														min="1"
-														step="1"
-														defaultValue="1"
-														{...register("max_slots")}
-													/>
-												</Field>
+												<Card.Root>
+													<Card.Body padding={2}>
+														<Field
+															label="Максимальное количество игроков"
+															disabled={noPlayersLimit}
+															marginBottom={2}
+														>
+															<Input
+																type="number"
+																min="1"
+																step="1"
+																defaultValue="1"
+																{...register("max_slots")}
+															/>
+														</Field>
 
-												<Field label="Планируемая длительность">
-													<Group attached w="full">
-														<Input
-															type="number"
-															min="1"
-															step="1"
-															defaultValue="1"
-															{...register("plan_duration")}
-														/>
-														<InputAddon>час</InputAddon>
-													</Group>
-												</Field>
+														<Checkbox
+															checked={noPlayersLimit}
+															onChange={() =>
+																setPlayersLimit(!noPlayersLimit)
+															}
+														>
+															Без ограничений
+														</Checkbox>
+													</Card.Body>
+												</Card.Root>
+
+												<Card.Root>
+													<Card.Body padding={2}>
+														<Field
+															label="Планируемая длительность"
+															disabled={noDurationLimit}
+															marginBottom={2}
+														>
+															<Group attached w="full">
+																<Input
+																	type="number"
+																	min="1"
+																	step="1"
+																	defaultValue="1"
+																	{...register(
+																		"plan_duration",
+																	)}
+																/>
+																<InputAddon>час</InputAddon>
+															</Group>
+														</Field>
+
+														<Checkbox
+															checked={noDurationLimit}
+															onChange={() =>
+																setDurationLimi(
+																	!noDurationLimit,
+																)
+															}
+														>
+															Как пойдёт
+														</Checkbox>
+													</Card.Body>
+												</Card.Root>
 											</Stack>
 											<Button
 												disabled={isDisableCreateEventSubmitButton}

@@ -46,7 +46,7 @@ const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 		<Card.Root width="full">
 			<Card.Body>
 				<HStack mb="6" gap="3">
-					<Heading size="3xl">Компания - {company.name}</Heading>
+					<Heading size="3xl">Кампания - {company.name}</Heading>
 				</HStack>
 				<DataList.Root orientation="horizontal">
 					{stats.map((item) => (
@@ -67,7 +67,6 @@ const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 					))}
 				</DataList.Root>
 			</Card.Body>
-			<Card.Footer></Card.Footer>
 		</Card.Root>
 	);
 };
