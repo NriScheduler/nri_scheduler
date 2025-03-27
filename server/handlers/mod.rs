@@ -11,6 +11,7 @@ use axum::{
 	response::{IntoResponse, Response},
 };
 use lettre::message::Mailbox;
+use tokio::task;
 use uuid::Uuid;
 
 use crate::{
@@ -41,14 +42,7 @@ pub(super) async fn registration(
 		)
 		.await?;
 
-	crate::email::send(to, verification_id)
-		.await
-		.map_err(|err| {
-			AppError::scenario_error(
-				"Не удалось отправить сообщение для подтверждения email",
-				Some(err),
-			)
-		})?;
+	task::spawn(crate::email::send(to, verification_id));
 
 	return AppResponse::user_registered();
 }
