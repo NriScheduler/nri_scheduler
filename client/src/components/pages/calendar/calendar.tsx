@@ -6,6 +6,7 @@ import type { UUID } from "node:crypto";
 import { Fragment, h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
+
 import { Controller, useForm } from "react-hook-form";
 
 import {
@@ -28,6 +29,7 @@ import dayjs from "dayjs";
 
 import { Company } from "./company";
 import { Location } from "./location";
+import { Checkbox } from "../../ui/checkbox";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -38,6 +40,7 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "../../ui/drawer";
+
 import { Field } from "../../ui/field";
 
 import {
@@ -91,6 +94,9 @@ export const CalendarPage = () => {
 		useState(false);
 	const [companyList, setCompanyList] = useState<IApiCompany[]>([]);
 	const [locationList, setLocationList] = useState<IApiLocation[]>([]);
+
+	const [noPlayersLimit, setPlayersLimit] = useState(false);
+	const [noDurationLimit, setDurationLimi] = useState(false);
 
 	const tz = useStore($tz);
 	const mastery = useStore($mastery);
@@ -220,7 +226,13 @@ export const CalendarPage = () => {
 	useEffect(() => {
 		setShowSwitch(Boolean(profile?.signed));
 
-		document.addEventListener("keydown", handleKeyDown);
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setOpenDraw(false);
+			}
+		};
+
+		document.addEventListener("keydown", handleKeyDown, { passive: true });
 
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
@@ -234,7 +246,7 @@ export const CalendarPage = () => {
 		}
 	}
 
-	const [start] = watch(["start"]);
+  const [start] = watch(["start"]);
 
 	const validateDate = (value: string) => {
 		clearErrors("startTime");
@@ -311,10 +323,16 @@ export const CalendarPage = () => {
 		<section>
 			<Container>
 				<HStack flexWrap="wrap" mb="5" minHeight="40px" gap={10}>
+					{!profile?.email_verified && profile?.signed && (
+						<HoverCard content="Нельзя перейти в режим мастера - электронная почта не подтверждена">
+							<Warning />
+						</HoverCard>
+					)}
 					{showSwitch && (
 						<Switch.Root
 							size="lg"
-							checked={mastery}
+							checked={mastery && profile?.email_verified}
+							disabled={!profile?.email_verified}
 							onCheckedChange={() =>
 								mastery ? disableMastery() : enableMastery()
 							}
@@ -326,7 +344,8 @@ export const CalendarPage = () => {
 							<Switch.Label>Режим мастера</Switch.Label>
 						</Switch.Root>
 					)}
-					{mastery && showSwitch && (
+
+					{mastery && profile?.email_verified && showSwitch && (
 						<Stack direction="row" gap={4}>
 							<DrawerRoot
 								open={openDraw}

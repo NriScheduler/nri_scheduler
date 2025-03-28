@@ -1,63 +1,32 @@
-import { h, RefObject } from "preact";
-import { forwardRef } from "preact/compat";
+import { h } from "preact";
 
-import {
-	CloseButton,
-	Popover as ChakraPopover,
-	Portal,
-} from "@chakra-ui/react";
+import { Popover as ChakraPopover } from "@chakra-ui/react";
+import type { PositioningOptions } from "@zag-js/popper";
 
-interface IPopoverContentProps extends ChakraPopover.ContentProps {
-	portalled?: boolean;
-	portalRef?: RefObject<HTMLElement>;
+export interface IPopoverProps {
+	readonly children: h.JSX.Element | string;
+	readonly content: h.JSX.Element | string;
+	readonly positioning?: PositioningOptions;
+	readonly open?: boolean;
+	readonly onOpenChange?: (evt: { open: boolean }) => void;
 }
 
-export const PopoverContent = forwardRef<HTMLDivElement, IPopoverContentProps>(
-	function PopoverContent(props, ref) {
-		const { portalled = true, portalRef, ...rest } = props;
-		return (
-			<Portal disabled={!portalled} container={portalRef}>
-				<ChakraPopover.Positioner>
-					<ChakraPopover.Content ref={ref} {...rest} />
-				</ChakraPopover.Positioner>
-			</Portal>
-		);
-	},
+export const Popover = (p: IPopoverProps) => (
+	<ChakraPopover.Root
+		open={p.open}
+		onOpenChange={p.onOpenChange}
+		positioning={p.positioning}
+	>
+		<ChakraPopover.Trigger asChild cursor="pointer">
+			{p.children}
+		</ChakraPopover.Trigger>
+		<ChakraPopover.Positioner>
+			<ChakraPopover.Content>
+				<ChakraPopover.Arrow>
+					<ChakraPopover.ArrowTip />
+				</ChakraPopover.Arrow>
+				<ChakraPopover.Body>{p.content}</ChakraPopover.Body>
+			</ChakraPopover.Content>
+		</ChakraPopover.Positioner>
+	</ChakraPopover.Root>
 );
-
-export const PopoverArrow = forwardRef<
-	HTMLDivElement,
-	ChakraPopover.ArrowProps
->(function PopoverArrow(props, ref) {
-	return (
-		<ChakraPopover.Arrow {...props} ref={ref}>
-			<ChakraPopover.ArrowTip />
-		</ChakraPopover.Arrow>
-	);
-});
-
-export const PopoverCloseTrigger = forwardRef<
-	HTMLButtonElement,
-	ChakraPopover.CloseTriggerProps
->(function PopoverCloseTrigger(props, ref) {
-	return (
-		<ChakraPopover.CloseTrigger
-			position="absolute"
-			top="1"
-			insetEnd="1"
-			{...props}
-			asChild
-			ref={ref}
-		>
-			<CloseButton size="sm" />
-		</ChakraPopover.CloseTrigger>
-	);
-});
-
-export const PopoverTitle = ChakraPopover.Title;
-export const PopoverDescription = ChakraPopover.Description;
-export const PopoverFooter = ChakraPopover.Footer;
-export const PopoverHeader = ChakraPopover.Header;
-export const PopoverRoot = ChakraPopover.Root;
-export const PopoverBody = ChakraPopover.Body;
-export const PopoverTrigger = ChakraPopover.Trigger;

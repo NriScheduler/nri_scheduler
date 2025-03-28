@@ -31,14 +31,14 @@ export const Location = () => {
 
 	const profile = useStore($profile);
 
-	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") {
-			setOpen(false);
-		}
-	}
-
 	useEffect(() => {
-		document.addEventListener("keydown", handleKeyDown);
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setOpen(false);
+			}
+		};
+
+		document.addEventListener("keydown", handleKeyDown, { passive: true });
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
 			setOpen(false);

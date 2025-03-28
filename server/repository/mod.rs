@@ -29,12 +29,14 @@ trait Store {
 		email: &str,
 		hashed_pass: &str,
 		timezone_offset: Option<i16>,
-	) -> CoreResult;
+	) -> CoreResult<Uuid>;
 	async fn get_user_for_signing_in(&self, email: &str) -> CoreResult<Option<UserForAuth>>;
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>>;
 	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult;
 	async fn get_avatar_link(&self, user_id: Uuid) -> CoreResult<Option<String>>;
 	async fn set_avatar(&self, user_id: Uuid, url: &str) -> CoreResult;
+	async fn verify_email(&self, verification_id: Uuid) -> CoreResult<Option<(bool, bool)>>;
+	async fn send_email_verification(&self, user_id: Uuid) -> CoreResult<(Uuid, String)>;
 
 	async fn get_locations_list(&self, query: ReadLocationDto) -> CoreResult<Vec<Location>>;
 	async fn get_location_by_id(&self, location_id: Uuid) -> CoreResult<Option<Location>>;
@@ -145,7 +147,7 @@ impl Repository {
 		email: &str,
 		password: &str,
 		timezone_offset: Option<i16>,
-	) -> CoreResult {
+	) -> CoreResult<Uuid> {
 		let hashed_pass = auth::hash_password(password)?;
 
 		return self
@@ -179,6 +181,17 @@ impl Repository {
 
 	pub(crate) async fn set_avatar(&self, user_id: Uuid, url: &str) -> CoreResult {
 		return self.store.set_avatar(user_id, url).await;
+	}
+
+	pub(crate) async fn verify_email(
+		&self,
+		verification_id: Uuid,
+	) -> CoreResult<Option<(bool, bool)>> {
+		return self.store.verify_email(verification_id).await;
+	}
+
+	pub(crate) async fn send_email_verification(&self, user_id: Uuid) -> CoreResult<(Uuid, String)> {
+		return self.store.send_email_verification(user_id).await;
 	}
 
 	pub(crate) async fn get_locations_list(

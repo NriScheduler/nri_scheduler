@@ -1,8 +1,8 @@
 import type { UUID } from "node:crypto";
 
 import { route as navigate } from "preact-router";
-import { toast } from "react-hot-toast";
 
+import { toaster } from "./components/ui/toaster";
 import { enter, leave } from "./store/profile";
 
 export const API_HOST = import.meta.env.PROD
@@ -84,8 +84,7 @@ const checkResponse = async <T>(
 			console.info("http response body parsing error");
 			console.error(err);
 		}
-
-		toast.error("Ошибка обращения к серверу");
+		toaster.warning({ title: "Ошибка обращения к серверу" });
 		console.info("Http response is not ok");
 		console.error({
 			status: response.status,
@@ -108,7 +107,7 @@ const checkResponse = async <T>(
 				/** @todo добавить refresh */
 				leave();
 				if (!isSoft) {
-					toast.error(apiRes.result);
+					toaster.error({ title: apiRes.result });
 					navigate("/signin");
 				}
 
@@ -116,11 +115,11 @@ const checkResponse = async <T>(
 
 			case EScenarioStatus.SCENARIO_FAIL:
 			case EScenarioStatus.SYSTEM_ERROR:
-				toast.error(apiRes.result);
+				toaster.error({ title: apiRes.result });
 				break;
 
 			default:
-				toast.error("Неизвестный статус ответа");
+				toaster.warning({ title: "Неизвестный статус ответа" });
 				console.info("Неизвестный статус");
 				console.error(apiRes);
 				break;
@@ -129,9 +128,9 @@ const checkResponse = async <T>(
 		return null;
 	} catch (err) {
 		if (err instanceof Error && err.name === "AbortError") {
-			toast.error("Истекло время ожидания ответа сервера");
+			toaster.warning({ title: "Истекло время ожидания ответа сервера" });
 		} else {
-			toast.error("Неизвестная ошибка");
+			toaster.error({ title: "Неизвестная ошибка" });
 			console.info("Хрень какая-то...");
 			console.error(err);
 		}
@@ -188,6 +187,23 @@ export const logout = () =>
 
 		return res;
 	});
+
+export const enum EVerificationChannel {
+	EMAIL = "email",
+}
+
+export const verifyEmail = (code: string) => {
+	return ajax<null>(
+		"/api/verify",
+		prepareAjax({ code, channel: EVerificationChannel.EMAIL }, POST),
+	);
+};
+
+export const sendVerificationLink = () =>
+	ajax<null>(
+		"/api/profile/send-email-verification",
+		prepareAjax(undefined, POST),
+	);
 
 export interface IApiLocation {
 	readonly id: UUID;
@@ -365,6 +381,7 @@ export const enum ETzVariant {
 export interface IApiProfile {
 	readonly id: UUID;
 	readonly email: string | null;
+	readonly email_verified: boolean;
 	readonly nickname: string;
 	readonly about_me: string | null;
 	readonly avatar_link: string | null;

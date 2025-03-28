@@ -1,8 +1,8 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
+import { useRouter } from "preact-router";
 
 import {
-	Avatar,
 	Box,
 	Button,
 	Container,
@@ -14,17 +14,13 @@ import {
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 
-import {
-	PopoverArrow,
-	PopoverBody,
-	PopoverContent,
-	PopoverRoot,
-	PopoverTrigger,
-} from "./ui/popover";
+import { Avatar } from "./ui/avatar";
+import { Popover } from "./ui/popover";
 import { logout } from "../api";
 import { $profile } from "../store/profile";
 
 export const Header = () => {
+	const [{ path }] = useRouter();
 	const [open, setOpen] = useState(false);
 
 	const profile = useStore($profile);
@@ -44,63 +40,52 @@ export const Header = () => {
 							НРИ Календарь
 						</Link>
 						{profile?.signed ? (
-							<PopoverRoot
+							<Popover
 								open={open}
-								onOpenChange={(e) => {
-									if (e) {
-										setOpen(e.open);
-									}
-								}}
+								onOpenChange={(e) => setOpen(e.open)}
 								positioning={{ placement: "bottom-end" }}
-							>
-								<PopoverTrigger asChild cursor="pointer">
-									<Stack gap="8">
-										<HStack key={profile?.email} gap="4">
-											<Avatar.Root>
-												<Avatar.Fallback name={profile?.nickname} />
-												<Avatar.Image src={profile.avatar_link} />
-											</Avatar.Root>
-											<Stack gap="0">
-												<Text fontWeight="medium">
-													{profile?.nickname}
-												</Text>
-												<Text color="fg.muted" textStyle="sm">
-													{profile?.email}
-												</Text>
-											</Stack>
-										</HStack>
+								content={
+									<Stack>
+										<Link
+											href="/profile"
+											onClick={() => setOpen(false)}
+										>
+											Профиль
+										</Link>
+										<Link
+											href="/signin"
+											colorPalette="red"
+											onClick={() => {
+												logout();
+												setOpen(false);
+											}}
+										>
+											Выйти
+										</Link>
 									</Stack>
-								</PopoverTrigger>
-								<PopoverContent>
-									<PopoverArrow />
-									<PopoverBody>
-										<Stack gapY={2}>
-											<Link
-												href="/profile"
-												onClick={() => setOpen(false)}
-											>
-												Профиль
-											</Link>
-											<Link
-												href="/signin"
-												colorPalette="red"
-												onClick={() => {
-													logout();
-													setOpen(false);
-												}}
-											>
-												Выйти
-											</Link>
-										</Stack>
-									</PopoverBody>
-								</PopoverContent>
-							</PopoverRoot>
+								}
+							>
+								<HStack key={profile?.email} gap="4">
+									<Avatar src={profile.avatar_link} />
+									<Stack gap="0">
+										<Text fontWeight="medium">
+											{profile?.nickname}
+										</Text>
+										<Text color="fg.muted" textStyle="sm">
+											{profile?.email}
+										</Text>
+									</Stack>
+								</HStack>
+							</Popover>
 						) : (
-							<Link href="/signin" ml="auto">
-								<Button type="button" h="44px">
-									Вход и регистрация
-								</Button>
-							</Link>
+							path !== "/signin" &&
+							path !== "/signup" && (
+								<Link href="/signin" ml="auto">
+									<Button type="button" h="44px">
+										Вход и регистрация
+									</Button>
+								</Link>
+							)
 						)}
 					</Flex>
 				</Container>

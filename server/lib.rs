@@ -4,6 +4,7 @@ pub(crate) mod cookie;
 #[cfg(feature = "cors")]
 pub(crate) mod cors;
 pub(crate) mod dto;
+pub(crate) mod email;
 pub mod graceful_shutdown;
 pub(crate) mod handlers;
 pub(crate) mod image;

@@ -66,6 +66,7 @@ static JWT_VALIDATION: LazyLock<Validation> = LazyLock::new(|| Validation::new(E
 struct Claims {
 	sub: Uuid,
 	exp: u64,
+	verified: bool,
 }
 
 pub(super) fn hash_password(password: &str) -> CoreResult<String> {
@@ -132,6 +133,41 @@ pub(super) async fn auth_middleware(
 	next.run(req).await
 }
 
+pub(super) async fn auth_and_verified_middleware(
+	cookie_jar: CookieJar,
+	mut req: Request<Body>,
+	next: Next,
+) -> Response {
+	let Some(jwt) = extract_jwt_from_cookie(&cookie_jar) else {
+		return AppError::unauthorized("Необходима авторизация").into_response();
+	};
+
+	let Ok(TokenData { claims, .. }) =
+		decode_and_verify::<Claims>(jwt, &PUBLIC_KEY, &JWT_VALIDATION)
+	else {
+		return AppError::unauthorized("Неверный пароль").into_response();
+	};
+
+	let Ok(now) = SystemTime::now()
+		.duration_since(UNIX_EPOCH)
+		.map(|dur| dur.as_secs())
+	else {
+		return AppResponse::system_error("Time went backwards", None).into_response();
+	};
+
+	if now >= claims.exp {
+		return AppError::SessionExpired.into_response();
+	}
+
+	if !claims.verified {
+		return AppError::unauthorized("Контактная информация не подтверждена").into_response();
+	}
+
+	req.extensions_mut().insert(claims.sub);
+
+	next.run(req).await
+}
+
 pub(super) async fn optional_auth_middleware(
 	cookie_jar: CookieJar,
 	mut req: Request<Body>,
@@ -175,7 +211,7 @@ async fn handle_invalid_jwt_for_optional_auth(mut req: Request<Body>, next: Next
 	}
 }
 
-pub(super) fn generate_jwt(user_id: Uuid) -> CoreResult<String> {
+pub(super) fn generate_jwt(user_id: Uuid, verified: bool) -> CoreResult<String> {
 	// Время истечения срока действия токена (текущее время + время жизни сессии)
 	let expiration_time = SystemTime::now()
 		.duration_since(UNIX_EPOCH)
@@ -186,6 +222,7 @@ pub(super) fn generate_jwt(user_id: Uuid) -> CoreResult<String> {
 	let claims = Claims {
 		sub: user_id,
 		exp: expiration_time,
+		verified,
 	};
 
 	let token = encode(&JWT_HEADER, &claims, &PRIVATE_KEY).map_err(|e| {
