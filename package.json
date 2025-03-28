@@ -13,6 +13,7 @@
 	},
 	"dependencies": {
 		"@chakra-ui/react": "^3.13.0",
+		"@choc-ui/chakra-autocomplete": "^6.1.0",
 		"@nanostores/preact": "^0.5.2",
 		"@schedule-x/calendar": "^2.22.0",
 		"@schedule-x/preact": "^2.17.0",
