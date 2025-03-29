@@ -3,7 +3,10 @@ use axum::extract::State;
 
 use crate::{
 	dto::{Dto, region::ReadCityDto},
-	repository::{Repository, models::City},
+	repository::{
+		Repository,
+		models::{City, Region},
+	},
 	system_models::{AppResponse, AppResult},
 };
 
@@ -16,6 +19,15 @@ pub(crate) async fn read_regions_list(State(repo): State<Arc<Repository>>) -> Ap
 		"Список регионов",
 		Some(json_value),
 	));
+}
+
+pub(crate) async fn add_region(
+	State(repo): State<Arc<Repository>>,
+	Dto(body): Dto<Region>,
+) -> AppResult {
+	repo.add_region(body).await?;
+
+	return Ok(AppResponse::scenario_success("Регион добавлен", None));
 }
 
 pub(crate) async fn read_cities_list(

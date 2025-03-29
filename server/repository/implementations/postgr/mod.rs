@@ -727,6 +727,16 @@ impl Store for PostgresStore {
 			.map_err(AppError::from)
 	}
 
+	async fn add_region(&self, region: Region) -> CoreResult {
+		sqlx::query("INSERT INTO regions (name, timezone) values ($1, $2);")
+			.bind(region.name)
+			.bind(region.timezone)
+			.execute(&self.pool)
+			.await?;
+
+		Ok(())
+	}
+
 	async fn add_city(&self, city: City) -> CoreResult {
 		sqlx::query("INSERT INTO cities (name, region, own_timezone) values ($1, $2, $3);")
 			.bind(city.name)

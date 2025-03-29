@@ -454,6 +454,10 @@ export const readCitiesList = (region?: string | null) => {
 	return ajax<IApiCity[]>(`/api/cities?${query}`);
 };
 
+export const addRegion = (name: string, timezone: string) => {
+	return ajax<null>(`/api/regions`, prepareAjax({ name, timezone }, POST));
+};
+
 export const addCity = (
 	name: string,
 	region: string,

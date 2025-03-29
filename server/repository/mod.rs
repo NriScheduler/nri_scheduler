@@ -125,6 +125,7 @@ trait Store {
 
 	async fn read_regions_list(&self) -> CoreResult<Vec<Region>>;
 	async fn read_cities_list(&self, region: Option<String>) -> CoreResult<Vec<City>>;
+	async fn add_region(&self, region: Region) -> CoreResult;
 	async fn add_city(&self, city: City) -> CoreResult;
 
 	async fn close(&self);
@@ -337,6 +338,10 @@ impl Repository {
 
 	pub(crate) async fn read_cities_list(&self, region: Option<String>) -> CoreResult<Vec<City>> {
 		return self.store.read_cities_list(region).await;
+	}
+
+	pub(crate) async fn add_region(&self, region: Region) -> CoreResult {
+		return self.store.add_region(region).await;
 	}
 
 	pub(crate) async fn add_city(&self, city: City) -> CoreResult {
