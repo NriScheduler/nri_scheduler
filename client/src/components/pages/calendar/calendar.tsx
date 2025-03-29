@@ -3,21 +3,21 @@ import "./calendar.css";
 
 import type { UUID } from "node:crypto";
 
-import { h } from "preact";
+import { Fragment, h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
-import { useForm } from "react-hook-form";
+
+import { Controller, useForm } from "react-hook-form";
 
 import {
 	Button,
-	Card,
+	CheckboxCard,
 	Container,
 	createListCollection,
 	Group,
 	HStack,
 	Input,
 	InputAddon,
-	NativeSelect,
 	Stack,
 	Switch,
 } from "@chakra-ui/react";
@@ -40,10 +40,9 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "../../ui/drawer";
+
 import { Field } from "../../ui/field";
-import { HoverCard } from "../../ui/hover-card";
-import { Warning } from "../../ui/icons";
-import { toaster } from "../../ui/toaster";
+
 import {
 	createEvent,
 	IApiCompany,
@@ -53,6 +52,15 @@ import {
 	readLocations,
 	readMyCompanies,
 } from "../../../api";
+
+import {
+	AutoComplete,
+	AutoCompleteGroup,
+	AutoCompleteInput,
+	AutoCompleteItem,
+	AutoCompleteList,
+} from "@choc-ui/chakra-autocomplete";
+
 import {
 	$mastery,
 	disableMastery,
@@ -69,8 +77,10 @@ interface IFormCreateEvent {
 	readonly location: UUID;
 	readonly start: string;
 	readonly startTime: string;
-	readonly max_slots: string;
-	readonly plan_duration: string;
+	readonly max_slots: number | null;
+	readonly plan_duration: number | null;
+	readonly isMax_slots: { checked: boolean };
+	readonly isPlan_duration: { checked: boolean };
 }
 
 export const CalendarPage = () => {
@@ -95,11 +105,15 @@ export const CalendarPage = () => {
 	const {
 		register,
 		handleSubmit,
-		reset,
+		setValue,
 		watch,
+		reset,
+		control,
 		clearErrors,
 		formState: { errors },
-	} = useForm<IFormCreateEvent>();
+	} = useForm<IFormCreateEvent>({
+		mode: "onChange",
+	});
 
 	const addDataEventToCalendar = (
 		dateStart: string,
@@ -226,34 +240,14 @@ export const CalendarPage = () => {
 		};
 	}, [profile?.signed]);
 
-	const onSubmit = handleSubmit((data) => {
-		const { company, location, start, startTime, max_slots, plan_duration } =
-			data;
-
-		if (data) {
-			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
-			setIsDisableCreateEventSubmitButton(true);
-			createEvent(
-				company,
-				date.toISOString(),
-				location,
-				noPlayersLimit ? null : Number(max_slots) || null,
-				noDurationLimit ? null : Number(plan_duration) || null,
-			)
-				.then((res) => {
-					if (res) {
-						toaster.success({ title: "Событие успешно создано" });
-						setOpenDraw(false);
-						getNewEvent(res.payload);
-						reset();
-					}
-				})
-				.finally(() => {
-					setIsDisableCreateEventSubmitButton(false);
-				});
+	function handleKeyDown(event: KeyboardEvent) {
+		if (event.key === "Escape") {
+			setOpenDraw(false);
 		}
-	});
-	const [start] = watch(["start"]);
+	}
+
+  const [start] = watch(["start"]);
+
 	const validateDate = (value: string) => {
 		clearErrors("startTime");
 		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
@@ -283,6 +277,47 @@ export const CalendarPage = () => {
 			return "Вы указали прошлое время";
 		}
 	};
+
+	const isMaxSlotsChecked = watch("isMax_slots");
+	const isMaxDuration = watch("isPlan_duration");
+
+	useEffect(() => {
+		if (isMaxSlotsChecked?.checked) {
+			setValue("max_slots", null); // Обнуляем значение
+		}
+		if (isMaxDuration?.checked) {
+			setValue("plan_duration", null); // Обнуляем значение
+		}
+	}, [isMaxSlotsChecked?.checked, isMaxDuration?.checked, setValue]);
+
+	const onSubmit = handleSubmit((data) => {
+		const { company, location, start, startTime, max_slots, plan_duration } =
+			data;
+
+		if (data) {
+			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
+			setIsDisableCreateEventSubmitButton(true);
+			createEvent(
+				company,
+				date.toISOString(),
+				location,
+				Number(max_slots) || null,
+				Number(plan_duration) || null,
+			)
+				.then((res) => {
+					if (res) {
+						// toast.success("Событие успешно создано");
+						console.log("Событие успешно создано");
+						setOpenDraw(false);
+						getNewEvent(res.payload);
+						reset();
+					}
+				})
+				.finally(() => {
+					setIsDisableCreateEventSubmitButton(false);
+				});
+		}
+	});
 
 	return (
 		<section>
@@ -353,30 +388,57 @@ export const CalendarPage = () => {
 										<form onSubmit={onSubmit}>
 											<Stack gap="4" w="full">
 												<Field
-													label="Кампания"
+													label="Кампания *"
 													errorText={errors.company?.message}
 													invalid={!!errors.company?.message}
 												>
-													<NativeSelect.Root>
-														<NativeSelect.Field
-															placeholder="Выберите из списка"
-															{...register("company", {
-																required: "Заполните",
-															})}
-															defaultValue={companyList?.[0]?.id}
-														>
-															{companies.items.map((company) => (
-																<option
-																	value={company.id}
-																	key={company.name}
-																>
-																	{company.name}
-																</option>
-															))}
-														</NativeSelect.Field>
-														<NativeSelect.Indicator />
-													</NativeSelect.Root>
+													<Controller
+														name="company"
+														control={control}
+														rules={{
+															required: "Выберите кампанию",
+														}}
+														render={({ field }) => (
+															<AutoComplete
+																onChange={field.onChange}
+																openOnFocus
+																freeSolo
+																value={field.value}
+																emptyState="Ничего не найдено"
+															>
+																<AutoCompleteInput
+																	variant="outline"
+																	onBlur={field.onBlur}
+																	ref={field.ref}
+																/>
+																<AutoCompleteList bg="inherit">
+																	<AutoCompleteGroup>
+																		{companies.items.map(
+																			(option) => (
+																				<Fragment>
+																					<AutoCompleteItem
+																						key={`option-${option.id}`}
+																						value={{
+																							title: `${option.name}`,
+																						}}
+																						label={
+																							option.name
+																						}
+																						textTransform="capitalize"
+																						_hover={{
+																							bg: "gray.200",
+																						}}
+																					/>
+																				</Fragment>
+																			),
+																		)}
+																	</AutoCompleteGroup>
+																</AutoCompleteList>
+															</AutoComplete>
+														)}
+													/>
 												</Field>
+
 												<HStack
 													alignItems="start"
 													gap={2}
@@ -412,96 +474,162 @@ export const CalendarPage = () => {
 														/>
 													</Field>
 												</HStack>
+
 												<Field
-													label="Локация"
+													label="Локация *"
 													errorText={errors.location?.message}
 													invalid={!!errors.location?.message}
 												>
-													<NativeSelect.Root>
-														<NativeSelect.Field
-															placeholder="Выберите из списка"
-															{...register("location", {
-																required: "Заполните",
-															})}
-															defaultValue={
-																locationList?.[0]?.id
-															}
-														>
-															{locations.items.map(
-																(location) => (
-																	<option
-																		value={location.id}
-																		key={location.name}
-																	>
-																		{location.name}
-																	</option>
-																),
-															)}
-														</NativeSelect.Field>
-														<NativeSelect.Indicator />
-													</NativeSelect.Root>
+													<Controller
+														name="location"
+														control={control}
+														rules={{
+															required: "Выберите локацию",
+														}}
+														render={({ field }) => (
+															<AutoComplete
+																onChange={field.onChange}
+																openOnFocus
+																freeSolo
+																value={field.value}
+																emptyState="Ничего не найдено"
+															>
+																<AutoCompleteInput
+																	variant="outline"
+																	onBlur={field.onBlur}
+																	ref={field.ref}
+																/>
+																<AutoCompleteList bg="inherit">
+																	<AutoCompleteGroup>
+																		{locations.items.map(
+																			(option) => (
+																				<Fragment>
+																					<AutoCompleteItem
+																						key={`option-${option.id}`}
+																						value={{
+																							title: `${option.name}`,
+																						}}
+																						label={
+																							option.name
+																						}
+																						textTransform="capitalize"
+																						_hover={{
+																							bg: "gray.200",
+																						}}
+																					/>
+																				</Fragment>
+																			),
+																		)}
+																	</AutoCompleteGroup>
+																</AutoCompleteList>
+															</AutoComplete>
+														)}
+													/>
 												</Field>
 
-												<Card.Root>
-													<Card.Body padding={2}>
-														<Field
-															label="Максимальное количество игроков"
-															disabled={noPlayersLimit}
-															marginBottom={2}
-														>
-															<Input
-																type="number"
-																min="1"
-																step="1"
-																defaultValue="1"
-																{...register("max_slots")}
-															/>
-														</Field>
-
-														<Checkbox
-															checked={noPlayersLimit}
-															onChange={() =>
-																setPlayersLimit(!noPlayersLimit)
+												<Field
+													label="Максимальное количество игроков"
+													helperText="Добавьте желаемое количество игроков, либо выберите режим «Без ограничений»"
+													errorText={errors.max_slots?.message}
+													invalid={
+														!!errors.max_slots?.message &&
+														!isMaxSlotsChecked?.checked
+													}
+												>
+													<Input
+														type="number"
+														placeholder="Заполните поле"
+														disabled={isMaxSlotsChecked?.checked}
+														{...register("max_slots", {
+															validate: (value) => {
+																if (
+																	!isMaxSlotsChecked &&
+																	!value
+																) {
+																	return "Укажите количество игроков";
+																}
+																return true;
+															},
+														})}
+													/>
+												</Field>
+												<Controller
+													name="isMax_slots"
+													control={control}
+													render={({ field }) => (
+														<CheckboxCard.Root
+															size="sm"
+															onCheckedChange={(checked) =>
+																field.onChange(checked)
 															}
 														>
-															Без ограничений
-														</Checkbox>
-													</Card.Body>
-												</Card.Root>
+															<CheckboxCard.HiddenInput />
+															<CheckboxCard.Control>
+																<CheckboxCard.Content>
+																	<CheckboxCard.Label>
+																		Без ограничений
+																	</CheckboxCard.Label>
+																</CheckboxCard.Content>
+																<CheckboxCard.Indicator />
+															</CheckboxCard.Control>
+														</CheckboxCard.Root>
+													)}
+												/>
 
-												<Card.Root>
-													<Card.Body padding={2}>
-														<Field
-															label="Планируемая длительность"
-															disabled={noDurationLimit}
-															marginBottom={2}
-														>
-															<Group attached w="full">
-																<Input
-																	type="number"
-																	min="1"
-																	step="1"
-																	defaultValue="1"
-																	{...register(
-																		"plan_duration",
-																	)}
-																/>
-																<InputAddon>час</InputAddon>
-															</Group>
-														</Field>
+												<Field
+													label="Планируемая длительность"
+													helperText="Добавьте желаемую продолжительность, либо выберите режим «Без ограничений»"
+													errorText={errors.plan_duration?.message}
+													invalid={
+														!!errors.plan_duration?.message &&
+														!isMaxDuration?.checked
+													}
+												>
+													<Group attached w="full">
+														<Input
+															type="number"
+															placeholder="Заполните поле"
+															min="1"
+															step="1"
+															disabled={isMaxDuration?.checked}
+															{...register("plan_duration", {
+																validate: (value) => {
+																	if (
+																		!isMaxDuration &&
+																		!value
+																	) {
+																		return "Укажите продолжительность";
+																	}
+																	return true;
+																},
+															})}
+														/>
+														<InputAddon>час</InputAddon>
+													</Group>
+												</Field>
 
-														<Checkbox
-															checked={noDurationLimit}
-															onChange={() =>
-																setDurationLimi(
-																	!noDurationLimit,
-																)
+												<Controller
+													name="isPlan_duration"
+													control={control}
+													render={({ field }) => (
+														<CheckboxCard.Root
+															size="sm"
+															onCheckedChange={(checked) =>
+																field.onChange(checked)
 															}
 														>
-															Как пойдёт
-														</Checkbox>
-													</Card.Body>
-												</Card.Root>
+															<CheckboxCard.HiddenInput />
+															<CheckboxCard.Control>
+																<CheckboxCard.Content>
+																	<CheckboxCard.Label>
+																		Без ограничений
+																	</CheckboxCard.Label>
+																</CheckboxCard.Content>
+																<CheckboxCard.Indicator />
+															</CheckboxCard.Control>
+														</CheckboxCard.Root>
+													)}
+												/>
 											</Stack>
 											<Button
 												disabled={isDisableCreateEventSubmitButton}
