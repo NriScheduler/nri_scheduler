@@ -20,6 +20,7 @@ import {
 	NativeSelect,
 	Skeleton,
 	Stack,
+	Text,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 import "dayjs/locale/ru";
@@ -66,7 +67,7 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 	const stats = [
 		{ label: "Мастер игры", value: event.master, href: "#" },
 		{
-			label: "Место проведения",
+			label: "npmоведения",
 			value: event.location,
 			href: `/location/${event.location_id}`,
 		},
@@ -105,6 +106,7 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 				setIsLoading(false);
 			});
 	};
+	const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
 
 	return (
 		<Card.Root width="full">
@@ -142,7 +144,9 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 			</Card.Body>
 			<Card.Footer>
 				{profile?.signed ? (
-					!event.you_are_master ? (
+					!event.you_are_master &&
+					(nowDate.isSame(eventDate, "minute") ||
+						eventDate.isAfter(nowDate, "minute")) ? (
 						<>
 							<Button
 								variant="subtle"
@@ -168,6 +172,14 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 					) : null
 				) : (
 					"необходимо авторизоваться для записи на игру"
+				)}
+				{eventDate.isBefore(nowDate, "minute") && (
+					<>
+						<HoverCard content="Запись закрыта потому что событие уже стартовало">
+							<Warning />
+						</HoverCard>
+						<Text>Запись закрыта</Text>
+					</>
 				)}
 			</Card.Footer>
 		</Card.Root>
