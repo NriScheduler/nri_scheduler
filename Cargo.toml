@@ -22,8 +22,8 @@ panic = 'abort'
 
 [dependencies]
 argon2 = "0.5.3"
-axum = "0.8.1"
-axum-extra = { version = "0.10.0", features = ["cookie"] }
+axum = "0.8.3"
+axum-extra = { version = "0.10.1", features = ["cookie"] }
 axum-server = { version = "0.7.2", features = ["tls-rustls"], optional = true }
 chrono = { version = "0.4.40", features = ["serde"] }
 derive-masked = "0.1.0"
