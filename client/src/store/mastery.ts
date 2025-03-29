@@ -1,10 +1,15 @@
 import { atom, computed } from "nanostores";
 
+import { $profile } from "./profile";
+
 const MASTERY_KEY = "nri_mastery";
 const TRUE = "true";
 
 const _mastery = atom(localStorage.getItem(MASTERY_KEY) === TRUE);
-export const $mastery = computed(_mastery, (m) => m);
+export const $mastery = computed(
+	[_mastery, $profile],
+	(m, p) => m && Boolean(p?.email_verified),
+);
 
 export const enableMastery = () => {
 	localStorage.setItem(MASTERY_KEY, TRUE);
