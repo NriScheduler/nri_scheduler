@@ -658,6 +658,80 @@
 				]
 			}
 		},
+		"/api/events/cancel/{id}": {
+			"post": {
+				"tags": [
+					"events"
+				],
+				"summary": "Отмена события мастером",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор события",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
+			}
+		},
+		"/api/events/reopen/{id}": {
+			"post": {
+				"tags": [
+					"events"
+				],
+				"summary": "Повторное открытие события мастером после отмены",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "Идентификатор события",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
+			}
+		},
 		"/api/locations": {
 			"get": {
 				"tags": [

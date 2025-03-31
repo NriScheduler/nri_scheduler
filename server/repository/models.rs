@@ -80,6 +80,7 @@ pub(crate) struct Event {
 	pub you_applied: bool,
 	pub you_are_master: bool,
 	pub your_approval: Option<bool>,
+	pub cancelled: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
@@ -88,6 +89,7 @@ pub(crate) struct EventForApplying {
 	pub you_are_master: bool,
 	pub already_applied: bool,
 	pub can_auto_approve: bool,
+	pub cancelled: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]

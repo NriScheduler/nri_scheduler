@@ -107,6 +107,9 @@ trait Store {
 		can_auto_approve: bool,
 	) -> CoreResult<RecordId>;
 
+	async fn cancel_event(&self, event_id: Uuid) -> CoreResult;
+	async fn reopen_event(&self, event_id: Uuid) -> CoreResult;
+
 	async fn add_event(
 		&self,
 		company: Uuid,
@@ -307,6 +310,14 @@ impl Repository {
 			.store
 			.apply_event(event_id, player_id, can_auto_approve)
 			.await;
+	}
+
+	pub(crate) async fn cancel_event(&self, event_id: Uuid) -> CoreResult {
+		return self.store.cancel_event(event_id).await;
+	}
+
+	pub(crate) async fn reopen_event(&self, event_id: Uuid) -> CoreResult {
+		return self.store.reopen_event(event_id).await;
 	}
 
 	pub(crate) async fn add_event(

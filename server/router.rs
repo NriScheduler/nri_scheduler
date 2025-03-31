@@ -63,6 +63,8 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 						.route("/companies/{id}/cover", put(H::companies::set_cover))
 						.route("/events", post(H::events::add_event))
 						.route("/events/apply/{id}", post(H::events::apply_event))
+						.route("/events/cancel/{id}", post(H::events::cancel_event))
+						.route("/events/reopen/{id}", post(H::events::reopen_event))
 						.route("/events/{id}", put(H::events::update_event))
 						.route("/regions", post(H::regions::add_region))
 						.route("/cities", post(H::regions::add_city))

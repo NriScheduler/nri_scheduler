@@ -469,6 +469,7 @@ impl Store for PostgresStore {
 					, l.name AS location
 					, l.id AS location_id
 					, e.date
+					, e.cancelled
 					, COALESCE(jsonb_agg(u.nickname) FILTER (WHERE u.nickname is not null), '[]') AS players
 					, e.max_slots
 					, e.plan_duration
@@ -538,7 +539,9 @@ impl Store for PostgresStore {
 			};
 		}
 
-		qb.push(" GROUP BY e.id, c.name, c.id, m.nickname, m.id, l.name, l.id, e.date, y.approval;");
+		qb.push(
+			" GROUP BY e.id, c.name, c.id, m.nickname, m.id, l.name, l.id, e.date, e.cancelled, y.approval;",
+		);
 
 		let events = qb.build_query_as::<Event>().fetch_all(&self.pool).await?;
 
@@ -560,6 +563,7 @@ impl Store for PostgresStore {
 				, l.name AS location
 				, l.id AS location_id
 				, e.date
+				, e.cancelled
 				, COALESCE(jsonb_agg(u.nickname) FILTER (WHERE u.nickname is not null), '[]') AS players
 				, e.max_slots
 				, e.plan_duration
@@ -580,7 +584,7 @@ impl Store for PostgresStore {
 			LEFT JOIN users u
 				ON u.id = ap.player
 			WHERE e.id = $1
-			GROUP BY e.id, c.name, c.id, m.nickname, m.id, l.name, l.id, e.date, y.approval;",
+			GROUP BY e.id, c.name, c.id, m.nickname, m.id, l.name, l.id, e.date, e.cancelled, y.approval;",
 		)
 		.bind(event_id)
 		.bind(player_id)
@@ -607,6 +611,7 @@ impl Store for PostgresStore {
 				, (c.master = $2) as you_are_master
 				, bool_or(a.id is not null) AS already_applied
 				, (e.max_slots is null or approved_slots.count < e.max_slots) as can_auto_approve
+				, e.cancelled
 			from events e
 			inner join companies c
 				on c.id = e.company
@@ -643,6 +648,24 @@ impl Store for PostgresStore {
 		.await?;
 
 		Ok(new_app_id)
+	}
+
+	async fn cancel_event(&self, event_id: Uuid) -> CoreResult {
+		sqlx::query("UPDATE events SET cancelled = true WHERE id = $1;")
+			.bind(event_id)
+			.execute(&self.pool)
+			.await?;
+
+		Ok(())
+	}
+
+	async fn reopen_event(&self, event_id: Uuid) -> CoreResult {
+		sqlx::query("UPDATE events SET cancelled = false WHERE id = $1;")
+			.bind(event_id)
+			.execute(&self.pool)
+			.await?;
+
+		Ok(())
 	}
 
 	async fn add_event(

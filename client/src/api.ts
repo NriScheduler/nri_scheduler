@@ -372,6 +372,20 @@ export const updateEvent = (
 	);
 };
 
+export const cancelEvent = (eventId: UUID) => {
+	return ajax<null>(
+		`/api/events/cancel/${eventId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+
+export const reopenEvent = (eventId: UUID) => {
+	return ajax<null>(
+		`/api/events/reopen/${eventId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+
 export const enum ETzVariant {
 	CITY = "city",
 	DEVICE = "device",

@@ -108,6 +108,14 @@ pub(crate) async fn apply_event(
 		));
 	}
 
+	if event.cancelled {
+		let payload = serde_json::to_value(event_id)?;
+		return Ok(AppResponse::scenario_fail(
+			"Событие отменено",
+			Some(payload),
+		));
+	}
+
 	let new_app_id = repo
 		.apply_event(event_id, user_id, event.can_auto_approve)
 		.await?;
@@ -128,6 +136,62 @@ pub(crate) async fn update_event(
 		false => Err(AppError::scenario_error("Игра не найдена", None::<&str>)),
 		true => Ok(AppResponse::scenario_success("Данные игры обновлены", None)),
 	}
+}
+
+pub(crate) async fn cancel_event(
+	State(repo): State<Arc<Repository>>,
+	Extension(user_id): Extension<Uuid>,
+	Path(event_id): Path<Uuid>,
+) -> AppResult {
+	let event = repo.read_event(event_id, Some(user_id)).await?;
+
+	let Some(event) = event else {
+		let payload = serde_json::to_value(event_id)?;
+		return Ok(AppResponse::scenario_fail(
+			"Событие не найдено",
+			Some(payload),
+		));
+	};
+
+	if !event.you_are_master {
+		let payload = serde_json::to_value(event_id)?;
+		return Ok(AppResponse::scenario_fail(
+			"Вы не являетесь мастером на данном событии",
+			Some(payload),
+		));
+	}
+
+	repo.cancel_event(event_id).await?;
+
+	Ok(AppResponse::scenario_success("Событие отменено", None))
+}
+
+pub(crate) async fn reopen_event(
+	State(repo): State<Arc<Repository>>,
+	Extension(user_id): Extension<Uuid>,
+	Path(event_id): Path<Uuid>,
+) -> AppResult {
+	let event = repo.read_event(event_id, Some(user_id)).await?;
+
+	let Some(event) = event else {
+		let payload = serde_json::to_value(event_id)?;
+		return Ok(AppResponse::scenario_fail(
+			"Событие не найдено",
+			Some(payload),
+		));
+	};
+
+	if !event.you_are_master {
+		let payload = serde_json::to_value(event_id)?;
+		return Ok(AppResponse::scenario_fail(
+			"Вы не являетесь мастером на данном событии",
+			Some(payload),
+		));
+	}
+
+	repo.reopen_event(event_id).await?;
+
+	Ok(AppResponse::scenario_success("Событие отменено", None))
 }
 
 async fn check_company(
