@@ -3,7 +3,7 @@ import "./calendar.css";
 
 import type { UUID } from "node:crypto";
 
-import { Fragment, h } from "preact";
+import { h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { Controller, useForm } from "react-hook-form";
@@ -405,32 +405,26 @@ export const CalendarPage = () => {
 																	onBlur={field.onBlur}
 																	ref={field.ref}
 																	disabled={
-																		companies.items.length > 0
-																			? false
-																			: true
+																		companies.items.length < 1
 																	}
 																/>
 																<AutoCompleteList bg="inherit">
 																	<AutoCompleteGroup>
 																		{companies.items.map(
 																			(option) => (
-																				<Fragment
+																				<AutoCompleteItem
 																					key={option.id}
-																				>
-																					<AutoCompleteItem
-																						key={`option-${option.id}`}
-																						value={{
-																							title: `${option.id}`,
-																						}}
-																						label={
-																							option.name
-																						}
-																						textTransform="capitalize"
-																						_hover={{
-																							bg: "gray.200",
-																						}}
-																					/>
-																				</Fragment>
+																					value={{
+																						title: option.id,
+																					}}
+																					label={
+																						option.name
+																					}
+																					textTransform="capitalize"
+																					_hover={{
+																						bg: "gray.200",
+																					}}
+																				/>
 																			),
 																		)}
 																	</AutoCompleteGroup>
@@ -505,32 +499,26 @@ export const CalendarPage = () => {
 																	onBlur={field.onBlur}
 																	ref={field.ref}
 																	disabled={
-																		locations.items.length > 0
-																			? false
-																			: true
+																		locations.items.length < 1
 																	}
 																/>
 																<AutoCompleteList bg="inherit">
 																	<AutoCompleteGroup>
 																		{locations.items.map(
 																			(option) => (
-																				<Fragment
+																				<AutoCompleteItem
 																					key={option.id}
-																				>
-																					<AutoCompleteItem
-																						key={`option-${option.id}`}
-																						value={{
-																							title: `${option.id}`,
-																						}}
-																						label={
-																							option.name
-																						}
-																						textTransform="capitalize"
-																						_hover={{
-																							bg: "gray.200",
-																						}}
-																					/>
-																				</Fragment>
+																					value={{
+																						title: option.id,
+																					}}
+																					label={
+																						option.name
+																					}
+																					textTransform="capitalize"
+																					_hover={{
+																						bg: "gray.200",
+																					}}
+																				/>
 																			),
 																		)}
 																	</AutoCompleteGroup>
