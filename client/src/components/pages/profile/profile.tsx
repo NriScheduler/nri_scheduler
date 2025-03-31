@@ -38,18 +38,29 @@ export const ProfilePage = () => {
 	const [campList, setCampList] = useState<IApiCompany[]>([]);
 	const activeTab = useStore($activeTab);
 
-	const getCampList = useCallback(async () => {
-		const responce = await readMyCompanies();
-		const payload = responce?.payload || null;
-		if (payload) {
-			setCampList(payload);
-		}
-		return payload;
-	}, []);
-
 	useEffect(() => {
-		getCampList();
-	}, [getCampList]);
+		let isMounted = true;
+
+		const fetchCompanies = async () => {
+			try {
+				const response = await readMyCompanies();
+				if (isMounted && response?.payload) {
+					setCampList(response.payload);
+				}
+			} catch (error) {
+				console.error("Failed to fetch companies:", error);
+				if (isMounted) {
+					setCampList([]); // Сброс списка при ошибке
+				}
+			}
+		};
+
+		fetchCompanies();
+
+		return () => {
+			isMounted = false; // Очистка при размонтировании
+		};
+	}, [activeTab]);
 
 	return (
 		<Container mb={6}>
