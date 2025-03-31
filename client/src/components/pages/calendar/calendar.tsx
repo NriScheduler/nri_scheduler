@@ -50,6 +50,7 @@ import {
 import { Field } from "../../ui/field";
 import { HoverCard } from "../../ui/hover-card";
 import { Warning } from "../../ui/icons";
+import { toaster } from "../../ui/toaster";
 import {
 	createEvent,
 	IApiCompany,
@@ -295,8 +296,7 @@ export const CalendarPage = () => {
 			)
 				.then((res) => {
 					if (res) {
-						// toast.success("Событие успешно создано");
-						console.info("Событие успешно создано");
+						toaster.success({ title: "Событие успешно создано" });
 						setOpenDraw(false);
 						getNewEvent(res.payload);
 						reset();
