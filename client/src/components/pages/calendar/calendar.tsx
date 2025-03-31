@@ -3,24 +3,32 @@ import "./calendar.css";
 
 import type { UUID } from "node:crypto";
 
-import { h } from "preact";
+import { Fragment, h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 import {
 	Button,
 	Card,
+	CardBody,
+	Checkbox,
 	Container,
 	createListCollection,
 	Group,
 	HStack,
 	Input,
 	InputAddon,
-	NativeSelect,
 	Stack,
 	Switch,
 } from "@chakra-ui/react";
+import {
+	AutoComplete,
+	AutoCompleteGroup,
+	AutoCompleteInput,
+	AutoCompleteItem,
+	AutoCompleteList,
+} from "@choc-ui/chakra-autocomplete";
 import { useStore } from "@nanostores/preact";
 import { CalendarApp, createViewMonthGrid } from "@schedule-x/calendar";
 import { ScheduleXCalendar, useCalendarApp } from "@schedule-x/preact";
@@ -29,7 +37,6 @@ import dayjs from "dayjs";
 
 import { Company } from "./company";
 import { Location } from "./location";
-import { Checkbox } from "../../ui/checkbox";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -69,8 +76,10 @@ interface IFormCreateEvent {
 	readonly location: UUID;
 	readonly start: string;
 	readonly startTime: string;
-	readonly max_slots: string;
-	readonly plan_duration: string;
+	readonly max_slots: number | null;
+	readonly plan_duration: number | null;
+	readonly isMax_slots: boolean;
+	readonly isPlan_duration: boolean;
 }
 
 export const CalendarPage = () => {
@@ -85,9 +94,6 @@ export const CalendarPage = () => {
 	const [companyList, setCompanyList] = useState<IApiCompany[]>([]);
 	const [locationList, setLocationList] = useState<IApiLocation[]>([]);
 
-	const [noPlayersLimit, setPlayersLimit] = useState(false);
-	const [noDurationLimit, setDurationLimi] = useState(false);
-
 	const tz = useStore($tz);
 	const mastery = useStore($mastery);
 	const profile = useStore($profile);
@@ -95,11 +101,15 @@ export const CalendarPage = () => {
 	const {
 		register,
 		handleSubmit,
-		reset,
+		setValue,
 		watch,
+		reset,
+		control,
 		clearErrors,
 		formState: { errors },
-	} = useForm<IFormCreateEvent>();
+	} = useForm<IFormCreateEvent>({
+		mode: "onChange",
+	});
 
 	const addDataEventToCalendar = (
 		dateStart: string,
@@ -203,7 +213,7 @@ export const CalendarPage = () => {
 
 	const locations = useMemo(() => {
 		return createListCollection({
-			items: locationList,
+			items: locationList || [],
 			itemToString: (item) => item.name,
 			itemToValue: (item) => item.id,
 		});
@@ -226,34 +236,8 @@ export const CalendarPage = () => {
 		};
 	}, [profile?.signed]);
 
-	const onSubmit = handleSubmit((data) => {
-		const { company, location, start, startTime, max_slots, plan_duration } =
-			data;
+	const [isStart] = watch(["start"]);
 
-		if (data) {
-			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
-			setIsDisableCreateEventSubmitButton(true);
-			createEvent(
-				company,
-				date.toISOString(),
-				location,
-				noPlayersLimit ? null : Number(max_slots) || null,
-				noDurationLimit ? null : Number(plan_duration) || null,
-			)
-				.then((res) => {
-					if (res) {
-						toaster.success({ title: "Событие успешно создано" });
-						setOpenDraw(false);
-						getNewEvent(res.payload);
-						reset();
-					}
-				})
-				.finally(() => {
-					setIsDisableCreateEventSubmitButton(false);
-				});
-		}
-	});
-	const [start] = watch(["start"]);
 	const validateDate = (value: string) => {
 		clearErrors("startTime");
 		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
@@ -269,10 +253,10 @@ export const CalendarPage = () => {
 	};
 
 	const validateTime = (value: string) => {
-		if (!start) {
+		if (!isStart) {
 			return "Укажите дату";
 		}
-		const fultime = dayjs(`${start} ${value}`).tz(tz, KEEP_LOCAL_TIME);
+		const fultime = dayjs(`${isStart} ${value}`).tz(tz, KEEP_LOCAL_TIME);
 		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
 		if (
 			nowDate.isSame(fultime, "minute") ||
@@ -283,6 +267,46 @@ export const CalendarPage = () => {
 			return "Вы указали прошлое время";
 		}
 	};
+
+	const isMaxSlotsChecked = watch("isMax_slots");
+	const isMaxDuration = watch("isPlan_duration");
+
+	useEffect(() => {
+		if (isMaxSlotsChecked) {
+			setValue("max_slots", null); // Обнуляем значение
+		}
+		if (isMaxDuration) {
+			setValue("plan_duration", null); // Обнуляем значение
+		}
+	}, [isMaxSlotsChecked, isMaxDuration, setValue]);
+
+	const onSubmit = handleSubmit((data) => {
+		const { company, location, start, startTime, max_slots, plan_duration } =
+			data;
+
+		if (data) {
+			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
+			setIsDisableCreateEventSubmitButton(true);
+			createEvent(
+				company,
+				date.toISOString(),
+				location,
+				Number(max_slots) || null,
+				Number(plan_duration) || null,
+			)
+				.then((res) => {
+					if (res) {
+						toaster.success({ title: "Событие успешно создано" });
+						setOpenDraw(false);
+						getNewEvent(res.payload);
+						reset();
+					}
+				})
+				.finally(() => {
+					setIsDisableCreateEventSubmitButton(false);
+				});
+		}
+	});
 
 	return (
 		<section>
@@ -353,30 +377,69 @@ export const CalendarPage = () => {
 										<form onSubmit={onSubmit}>
 											<Stack gap="4" w="full">
 												<Field
-													label="Кампания"
+													label="Кампания *"
+													helperText={
+														companies.items.length > 0
+															? ""
+															: "Сначала создайте кампанию"
+													}
 													errorText={errors.company?.message}
 													invalid={!!errors.company?.message}
 												>
-													<NativeSelect.Root>
-														<NativeSelect.Field
-															placeholder="Выберите из списка"
-															{...register("company", {
-																required: "Заполните",
-															})}
-															defaultValue={companyList?.[0]?.id}
-														>
-															{companies.items.map((company) => (
-																<option
-																	value={company.id}
-																	key={company.name}
-																>
-																	{company.name}
-																</option>
-															))}
-														</NativeSelect.Field>
-														<NativeSelect.Indicator />
-													</NativeSelect.Root>
+													<Controller
+														name="company"
+														control={control}
+														rules={{
+															required: "Выберите кампанию",
+														}}
+														render={({ field }) => (
+															<AutoComplete
+																onChange={field.onChange}
+																openOnFocus
+																freeSolo
+																value={field.value}
+																emptyState="Ничего не найдено"
+															>
+																<AutoCompleteInput
+																	variant="outline"
+																	onBlur={field.onBlur}
+																	ref={field.ref}
+																	disabled={
+																		companies.items.length > 0
+																			? false
+																			: true
+																	}
+																/>
+																<AutoCompleteList bg="inherit">
+																	<AutoCompleteGroup>
+																		{companies.items.map(
+																			(option) => (
+																				<Fragment
+																					key={option.id}
+																				>
+																					<AutoCompleteItem
+																						key={`option-${option.id}`}
+																						value={{
+																							title: `${option.id}`,
+																						}}
+																						label={
+																							option.name
+																						}
+																						textTransform="capitalize"
+																						_hover={{
+																							bg: "gray.200",
+																						}}
+																					/>
+																				</Fragment>
+																			),
+																		)}
+																	</AutoCompleteGroup>
+																</AutoCompleteList>
+															</AutoComplete>
+														)}
+													/>
 												</Field>
+
 												<HStack
 													alignItems="start"
 													gap={2}
@@ -412,95 +475,184 @@ export const CalendarPage = () => {
 														/>
 													</Field>
 												</HStack>
+
 												<Field
-													label="Локация"
+													label="Локация *"
+													helperText={
+														locations.items.length > 0
+															? ""
+															: "Сначала создайте локацию"
+													}
 													errorText={errors.location?.message}
 													invalid={!!errors.location?.message}
 												>
-													<NativeSelect.Root>
-														<NativeSelect.Field
-															placeholder="Выберите из списка"
-															{...register("location", {
-																required: "Заполните",
-															})}
-															defaultValue={
-																locationList?.[0]?.id
-															}
-														>
-															{locations.items.map(
-																(location) => (
-																	<option
-																		value={location.id}
-																		key={location.name}
-																	>
-																		{location.name}
-																	</option>
-																),
-															)}
-														</NativeSelect.Field>
-														<NativeSelect.Indicator />
-													</NativeSelect.Root>
+													<Controller
+														name="location"
+														control={control}
+														rules={{
+															required: "Выберите локацию",
+														}}
+														render={({ field }) => (
+															<AutoComplete
+																onChange={field.onChange}
+																openOnFocus
+																freeSolo
+																value={field.value}
+																emptyState="Ничего не найдено"
+															>
+																<AutoCompleteInput
+																	variant="outline"
+																	onBlur={field.onBlur}
+																	ref={field.ref}
+																	disabled={
+																		locations.items.length > 0
+																			? false
+																			: true
+																	}
+																/>
+																<AutoCompleteList bg="inherit">
+																	<AutoCompleteGroup>
+																		{locations.items.map(
+																			(option) => (
+																				<Fragment
+																					key={option.id}
+																				>
+																					<AutoCompleteItem
+																						key={`option-${option.id}`}
+																						value={{
+																							title: `${option.id}`,
+																						}}
+																						label={
+																							option.name
+																						}
+																						textTransform="capitalize"
+																						_hover={{
+																							bg: "gray.200",
+																						}}
+																					/>
+																				</Fragment>
+																			),
+																		)}
+																	</AutoCompleteGroup>
+																</AutoCompleteList>
+															</AutoComplete>
+														)}
+													/>
 												</Field>
 
 												<Card.Root>
-													<Card.Body padding={2}>
+													<CardBody padding={2}>
 														<Field
 															label="Максимальное количество игроков"
-															disabled={noPlayersLimit}
-															marginBottom={2}
+															errorText={
+																errors.max_slots?.message
+															}
+															invalid={
+																!!errors.max_slots?.message &&
+																!isMaxSlotsChecked
+															}
 														>
 															<Input
 																type="number"
-																min="1"
-																step="1"
-																defaultValue="1"
-																{...register("max_slots")}
+																placeholder="Заполните поле"
+																disabled={isMaxSlotsChecked}
+																{...register("max_slots", {
+																	validate: (value) => {
+																		if (
+																			!isMaxSlotsChecked &&
+																			!value
+																		) {
+																			return "Укажите количество игроков";
+																		}
+																		return true;
+																	},
+																})}
 															/>
 														</Field>
-
-														<Checkbox
-															checked={noPlayersLimit}
-															onChange={() =>
-																setPlayersLimit(!noPlayersLimit)
-															}
-														>
-															Без ограничений
-														</Checkbox>
-													</Card.Body>
+														<Controller
+															name="isMax_slots"
+															control={control}
+															render={({ field }) => (
+																<Checkbox.Root
+																	mt={2}
+																	checked={field.value}
+																	onCheckedChange={({
+																		checked,
+																	}) =>
+																		field.onChange(checked)
+																	}
+																>
+																	<Checkbox.HiddenInput />
+																	<Checkbox.Control />
+																	<Checkbox.Label>
+																		Без ограничений
+																	</Checkbox.Label>
+																</Checkbox.Root>
+															)}
+														/>
+													</CardBody>
 												</Card.Root>
 
 												<Card.Root>
-													<Card.Body padding={2}>
+													<CardBody padding={2}>
 														<Field
 															label="Планируемая длительность"
-															disabled={noDurationLimit}
-															marginBottom={2}
+															errorText={
+																errors.plan_duration?.message
+															}
+															invalid={
+																!!errors.plan_duration
+																	?.message && !isMaxDuration
+															}
 														>
 															<Group attached w="full">
 																<Input
 																	type="number"
+																	placeholder="Заполните поле"
 																	min="1"
 																	step="1"
-																	defaultValue="1"
+																	disabled={isMaxDuration}
 																	{...register(
 																		"plan_duration",
+																		{
+																			validate: (value) => {
+																				if (
+																					!isMaxDuration &&
+																					!value
+																				) {
+																					return "Укажите продолжительность";
+																				}
+																				return true;
+																			},
+																		},
 																	)}
 																/>
 																<InputAddon>час</InputAddon>
 															</Group>
 														</Field>
 
-														<Checkbox
-															checked={noDurationLimit}
-															onChange={() =>
-																setDurationLimi(
-																	!noDurationLimit,
-																)
-															}
-														>
-															Как пойдёт
-														</Checkbox>
-													</Card.Body>
+														<Controller
+															name="isPlan_duration"
+															control={control}
+															render={({ field }) => (
+																<Checkbox.Root
+																	mt={2}
+																	checked={field.value}
+																	onCheckedChange={({
+																		checked,
+																	}) =>
+																		field.onChange(checked)
+																	}
+																>
+																	<Checkbox.HiddenInput />
+																	<Checkbox.Control />
+																	<Checkbox.Label>
+																		Без ограничений
+																	</Checkbox.Label>
+																</Checkbox.Root>
+															)}
+														/>
+													</CardBody>
 												</Card.Root>
 											</Stack>
 											<Button
