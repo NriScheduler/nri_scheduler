@@ -86,6 +86,80 @@
 				}
 			}
 		},
+		"/api/verify": {
+			"post": {
+				"tags": [
+					"profile"
+				],
+				"summary": "Подтверждение контактной информации",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"description": "Данные для подтверждения контактной информации",
+								"properties": {
+									"channel": {
+										"type": "string",
+										"description": "Тип контакта",
+										"enum": ["email"],
+										"x-enum-descriptions": [
+											"Электронная почта"
+										],
+										"x-enum-varnames": [
+											"email"
+										]
+									},
+									"code": {
+										"type": "string",
+										"format": "uuid",
+										"description": "Код подтверждения"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/send-email-verification": {
+			"post": {
+				"tags": [
+					"profile"
+				],
+				"summary": "Повторная отправка кода для подтверждения электронной почты",
+				"responses": {
+					"200": {
+						"description": "Результат выполнения запроса",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AppResponse"
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cookieAuth": []
+					}
+				]
+			}
+		},
 		"/api/profile/my": {
 			"get": {
 				"tags": [

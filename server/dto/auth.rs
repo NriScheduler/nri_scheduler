@@ -2,6 +2,7 @@ use ::std::sync::LazyLock;
 use derive_masked::DebugMasked;
 use regex::Regex;
 use serde::{Deserialize, Deserializer, de::Error as _};
+use uuid::Uuid;
 
 static EMAIL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 	Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").expect("Email regex should build without errors")
@@ -161,4 +162,10 @@ impl<'de> Deserialize<'de> for UpdateProfileDto {
 			tz_variant,
 		})
 	}
+}
+
+#[derive(Deserialize)]
+pub(crate) struct VerificationDto {
+	pub channel: String,
+	pub code: Uuid,
 }

@@ -1,7 +1,6 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
-import toast from "react-hot-toast";
 
 import {
 	Button,
@@ -20,6 +19,7 @@ import { useStore } from "@nanostores/preact";
 
 import { ProfilePicture } from "./profile-picture";
 import { Field } from "../../ui/field";
+import { toaster } from "../../ui/toaster";
 import {
 	ETzVariant,
 	getMyProfile,
@@ -264,7 +264,9 @@ export const ProfileEdit = () => {
 								(res) =>
 									res &&
 									(navBack(),
-									toast.success("Данные профиля обновлены")),
+									toaster.success({
+										title: "Данные профиля обновлены",
+									})),
 							);
 					}}
 				>

@@ -48,6 +48,8 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
+import { HoverCard } from "../../ui/hover-card";
+import { Warning } from "../../ui/icons";
 import {
 	createEvent,
 	IApiCompany,
@@ -219,19 +221,19 @@ export const CalendarPage = () => {
 	useEffect(() => {
 		setShowSwitch(Boolean(profile?.signed));
 
-		document.addEventListener("keydown", handleKeyDown);
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				setOpenDraw(false);
+			}
+		};
+
+		document.addEventListener("keydown", handleKeyDown, { passive: true });
 
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
 			setOpenDraw(false);
 		};
 	}, [profile?.signed]);
-
-	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === "Escape") {
-			setOpenDraw(false);
-		}
-	}
 
 	const [isStart] = watch(["start"]);
 
@@ -310,10 +312,16 @@ export const CalendarPage = () => {
 		<section>
 			<Container>
 				<HStack flexWrap="wrap" mb="5" minHeight="40px" gap={10}>
+					{!profile?.email_verified && profile?.signed && (
+						<HoverCard content="Нельзя перейти в режим мастера - электронная почта не подтверждена">
+							<Warning />
+						</HoverCard>
+					)}
 					{showSwitch && (
 						<Switch.Root
 							size="lg"
-							checked={mastery}
+							checked={mastery && profile?.email_verified}
+							disabled={!profile?.email_verified}
 							onCheckedChange={() =>
 								mastery ? disableMastery() : enableMastery()
 							}
@@ -325,7 +333,8 @@ export const CalendarPage = () => {
 							<Switch.Label>Режим мастера</Switch.Label>
 						</Switch.Root>
 					)}
-					{mastery && showSwitch && (
+
+					{mastery && profile?.email_verified && showSwitch && (
 						<Stack direction="row" gap={4}>
 							<DrawerRoot
 								open={openDraw}

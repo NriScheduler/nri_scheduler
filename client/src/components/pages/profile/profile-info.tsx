@@ -1,9 +1,8 @@
 import { Fragment, h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 
 import {
-	Avatar,
 	Button,
 	DataList,
 	Heading,
@@ -12,6 +11,11 @@ import {
 	Stack,
 } from "@chakra-ui/react";
 
+import { Avatar } from "../../ui/avatar";
+import { HoverCard } from "../../ui/hover-card";
+import { Check, Warning } from "../../ui/icons";
+import { toaster } from "../../ui/toaster";
+import { sendVerificationLink } from "../../../api";
 import { IStorePrifile, TIMEZONES } from "../../../store/profile";
 
 const NOT_SET = "Не установлен";
@@ -22,6 +26,8 @@ interface IProfileInfoProps {
 
 export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 	const [timeZone, setTimeZone] = useState(NOT_SET);
+	const [fetching, setFetching] = useState(false);
+	const [verificationSent, setVerificationSent] = useState(false);
 
 	useEffect(() => {
 		setTimeZone(
@@ -30,6 +36,21 @@ export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 				: NOT_SET,
 		);
 	}, [user.timezone_offset]);
+
+	const sendVerification = useCallback(() => {
+		setFetching(true);
+		sendVerificationLink().then((res) => {
+			if (!res) {
+				setFetching(false);
+				return;
+			}
+
+			toaster.success({
+				title: "Вам отправлена ссылка для подтверждения email",
+			});
+			setVerificationSent(true);
+		});
+	}, []);
 
 	return (
 		<>
@@ -41,10 +62,7 @@ export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 				<Separator flex="1" />
 			</HStack>
 			<Stack>
-				<Avatar.Root w="100px" h="100px">
-					<Avatar.Fallback name={user.nickname} />
-					<Avatar.Image src={user.avatar_link} />
-				</Avatar.Root>
+				<Avatar src={user.avatar_link} w="100px" h="100px" />
 				<DataList.Root orientation="horizontal">
 					<DataList.Item key="nickname">
 						<DataList.ItemLabel minW="150px">
@@ -77,7 +95,26 @@ export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 							Электронная почта
 						</DataList.ItemLabel>
 						<DataList.ItemValue color="black" fontWeight="500">
-							<p>{user.email}</p>
+							<HStack>
+								{user.email}
+								<HoverCard
+									content={`Электронная почта ${user.email_verified ? "" : "не "}подтверждена`}
+								>
+									{user.email_verified ? <Check /> : <Warning />}
+								</HoverCard>
+								{!user.email_verified && !verificationSent && (
+									<Button
+										type="button"
+										size="xs"
+										variant="surface"
+										colorPalette="blue"
+										disabled={fetching}
+										onClick={sendVerification}
+									>
+										Подтвердить email
+									</Button>
+								)}
+							</HStack>
 						</DataList.ItemValue>
 					</DataList.Item>
 					<DataList.Item key="region">
