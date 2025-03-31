@@ -1,16 +1,8 @@
 import { h } from "preact";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 
-import {
-	Button,
-	Card,
-	Container,
-	Grid,
-	Link,
-	Tabs,
-	useTabs,
-} from "@chakra-ui/react";
+import { Button, Card, Container, Grid, Link, Tabs } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 
 import { CampList } from "./camplist/camplist";
