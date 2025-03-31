@@ -307,6 +307,7 @@ export interface IApiEvent {
 	readonly you_applied: boolean;
 	readonly you_are_master: boolean;
 	readonly your_approval: boolean | null;
+	readonly cancelled: boolean;
 }
 
 export interface IEventsFilter {
