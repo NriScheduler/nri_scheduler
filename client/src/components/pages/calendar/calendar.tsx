@@ -281,11 +281,19 @@ export const CalendarPage = () => {
 	}, [isMaxSlotsChecked, isMaxDuration, setValue]);
 
 	const onSubmit = handleSubmit((data) => {
-		const { company, location, start, startTime, max_slots, plan_duration } =
-			data;
+		const { company, location, start, startTime, max_slots } = data;
+		let { plan_duration } = data;
 
 		if (data) {
 			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
+			if (plan_duration !== null) {
+				const endDate = date.add(plan_duration, "hour");
+				if (!date.isSame(endDate, "day")) {
+					const endDateDay = dayjs(endDate.format("DD/MM/YYYY"));
+					const diff = endDateDay.diff(date, "hour", true);
+					plan_duration = diff - 1;
+				}
+			}
 			setIsDisableCreateEventSubmitButton(true);
 			createEvent(
 				company,
