@@ -289,8 +289,8 @@ export const CalendarPage = () => {
 			if (plan_duration !== null) {
 				const endDate = date.add(plan_duration, "hour");
 				if (!date.isSame(endDate, "day")) {
-					const endDateDay = dayjs(endDate.format("DD/MM/YYYY"));
-					const diff = endDateDay.diff(date, "hour", true);
+					const endDateDay = dayjs(endDate.format("YYYY-MM-DD"));
+					const diff = endDateDay.diff(date, "hour");
 					plan_duration = diff - 1;
 				}
 			}
