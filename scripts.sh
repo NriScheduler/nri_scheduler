@@ -30,7 +30,7 @@ check() {
 }
 
 clippy() {
-	(cargo clippy --all --all-features --tests -- -D warnings && echo "clippy is ok") || exit 1;
+	(cargo clippy --workspace --all-features --tests -- -D warnings && echo "clippy is ok") || exit 1;
 }
 
 fmt() {
