@@ -14,7 +14,8 @@ use crate::{
 		location::ReadLocationDto,
 	},
 	repository::models::{
-		City, Company, CompanyInfo, Event, EventForApplying, Location, Profile, Region, UserForAuth,
+		AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
+		PlayerApp, Profile, Region, UserForAuth,
 	},
 	shared::RecordId,
 	system_models::{AppError, CoreResult},
@@ -724,6 +725,357 @@ impl Store for PostgresStore {
 		.unwrap_or_default();
 
 		Ok(was_updated)
+	}
+
+	async fn read_player_apps_list(&self, player_id: Uuid) -> CoreResult<Vec<PlayerApp>> {
+		sqlx::query_as::<_, PlayerApp>(
+			"select
+	a.id
+	, e.id as event_id
+	, e.date as event_date
+	, e.cancelled as event_cancelled
+	, c.id as company_id
+	, c.name as company_name
+	, l.id as location_id
+	, l.name as location_name
+	, m.id as master_id
+	, m.nickname as master_name
+	, a.approval
+from applications a
+inner join events e
+	on e.id = a.event
+inner join companies c
+	on c.id = e.company
+inner join locations l
+	on l.id = e.location
+inner join users m
+	on m.id = c.master
+where a.player = $1
+and e.date > CURRENT_TIMESTAMP
+order by e.date asc;",
+		)
+		.bind(player_id)
+		.fetch_all(&self.pool)
+		.await
+		.map_err(AppError::from)
+	}
+
+	async fn read_player_app(&self, player_id: Uuid, app_id: Uuid) -> CoreResult<Option<PlayerApp>> {
+		sqlx::query_as::<_, PlayerApp>(
+			"select
+	a.id
+	, e.id as event_id
+	, e.date as event_date
+	, e.cancelled as event_cancelled
+	, c.id as company_id
+	, c.name as company_name
+	, l.id as location_id
+	, l.name as location_name
+	, m.id as master_id
+	, m.nickname as master_name
+	, a.approval
+from applications a
+inner join events e
+	on e.id = a.event
+inner join companies c
+	on c.id = e.company
+inner join locations l
+	on l.id = e.location
+inner join users m
+	on m.id = c.master
+where a.id = $1
+and a.player = $2;",
+		)
+		.bind(app_id)
+		.bind(player_id)
+		.fetch_optional(&self.pool)
+		.await
+		.map_err(AppError::from)
+	}
+
+	async fn read_player_app_by_event(
+		&self,
+		player_id: Uuid,
+		event_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>> {
+		sqlx::query_as::<_, PlayerApp>(
+			"select
+	a.id
+	, e.id as event_id
+	, e.date as event_date
+	, e.cancelled as event_cancelled
+	, c.id as company_id
+	, c.name as company_name
+	, l.id as location_id
+	, l.name as location_name
+	, m.id as master_id
+	, m.nickname as master_name
+	, a.approval
+from applications a
+inner join events e
+	on e.id = a.event
+inner join companies c
+	on c.id = e.company
+inner join locations l
+	on l.id = e.location
+inner join users m
+	on m.id = c.master
+where e.id = $1
+and a.player = $2;",
+		)
+		.bind(event_id)
+		.bind(player_id)
+		.fetch_optional(&self.pool)
+		.await
+		.map_err(AppError::from)
+	}
+
+	async fn read_player_app_company_closest(
+		&self,
+		player_id: Uuid,
+		company_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>> {
+		sqlx::query_as::<_, PlayerApp>(
+			"WITH nearest_event AS (
+	SELECT e.id
+	FROM events e
+	WHERE e.company = $1
+	AND e.date > CURRENT_TIMESTAMP
+	ORDER BY e.date ASC
+	LIMIT 1
+)
+SELECT
+	a.id,
+	e.id as event_id,
+	e.date as event_date,
+	e.cancelled as event_cancelled,
+	c.id as company_id,
+	c.name as company_name,
+	l.id as location_id,
+	l.name as location_name,
+	m.id as master_id,
+	m.nickname as master_name,
+	a.approval
+FROM applications a
+INNER JOIN events e
+	ON e.id = a.event
+INNER JOIN companies c
+	ON c.id = e.company
+INNER JOIN locations l
+	ON l.id = e.location
+INNER JOIN users m
+	ON m.id = c.master
+WHERE e.id = (SELECT id FROM nearest_event)
+AND a.player = $2;",
+		)
+		.bind(company_id)
+		.bind(player_id)
+		.fetch_optional(&self.pool)
+		.await
+		.map_err(AppError::from)
+	}
+
+	async fn read_master_apps_list(&self, master_id: Uuid) -> CoreResult<Vec<MasterApp>> {
+		sqlx::query_as::<_, MasterApp>(
+			"select
+	a.id
+	, e.id as event_id
+	, e.date as event_date
+	, e.cancelled as event_cancelled
+	, c.id as company_id
+	, c.name as company_name
+	, l.id as location_id
+	, l.name as location_name
+	, p.id as player_id
+	, p.nickname as player_name
+	, a.approval
+from applications a
+inner join events e
+	on e.id = a.event
+inner join companies c
+	on c.id = e.company
+inner join locations l
+	on l.id = e.location
+inner join users m
+	on m.id = c.master
+inner join users p
+	on p.id = a.player
+where m.id = $1
+and e.date > CURRENT_TIMESTAMP
+order by e.date, a.id asc;",
+		)
+		.bind(master_id)
+		.fetch_all(&self.pool)
+		.await
+		.map_err(AppError::from)
+	}
+
+	async fn read_master_apps_list_by_event(
+		&self,
+		master_id: Uuid,
+		event_id: Uuid,
+	) -> CoreResult<Vec<MasterApp>> {
+		sqlx::query_as::<_, MasterApp>(
+			"select
+	a.id
+	, e.id as event_id
+	, e.date as event_date
+	, e.cancelled as event_cancelled
+	, c.id as company_id
+	, c.name as company_name
+	, l.id as location_id
+	, l.name as location_name
+	, p.id as player_id
+	, p.nickname as player_name
+	, a.approval
+from applications a
+inner join events e
+	on e.id = a.event
+inner join companies c
+	on c.id = e.company
+inner join locations l
+	on l.id = e.location
+inner join users m
+	on m.id = c.master
+inner join users p
+	on p.id = a.player
+where m.id = $1
+and e.id = $2
+order by a.id asc;",
+		)
+		.bind(master_id)
+		.bind(event_id)
+		.fetch_all(&self.pool)
+		.await
+		.map_err(AppError::from)
+	}
+
+	async fn read_master_apps_list_company_closest(
+		&self,
+		master_id: Uuid,
+		company_id: Uuid,
+	) -> CoreResult<Vec<MasterApp>> {
+		sqlx::query_as::<_, MasterApp>(
+			"WITH nearest_event AS (
+	SELECT e.id
+	FROM events e
+	WHERE e.company = $2
+	AND e.date > CURRENT_TIMESTAMP
+	ORDER BY e.date ASC
+	LIMIT 1
+)
+SELECT
+	a.id,
+	e.id as event_id,
+	e.date as event_date,
+	e.cancelled as event_cancelled,
+	c.id as company_id,
+	c.name as company_name,
+	l.id as location_id,
+	l.name as location_name,
+	p.id as player_id,
+	p.nickname as player_name,
+	a.approval
+FROM applications a
+INNER JOIN events e
+	ON e.id = a.event
+INNER JOIN companies c
+	ON c.id = e.company
+INNER JOIN locations l
+	ON l.id = e.location
+INNER JOIN users m
+	ON m.id = c.master
+INNER JOIN users p
+	ON p.id = a.player
+WHERE m.id = $1
+AND e.id = (SELECT id FROM nearest_event)
+ORDER BY a.id asc;",
+		)
+		.bind(master_id)
+		.bind(company_id)
+		.fetch_all(&self.pool)
+		.await
+		.map_err(AppError::from)
+	}
+
+	async fn read_master_app(&self, master_id: Uuid, app_id: Uuid) -> CoreResult<Option<MasterApp>> {
+		sqlx::query_as::<_, MasterApp>(
+			"select
+	a.id,
+	e.id as event_id,
+	e.date as event_date,
+	e.cancelled as event_cancelled,
+	c.id as company_id,
+	c.name as company_name,
+	l.id as location_id,
+	l.name as location_name,
+	p.id as player_id,
+	p.nickname as player_name,
+	a.approval
+from applications a
+inner join events e
+	on e.id = a.event
+inner join companies c
+	on c.id = e.company
+inner join locations l
+	on l.id = e.location
+inner join users m
+	on m.id = c.master
+inner join users p
+	on p.id = a.player
+where a.id = $1
+and m.id = $2;",
+		)
+		.bind(app_id)
+		.bind(master_id)
+		.fetch_optional(&self.pool)
+		.await
+		.map_err(AppError::from)
+	}
+
+	async fn read_app_for_approval(
+		&self,
+		master_id: Uuid,
+		app_id: Uuid,
+	) -> CoreResult<Option<AppForApproval>> {
+		sqlx::query_as::<_, AppForApproval>(
+			"select
+	e.date as event_date,
+	e.cancelled as event_cancelled,
+	a.approval
+from applications a
+inner join events e
+	on e.id = a.event
+inner join companies c
+	on c.id = e.company
+inner join users m
+	on m.id = c.master
+where a.id = $1
+and m.id = $2;",
+		)
+		.bind(app_id)
+		.bind(master_id)
+		.fetch_optional(&self.pool)
+		.await
+		.map_err(AppError::from)
+	}
+
+	async fn approve_app(&self, app_id: Uuid) -> CoreResult {
+		sqlx::query("update applications set approval = true where id = $1;")
+			.bind(app_id)
+			.execute(&self.pool)
+			.await?;
+
+		Ok(())
+	}
+
+	async fn reject_app(&self, app_id: Uuid) -> CoreResult {
+		sqlx::query("update applications set approval = false where id = $1;")
+			.bind(app_id)
+			.execute(&self.pool)
+			.await?;
+
+		Ok(())
 	}
 
 	async fn read_regions_list(&self) -> CoreResult<Vec<Region>> {

@@ -5,7 +5,8 @@ use ::std::error::Error;
 use chrono::{DateTime, FixedOffset};
 use implementations::PostgresStore;
 use models::{
-	City, Company, CompanyInfo, Event, EventForApplying, Location, Profile, Region, UserForAuth,
+	AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
+	PlayerApp, Profile, Region, UserForAuth,
 };
 use uuid::Uuid;
 
@@ -106,6 +107,40 @@ trait Store {
 		player_id: Uuid,
 		can_auto_approve: bool,
 	) -> CoreResult<RecordId>;
+
+	async fn read_player_apps_list(&self, player_id: Uuid) -> CoreResult<Vec<PlayerApp>>;
+	async fn read_player_app(&self, player_id: Uuid, app_id: Uuid) -> CoreResult<Option<PlayerApp>>;
+	async fn read_player_app_by_event(
+		&self,
+		player_id: Uuid,
+		event_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>>;
+	async fn read_player_app_company_closest(
+		&self,
+		player_id: Uuid,
+		company_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>>;
+
+	async fn read_master_apps_list(&self, master_id: Uuid) -> CoreResult<Vec<MasterApp>>;
+	async fn read_master_apps_list_by_event(
+		&self,
+		master_id: Uuid,
+		event_id: Uuid,
+	) -> CoreResult<Vec<MasterApp>>;
+	async fn read_master_apps_list_company_closest(
+		&self,
+		master_id: Uuid,
+		company_id: Uuid,
+	) -> CoreResult<Vec<MasterApp>>;
+	async fn read_master_app(&self, master_id: Uuid, app_id: Uuid) -> CoreResult<Option<MasterApp>>;
+
+	async fn read_app_for_approval(
+		&self,
+		master_id: Uuid,
+		app_id: Uuid,
+	) -> CoreResult<Option<AppForApproval>>;
+	async fn approve_app(&self, app_id: Uuid) -> CoreResult;
+	async fn reject_app(&self, app_id: Uuid) -> CoreResult;
 
 	async fn cancel_event(&self, event_id: Uuid) -> CoreResult;
 	async fn reopen_event(&self, event_id: Uuid) -> CoreResult;
@@ -341,6 +376,90 @@ impl Repository {
 		data: UpdateEventDto,
 	) -> CoreResult<bool> {
 		return self.store.update_event(event_id, master, data).await;
+	}
+
+	pub(crate) async fn read_player_apps_list(&self, player_id: Uuid) -> CoreResult<Vec<PlayerApp>> {
+		return self.store.read_player_apps_list(player_id).await;
+	}
+
+	pub(crate) async fn read_player_app(
+		&self,
+		player_id: Uuid,
+		app_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>> {
+		return self.store.read_player_app(player_id, app_id).await;
+	}
+
+	pub(crate) async fn read_player_app_by_event(
+		&self,
+		player_id: Uuid,
+		event_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>> {
+		return self
+			.store
+			.read_player_app_by_event(player_id, event_id)
+			.await;
+	}
+
+	pub(crate) async fn read_player_app_company_closest(
+		&self,
+		player_id: Uuid,
+		company_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>> {
+		return self
+			.store
+			.read_player_app_company_closest(player_id, company_id)
+			.await;
+	}
+
+	pub(crate) async fn read_master_apps_list(&self, master_id: Uuid) -> CoreResult<Vec<MasterApp>> {
+		return self.store.read_master_apps_list(master_id).await;
+	}
+
+	pub(crate) async fn read_master_apps_list_by_event(
+		&self,
+		master_id: Uuid,
+		event_id: Uuid,
+	) -> CoreResult<Vec<MasterApp>> {
+		return self
+			.store
+			.read_master_apps_list_by_event(master_id, event_id)
+			.await;
+	}
+
+	pub(crate) async fn read_master_apps_list_company_closest(
+		&self,
+		master_id: Uuid,
+		company_id: Uuid,
+	) -> CoreResult<Vec<MasterApp>> {
+		return self
+			.store
+			.read_master_apps_list_company_closest(master_id, company_id)
+			.await;
+	}
+
+	pub(crate) async fn read_master_app(
+		&self,
+		master_id: Uuid,
+		app_id: Uuid,
+	) -> CoreResult<Option<MasterApp>> {
+		return self.store.read_master_app(master_id, app_id).await;
+	}
+
+	pub(crate) async fn read_app_for_approval(
+		&self,
+		master_id: Uuid,
+		app_id: Uuid,
+	) -> CoreResult<Option<AppForApproval>> {
+		return self.store.read_app_for_approval(master_id, app_id).await;
+	}
+
+	pub(crate) async fn approve_app(&self, app_id: Uuid) -> CoreResult {
+		return self.store.approve_app(app_id).await;
+	}
+
+	pub(crate) async fn reject_app(&self, app_id: Uuid) -> CoreResult {
+		return self.store.reject_app(app_id).await;
 	}
 
 	pub(crate) async fn read_regions_list(&self) -> CoreResult<Vec<Region>> {

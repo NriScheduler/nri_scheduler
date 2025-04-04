@@ -93,6 +93,43 @@ pub(crate) struct EventForApplying {
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct PlayerApp {
+	pub id: Uuid,
+	pub event_id: Uuid,
+	pub event_date: DateTime<Utc>,
+	pub event_cancelled: bool,
+	pub company_id: Uuid,
+	pub company_name: String,
+	pub location_id: Uuid,
+	pub location_name: String,
+	pub master_id: Uuid,
+	pub master_name: String,
+	pub approval: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct MasterApp {
+	pub id: Uuid,
+	pub event_id: Uuid,
+	pub event_date: DateTime<Utc>,
+	pub event_cancelled: bool,
+	pub company_id: Uuid,
+	pub company_name: String,
+	pub location_id: Uuid,
+	pub location_name: String,
+	pub player_id: Uuid,
+	pub player_name: String,
+	pub approval: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct AppForApproval {
+	pub event_date: DateTime<Utc>,
+	pub event_cancelled: bool,
+	pub approval: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
 pub(crate) struct Region {
 	pub name: String,
 	pub timezone: String,

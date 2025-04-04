@@ -387,6 +387,63 @@ export const reopenEvent = (eventId: UUID) => {
 	);
 };
 
+export interface IPlayerApp {
+	readonly approval: boolean | null;
+	readonly company_id: UUID;
+	readonly company_name: string;
+	readonly event_cancelled: boolean;
+	readonly event_date: string; // "2025-04-15T07:24:00Z"
+	readonly event_id: UUID;
+	readonly id: UUID;
+	readonly location_id: UUID;
+	readonly location_name: string;
+	readonly master_id: UUID;
+	readonly master_name: string;
+}
+
+export const readPlayerAppsList = () => ajax<IPlayerApp[]>(`/api/apps`);
+export const readPlayerApp = (appId: UUID) =>
+	ajax<IPlayerApp>(`/api/apps/${appId}`);
+export const readPlayerAppByEvent = (eventId: UUID) =>
+	ajax<IPlayerApp>(`/api/apps/by_event/${eventId}`);
+export const readPlayerAppCompanyClosest = (companyId: UUID) =>
+	ajax<IPlayerApp>(`/api/apps/company_closest/${companyId}`);
+
+export interface IMasterApp {
+	readonly approval: boolean | null;
+	readonly company_id: UUID;
+	readonly company_name: string;
+	readonly event_cancelled: boolean;
+	readonly event_date: string; // "2025-04-15T07:24:00Z"
+	readonly event_id: UUID;
+	readonly id: UUID;
+	readonly location_id: UUID;
+	readonly location_name: string;
+	readonly player_id: UUID;
+	readonly player_name: string;
+}
+
+export const readMasterAppsList = () => ajax<IMasterApp[]>(`/api/apps/master`);
+export const readMasterAppsListByEvent = (eventId: UUID) =>
+	ajax<IMasterApp[]>(`/api/apps/master/by_event/${eventId}`);
+export const readMasterAppsListCompanyClosest = (companyId: UUID) =>
+	ajax<IMasterApp[]>(`/api/apps/master/company_closest/${companyId}`);
+export const readMasterApp = (appId: UUID) =>
+	ajax<IMasterApp>(`/api/apps/master/${appId}`);
+
+export const approveApplication = (appId: UUID) => {
+	return ajax<null>(
+		`/api/apps/approve/${appId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+export const rejectApplication = (appId: UUID) => {
+	return ajax<null>(
+		`/api/apps/approve/${appId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+
 export const enum ETzVariant {
 	CITY = "city",
 	DEVICE = "device",

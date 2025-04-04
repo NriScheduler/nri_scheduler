@@ -1,3 +1,4 @@
+pub(super) mod apps;
 pub(super) mod companies;
 pub(super) mod events;
 pub(super) mod locations;

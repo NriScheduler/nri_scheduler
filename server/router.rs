@@ -66,6 +66,28 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 						.route("/events/cancel/{id}", post(H::events::cancel_event))
 						.route("/events/reopen/{id}", post(H::events::reopen_event))
 						.route("/events/{id}", put(H::events::update_event))
+						.route("/apps", get(H::apps::read_player_apps_list))
+						.route("/apps/{id}", get(H::apps::read_player_app))
+						.route(
+							"/apps/by_event/{id}",
+							get(H::apps::read_player_app_by_event),
+						)
+						.route(
+							"/apps/company_closest/{id}",
+							get(H::apps::read_player_app_company_closest),
+						)
+						.route("/apps/master", get(H::apps::read_master_apps_list))
+						.route(
+							"/apps/master/by_event/{id}",
+							get(H::apps::read_master_apps_list_by_event),
+						)
+						.route(
+							"/apps/master/company_closest/{id}",
+							get(H::apps::read_master_apps_list_company_closest),
+						)
+						.route("/apps/master/{id}", get(H::apps::read_master_app))
+						.route("/apps/approve/{id}", post(H::apps::approve_app))
+						.route("/apps/reject/{id}", post(H::apps::reject_app))
 						.route("/regions", post(H::regions::add_region))
 						.route("/cities", post(H::regions::add_city))
 						.layer(middleware::from_fn(auth::auth_and_verified_middleware)),
