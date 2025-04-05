@@ -194,6 +194,7 @@ const EventCard = ({
 						</>
 					) : null
 				) : (
+					!event.cancelled &&
 					"необходимо авторизоваться для записи на игру"
 				)}
 				{eventDate.isBefore(nowDate, "minute") && (
