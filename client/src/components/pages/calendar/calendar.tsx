@@ -192,10 +192,14 @@ export const CalendarPage = () => {
 			if (responce?.payload) {
 				const data = responce.payload;
 				const start = dayjs(data.date);
-				const end = start.add(
+				let end = start.add(
 					data.plan_duration || DEFAULT_EVENT_DURATION,
 					"h",
 				);
+
+				if (!end.isSame(start, "day")) {
+					end = start.endOf("day");
+				}
 
 				calendar.events.add({
 					...data,
