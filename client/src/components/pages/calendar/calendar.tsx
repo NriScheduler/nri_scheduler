@@ -125,10 +125,14 @@ export const CalendarPage = () => {
 				calendar.events.set(
 					res.payload.map((apiEv) => {
 						const start = dayjs(apiEv.date);
-						const end = start.add(
+						let end = start.add(
 							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
 							"h",
 						);
+
+						if (!end.isSame(start, "day")) {
+							end = dayjs(`${start.format("YYYY-MM-DD")} 23:59`);
+						}
 
 						return {
 							id: apiEv.id,
@@ -281,19 +285,11 @@ export const CalendarPage = () => {
 	}, [isMaxSlotsChecked, isMaxDuration, setValue]);
 
 	const onSubmit = handleSubmit((data) => {
-		const { company, location, start, startTime, max_slots } = data;
-		let { plan_duration } = data;
+		const { company, location, start, startTime, max_slots, plan_duration } =
+			data;
 
 		if (data) {
 			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
-			if (plan_duration !== null) {
-				const endDate = date.add(plan_duration, "hour");
-				if (!date.isSame(endDate, "day")) {
-					const endDateDay = dayjs(endDate.format("YYYY-MM-DD"));
-					const diff = endDateDay.diff(date, "hour");
-					plan_duration = diff - 1;
-				}
-			}
 			setIsDisableCreateEventSubmitButton(true);
 			createEvent(
 				company,
