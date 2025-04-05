@@ -124,11 +124,15 @@ export const CalendarPage = () => {
 			if (res !== null) {
 				calendar.events.set(
 					res.payload.map((apiEv) => {
-						const start = dayjs(apiEv.date);
-						const end = start.add(
+						const start = dayjs(apiEv.date).tz(tz, KEEP_LOCAL_TIME);
+						let end = start.add(
 							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
 							"h",
 						);
+
+						if (!end.isSame(start, "day")) {
+							end = start.endOf("day");
+						}
 
 						return {
 							id: apiEv.id,
