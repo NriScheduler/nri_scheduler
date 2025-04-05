@@ -191,7 +191,7 @@ export const CalendarPage = () => {
 		readEvent(id).then((responce) => {
 			if (responce?.payload) {
 				const data = responce.payload;
-				const start = dayjs(data.date);
+				const start = dayjs(data.date).tz(tz, KEEP_LOCAL_TIME);
 				let end = start.add(
 					data.plan_duration || DEFAULT_EVENT_DURATION,
 					"h",
