@@ -5,10 +5,10 @@ use sqlx::{FromRow, types::Json as SqlxJson};
 use uuid::Uuid;
 
 #[derive(DebugMasked, Deserialize, Serialize, FromRow)]
-pub(crate) struct UserForAuth {
+pub(crate) struct UserForAuthEmail {
 	pub id: Uuid,
 	#[masked]
-	pub pw_hash: String,
+	pub pw_hash: Option<String>,
 	pub verified: bool,
 }
 
@@ -32,6 +32,7 @@ pub(crate) struct Profile {
 	pub tz_variant: Option<String>,
 	pub get_tz_from_device: bool,
 	pub email_verified: bool,
+	pub tg_id: Option<i32>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]

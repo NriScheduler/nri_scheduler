@@ -20,16 +20,17 @@ use crate::{
 	cookie::{remove_auth_cookie, set_auth_cookie},
 	dto::{
 		Dto, FileLinkDto,
-		auth::{RegistrationDto, SignInDto, UpdateProfileDto},
+		auth::{RegistrationEmailDto, SignInDto, TelegramAuthDto, UpdateProfileDto},
 	},
 	image,
 	repository::Repository,
 	system_models::{AppError, AppResponse, AppResult},
+	telegram::verify_telegram_hash,
 };
 
-pub(super) async fn registration(
+pub(super) async fn registration_email(
 	State(repo): State<Arc<Repository>>,
-	Dto(body): Dto<RegistrationDto>,
+	Dto(body): Dto<RegistrationEmailDto>,
 ) -> AppResult {
 	let to = Mailbox::from_str(&body.email)
 		.map_err(|err| AppError::scenario_error("Введен некорректный email", Some(err)))?;
@@ -48,17 +49,58 @@ pub(super) async fn registration(
 	return AppResponse::user_registered();
 }
 
-pub(super) async fn sign_in(
+pub(super) async fn registration_tg(
+	State(repo): State<Arc<Repository>>,
+	Dto(body): Dto<TelegramAuthDto>,
+) -> Response {
+	if !verify_telegram_hash(&body).unwrap_or_default() {
+		return AppError::scenario_error("Некорректные авторизационные данные", None::<&str>)
+			.into_response();
+	}
+
+	let nickname = body.username.unwrap_or_else(|| {
+		body
+			.first_name
+			.unwrap_or_else(|| format!("user_{}", body.id))
+	});
+
+	let user_id = repo
+		.registration_tg(&nickname, body.id, &body.photo_url)
+		.await;
+
+	let user_id = match user_id {
+		Ok(user_id) => user_id,
+		Err(err) => return err.into_response(),
+	};
+
+	let jwt = match auth::generate_jwt(user_id, true) {
+		Ok(jwt) => jwt,
+		Err(err) => return err.into_response(),
+	};
+
+	let mut res = AppResponse::user_registered().into_response();
+
+	match set_auth_cookie(&mut res, &jwt) {
+		Ok(()) => res,
+		Err(err) => err.into_response(),
+	}
+}
+
+pub(super) async fn sign_in_email(
 	State(repo): State<Arc<Repository>>,
 	Dto(body): Dto<SignInDto>,
 ) -> Response {
-	let user = match repo.get_user_for_signing_in(&body.email).await {
+	let user = match repo.get_user_for_signing_in_email(&body.email).await {
 		Ok(Some(user)) => user,
 		Ok(None) => return AppError::unauthorized("Неверный пароль").into_response(),
 		Err(err) => return err.into_response(),
 	};
 
-	if auth::verify_password(&body.password, user.pw_hash)
+	let Some(pw_hash) = user.pw_hash else {
+		return AppError::unauthorized("Неверный пароль").into_response();
+	};
+
+	if auth::verify_password(&body.password, pw_hash)
 		.await
 		.is_err()
 	{
@@ -66,6 +108,36 @@ pub(super) async fn sign_in(
 	};
 
 	let jwt = match auth::generate_jwt(user.id, user.verified) {
+		Err(err) => return err.into_response(),
+		Ok(jwt) => jwt,
+	};
+
+	let mut res = AppResponse::scenario_success("Успешная авторизация", None).into_response();
+
+	match set_auth_cookie(&mut res, &jwt) {
+		Ok(()) => res,
+		Err(err) => err.into_response(),
+	}
+}
+
+pub(super) async fn sign_in_tg(
+	State(repo): State<Arc<Repository>>,
+	Dto(body): Dto<TelegramAuthDto>,
+) -> Response {
+	if !verify_telegram_hash(&body).unwrap_or_default() {
+		return AppError::scenario_error("Некорректные авторизационные данные", None::<&str>)
+			.into_response();
+	}
+
+	let user_id = match repo.get_user_for_signing_in_tg(body.id).await {
+		Ok(Some(user_id)) => user_id,
+		Ok(None) => {
+			return AppError::unauthorized("Некорректные авторизационные данные").into_response();
+		}
+		Err(err) => return err.into_response(),
+	};
+
+	let jwt = match auth::generate_jwt(user_id, true) {
 		Err(err) => return err.into_response(),
 		Ok(jwt) => jwt,
 	};

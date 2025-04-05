@@ -4,11 +4,14 @@ import { route as navigate } from "preact-router";
 
 import { toaster } from "./components/ui/toaster";
 import { enter, leave } from "./store/profile";
+import { ITelegramUser } from "./typings/telegram";
 
 export const API_HOST = import.meta.env.PROD
 	? ""
 	: (import.meta.env.CLIENT_API_HOST as string | undefined) || "";
 const CREDENTIALS = import.meta.env.PROD ? undefined : "include";
+
+export const TG_BOT_ID = import.meta.env.CLIENT_TG_BOT_ID as string | undefined;
 
 const POST = "POST";
 const PUT = "PUT";
@@ -172,11 +175,19 @@ export const registration = (
 	);
 };
 
+export const registrationTg = (data: ITelegramUser) => {
+	return ajax<null>("/api/registration/tg", prepareAjax(data, POST));
+};
+
 export const signIn = (email: string, password: string) => {
 	return ajax<null>(
 		"/api/signin",
 		prepareAjax({ email, password }, POST, URL_ENCODED),
 	);
+};
+
+export const signInTg = (data: ITelegramUser) => {
+	return ajax<null>("/api/signin/tg", prepareAjax(data, POST));
 };
 
 export const logout = () =>
@@ -454,6 +465,7 @@ export interface IApiProfile {
 	readonly id: UUID;
 	readonly email: string | null;
 	readonly email_verified: boolean;
+	readonly tg_id: number | null;
 	readonly nickname: string;
 	readonly about_me: string | null;
 	readonly avatar_link: string | null;

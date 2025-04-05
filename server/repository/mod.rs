@@ -6,7 +6,7 @@ use chrono::{DateTime, FixedOffset};
 use implementations::PostgresStore;
 use models::{
 	AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
-	PlayerApp, Profile, Region, UserForAuth,
+	PlayerApp, Profile, Region, UserForAuthEmail,
 };
 use uuid::Uuid;
 
@@ -31,7 +31,17 @@ trait Store {
 		hashed_pass: &str,
 		timezone_offset: Option<i16>,
 	) -> CoreResult<Uuid>;
-	async fn get_user_for_signing_in(&self, email: &str) -> CoreResult<Option<UserForAuth>>;
+	async fn registration_tg(
+		&self,
+		nickname: &str,
+		tg_id: i64,
+		avatar_url: &Option<String>,
+	) -> CoreResult<Uuid>;
+	async fn get_user_for_signing_in_email(
+		&self,
+		email: &str,
+	) -> CoreResult<Option<UserForAuthEmail>>;
+	async fn get_user_for_signing_in_tg(&self, tg_id: i64) -> CoreResult<Option<Uuid>>;
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>>;
 	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult;
 	async fn get_avatar_link(&self, user_id: Uuid) -> CoreResult<Option<String>>;
@@ -195,11 +205,27 @@ impl Repository {
 			.await;
 	}
 
-	pub(crate) async fn get_user_for_signing_in(
+	pub(crate) async fn registration_tg(
+		&self,
+		nickname: &str,
+		tg_id: i64,
+		avatar_url: &Option<String>,
+	) -> CoreResult<Uuid> {
+		return self
+			.store
+			.registration_tg(nickname, tg_id, avatar_url)
+			.await;
+	}
+
+	pub(crate) async fn get_user_for_signing_in_email(
 		&self,
 		email: &str,
-	) -> CoreResult<Option<UserForAuth>> {
-		return self.store.get_user_for_signing_in(email).await;
+	) -> CoreResult<Option<UserForAuthEmail>> {
+		return self.store.get_user_for_signing_in_email(email).await;
+	}
+
+	pub(crate) async fn get_user_for_signing_in_tg(&self, tg_id: i64) -> CoreResult<Option<Uuid>> {
+		return self.store.get_user_for_signing_in_tg(tg_id).await;
 	}
 
 	pub(crate) async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>> {

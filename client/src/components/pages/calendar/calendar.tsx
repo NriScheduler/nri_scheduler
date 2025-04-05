@@ -320,16 +320,16 @@ export const CalendarPage = () => {
 		<section>
 			<Container>
 				<HStack flexWrap="wrap" mb="5" minHeight="40px" gap={10}>
-					{!profile?.email_verified && profile?.signed && (
-						<HoverCard content="Нельзя перейти в режим мастера - электронная почта не подтверждена">
+					{!profile?.verified && profile?.signed && (
+						<HoverCard content="Нельзя перейти в режим мастера - контактные данные не подтверждены">
 							<Warning />
 						</HoverCard>
 					)}
 					{showSwitch && (
 						<Switch.Root
 							size="lg"
-							checked={mastery && profile?.email_verified}
-							disabled={!profile?.email_verified}
+							checked={mastery && profile?.verified}
+							disabled={!profile?.verified}
 							onCheckedChange={() =>
 								mastery ? disableMastery() : enableMastery()
 							}
@@ -342,7 +342,7 @@ export const CalendarPage = () => {
 						</Switch.Root>
 					)}
 
-					{mastery && profile?.email_verified && showSwitch && (
+					{mastery && profile?.verified && showSwitch && (
 						<Stack direction="row" gap={4}>
 							<DrawerRoot
 								open={openDraw}

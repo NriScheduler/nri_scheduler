@@ -15,7 +15,7 @@ use crate::{
 	},
 	repository::models::{
 		AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
-		PlayerApp, Profile, Region, UserForAuth,
+		PlayerApp, Profile, Region, UserForAuthEmail,
 	},
 	shared::RecordId,
 	system_models::{AppError, CoreResult},
@@ -83,13 +83,52 @@ impl Store for PostgresStore {
 		Ok(verification_id)
 	}
 
-	async fn get_user_for_signing_in(&self, email: &str) -> CoreResult<Option<UserForAuth>> {
-		let may_be_user = sqlx::query_as::<_, UserForAuth>(
+	async fn registration_tg(
+		&self,
+		nickname: &str,
+		tg_id: i64,
+		avatar_url: &Option<String>,
+	) -> CoreResult<Uuid> {
+		sqlx::query_scalar::<_, Uuid>(
+			"INSERT INTO users (nickname, tg_id, avatar_link) values ($1, $2, $3) returning id;",
+		)
+		.bind(nickname)
+		.bind(tg_id)
+		.bind(avatar_url)
+		.fetch_one(&self.pool)
+		.await
+		.map_err(|err| {
+			let err_str = err.to_string();
+			if err_str.contains(DUPLICATE_KEY) {
+				AppError::scenario_error(
+					"Пользователь с данным аккаунтом telegram уже существует",
+					None::<&str>,
+				)
+			} else {
+				AppError::system_error(err_str)
+			}
+		})
+	}
+
+	async fn get_user_for_signing_in_email(
+		&self,
+		email: &str,
+	) -> CoreResult<Option<UserForAuthEmail>> {
+		let may_be_user = sqlx::query_as::<_, UserForAuthEmail>(
 			"SELECT id, pw_hash, email_verified as verified FROM users WHERE email = $1;",
 		)
 		.bind(email)
 		.fetch_optional(&self.pool)
 		.await?;
+
+		Ok(may_be_user)
+	}
+
+	async fn get_user_for_signing_in_tg(&self, tg_id: i64) -> CoreResult<Option<Uuid>> {
+		let may_be_user = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE tg_id = $1;")
+			.bind(tg_id)
+			.fetch_optional(&self.pool)
+			.await?;
 
 		Ok(may_be_user)
 	}
@@ -101,6 +140,7 @@ impl Store for PostgresStore {
 				, sq.nickname
 				, sq.email
 				, sq.email_verified
+				, sq.tg_id
 				, sq.about_me
 				, sq.city
 				, sq.region
@@ -114,6 +154,7 @@ impl Store for PostgresStore {
 					, u.nickname
 					, u.email
 					, u.email_verified
+					, u.tg_id
 					, u.about_me
 					, u.city
 					, r.name as region

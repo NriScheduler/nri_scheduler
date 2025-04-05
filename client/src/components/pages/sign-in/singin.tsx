@@ -2,6 +2,7 @@ import { h } from "preact";
 import { useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { useForm } from "react-hook-form";
+import { FaTelegramPlane } from "react-icons/fa";
 
 import {
 	Button,
@@ -16,7 +17,8 @@ import {
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
 import { toaster } from "../../ui/toaster";
-import { getMyProfile, signIn } from "../../../api";
+import { getMyProfile, signIn, signInTg, TG_BOT_ID } from "../../../api";
+import { ITelegramUser } from "../../../typings/telegram";
 
 interface IFormSignin {
 	readonly email: string;
@@ -50,6 +52,31 @@ export const SignInPage = () => {
 				}
 			});
 	});
+
+	const submitTg = (user: ITelegramUser | boolean): void => {
+		if (!user || typeof user !== "object") {
+			toaster.error({
+				title: "Не удалось установить связь с Telegram",
+			});
+			return;
+		}
+
+		setFetching(true);
+
+		signInTg(user)
+			.then((res) => {
+				return res === null ? null : getMyProfile();
+			})
+			.then((res) => {
+				if (res !== null) {
+					reset();
+					toaster.success({ title: "Успешная авторизация" });
+					navigate("/calendar");
+				} else {
+					setFetching(false);
+				}
+			});
+	};
 
 	return (
 		<Container>
@@ -85,6 +112,20 @@ export const SignInPage = () => {
 					</Field>
 					<Button type="submit" disabled={fetching} w="full">
 						Войти
+					</Button>
+					<Button
+						type="button"
+						backgroundColor="#08c"
+						disabled={!TG_BOT_ID || fetching}
+						w="full"
+						onClick={() => {
+							window.Telegram.Login.auth(
+								{ bot_id: TG_BOT_ID!, request_access: true },
+								submitTg,
+							);
+						}}
+					>
+						<FaTelegramPlane /> Войти при помощи Telegram
 					</Button>
 					<Text mx="auto" fontSize="sm">
 						Еще не зарегистрированы?{" "}

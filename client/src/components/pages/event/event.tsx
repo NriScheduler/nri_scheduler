@@ -176,9 +176,7 @@ const EventCard = ({
 								colorPalette="blue"
 								minW="115px"
 								onClick={handleSubscribe}
-								disabled={
-									isLoading || youApplied || !profile.email_verified
-								}
+								disabled={isLoading || youApplied || !profile.verified}
 							>
 								{isLoading
 									? "..."
@@ -186,8 +184,8 @@ const EventCard = ({
 										? "Вы записаны"
 										: "Записаться"}
 							</Button>
-							{!profile.email_verified && (
-								<HoverCard content="Нельзя записаться на событие - электронная почта не подтверждена">
+							{!profile.verified && (
+								<HoverCard content="Нельзя записаться на событие - контактные данные не подтверждены">
 									<Warning />
 								</HoverCard>
 							)}
