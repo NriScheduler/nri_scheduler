@@ -6,6 +6,7 @@
 		"dev": "export $(cat .env | grep -v '^#' | xargs) && vite",
 		"force": "vite --force",
 		"build": "tsc && vite build",
+		"build_env": "tsc && export $(cat .env | grep -v '^#' | xargs) && vite build",
 		"preview": "npm run build && export $(cat .env | grep -v '^#' | xargs) && vite preview",
 		"tsc": "tsc",
 		"prebuild": "rm -rf static || npx rimraf static",
