@@ -43,11 +43,13 @@ import { Warning } from "../../ui/icons";
 import { toaster } from "../../ui/toaster";
 import {
 	applyEvent,
+	cancelEvent,
 	EScenarioStatus,
 	IApiEvent,
 	IApiLocation,
 	readEvent,
 	readLocations,
+	reopenEvent,
 	updateEvent,
 } from "../../../api";
 import { $profile, $tz } from "../../../store/profile";
@@ -55,7 +57,13 @@ import { navBack } from "../../../utils";
 
 dayjs.locale("ru");
 
-const EventCard = ({ event }: { event: IApiEvent }) => {
+const EventCard = ({
+	event,
+	updateEventData,
+}: {
+	event: IApiEvent;
+	updateEventData: () => void;
+}) => {
 	const tz = useStore($tz);
 	const profile = useStore($profile);
 
@@ -108,6 +116,20 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 	};
 	const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
 
+	const onCancelEvent = () => {
+		cancelEvent(event.id).then(() => {
+			toaster.success({ title: "Событие отменено" });
+			updateEventData();
+		});
+	};
+
+	const onReopenEvent = () => {
+		reopenEvent(event.id).then(() => {
+			toaster.success({ title: "Событие открыто" });
+			updateEventData();
+		});
+	};
+
 	return (
 		<Card.Root width="full">
 			<Card.Body>
@@ -146,7 +168,8 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 				{profile?.signed ? (
 					!event.you_are_master &&
 					(nowDate.isSame(eventDate, "minute") ||
-						eventDate.isAfter(nowDate, "minute")) ? (
+						eventDate.isAfter(nowDate, "minute")) &&
+					!event.cancelled ? (
 						<>
 							<Button
 								variant="subtle"
@@ -180,6 +203,34 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 						</HoverCard>
 						<Text>Запись закрыта</Text>
 					</>
+				)}
+				{event.cancelled && (
+					<>
+						<HoverCard content="Запись закрыта потому что мастер отменил событие">
+							<Warning />
+						</HoverCard>
+						<Text>Запись закрыта мастером</Text>
+					</>
+				)}
+				{event.you_are_master && !event.cancelled && (
+					<Button
+						onClick={onCancelEvent}
+						variant="subtle"
+						colorPalette="blue"
+						minW="115px"
+					>
+						Отменить событие
+					</Button>
+				)}
+				{event.you_are_master && event.cancelled && (
+					<Button
+						onClick={onReopenEvent}
+						variant="subtle"
+						colorPalette="blue"
+						minW="115px"
+					>
+						Переоткрыть событие
+					</Button>
 				)}
 			</Card.Footer>
 		</Card.Root>
@@ -352,6 +403,27 @@ export const EventPage = () => {
 
 	const eventDate = dayjs(event?.date).tz(tz);
 
+	const updateEventData = () => {
+		if (eventId) {
+			setFetching(true);
+			readEvent(eventId)
+				.then((res) => {
+					if (res !== null) {
+						setEvent(res.payload);
+						return res?.payload;
+					}
+				})
+				.then((eventData) => {
+					if (eventData?.you_are_master) {
+						return getLocations();
+					}
+				})
+				.finally(() => {
+					setFetching(false);
+				});
+		}
+	};
+
 	return (
 		<section>
 			<Container>
@@ -499,7 +571,7 @@ export const EventPage = () => {
 				{fetching ? (
 					<EventCardSkeleton />
 				) : event !== null ? (
-					<EventCard event={event} />
+					<EventCard event={event} updateEventData={updateEventData} />
 				) : (
 					<NotFoundPage
 						checkButton={false}
