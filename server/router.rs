@@ -26,7 +26,6 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 			"/api",
 			Router::new()
 				.route("/registration", post(H::registration_email))
-				.route("/registration/tg", post(H::registration_tg))
 				.route("/signin", post(H::sign_in_email))
 				.route("/signin/tg", post(H::sign_in_tg))
 				.route("/logout", post(H::logout))

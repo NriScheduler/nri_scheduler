@@ -1,7 +1,7 @@
-use ::std::{collections::BTreeMap, error::Error, sync::LazyLock};
+use ::std::{error::Error, sync::LazyLock};
 use chrono::Utc;
 use hmac::{Hmac, Mac};
-use sha2::Sha256;
+use sha2::{Digest, Sha256};
 
 use crate::dto::auth::TelegramAuthDto;
 
@@ -9,9 +9,15 @@ static TG_BOT_SECRET_KEY: LazyLock<[u8; 32]> = LazyLock::new(|| {
 	let bot_token =
 		::std::env::var("TG_BOT_TOKEN").expect("TG_BOT_TOKEN environment variable is not defined");
 
-	let mut mac = Hmac::<Sha256>::new_from_slice(b"WebAppData").expect("can't parse a salt");
-	mac.update(bot_token.as_bytes());
-	mac.finalize().into_bytes().into()
+	let mut hasher = Sha256::new();
+	hasher.update(bot_token.as_bytes());
+
+	let secret_key: [u8; 32] = hasher.finalize().into();
+
+	let _ = Hmac::<Sha256>::new_from_slice(&secret_key)
+		.expect("Incorrect TG_BOT_TOKEN value - can't create a Hmac");
+
+	secret_key
 });
 
 pub(super) fn init_static() {
@@ -27,34 +33,21 @@ pub(crate) fn verify_telegram_hash(data: &TelegramAuthDto) -> Result<bool, Box<d
 	}
 
 	// 2. Собираем данные для проверки
-	let mut data_check = BTreeMap::new();
-	data_check.insert("auth_date", data.auth_date.to_string());
-	if let Some(ref first_name) = data.first_name {
-		data_check.insert("first_name", first_name.clone());
-	}
-	data_check.insert("id", data.id.to_string());
-	if let Some(ref last_name) = data.last_name {
-		data_check.insert("last_name", last_name.clone());
-	}
-	if let Some(ref photo_url) = data.photo_url {
-		data_check.insert("photo_url", photo_url.clone());
-	}
-	if let Some(ref username) = data.username {
-		data_check.insert("username", username.clone());
-	}
+	let data_check_string = format!(
+		"auth_date={}\nfirst_name={}\nid={}\nlast_name={}\nphoto_url={}\nusername={}",
+		data.auth_date,
+		data.first_name.as_deref().unwrap_or_default(),
+		data.id,
+		data.last_name.as_deref().unwrap_or_default(),
+		data.photo_url.as_deref().unwrap_or_default(),
+		data.username.as_deref().unwrap_or_default(),
+	);
 
-	// 3. Формируем строку для проверки
-	let data_check_string = data_check
-		.iter()
-		.map(|(k, v)| format!("{k}={v}"))
-		.collect::<Vec<_>>()
-		.join("\n");
-
-	// 4. Вычисляем хэш
+	// 3. Вычисляем хэш
 	let mut mac = Hmac::<Sha256>::new_from_slice(&*TG_BOT_SECRET_KEY)?;
 	mac.update(data_check_string.as_bytes());
 	let computed_hash = hex::encode(mac.finalize().into_bytes());
 
-	// 5. Сравниваем хэши
+	// 4. Сравниваем хэши
 	Ok(computed_hash == data.hash)
 }

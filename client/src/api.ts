@@ -175,10 +175,6 @@ export const registration = (
 	);
 };
 
-export const registrationTg = (data: ITelegramUser) => {
-	return ajax<null>("/api/registration/tg", prepareAjax(data, POST));
-};
-
 export const signIn = (email: string, password: string) => {
 	return ajax<null>(
 		"/api/signin",

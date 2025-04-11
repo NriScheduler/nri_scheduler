@@ -49,43 +49,6 @@ pub(super) async fn registration_email(
 	return AppResponse::user_registered();
 }
 
-pub(super) async fn registration_tg(
-	State(repo): State<Arc<Repository>>,
-	Dto(body): Dto<TelegramAuthDto>,
-) -> Response {
-	if !verify_telegram_hash(&body).unwrap_or_default() {
-		return AppError::scenario_error("Некорректные авторизационные данные", None::<&str>)
-			.into_response();
-	}
-
-	let nickname = body.username.unwrap_or_else(|| {
-		body
-			.first_name
-			.unwrap_or_else(|| format!("user_{}", body.id))
-	});
-
-	let user_id = repo
-		.registration_tg(&nickname, body.id, &body.photo_url)
-		.await;
-
-	let user_id = match user_id {
-		Ok(user_id) => user_id,
-		Err(err) => return err.into_response(),
-	};
-
-	let jwt = match auth::generate_jwt(user_id, true) {
-		Ok(jwt) => jwt,
-		Err(err) => return err.into_response(),
-	};
-
-	let mut res = AppResponse::user_registered().into_response();
-
-	match set_auth_cookie(&mut res, &jwt) {
-		Ok(()) => res,
-		Err(err) => err.into_response(),
-	}
-}
-
 pub(super) async fn sign_in_email(
 	State(repo): State<Arc<Repository>>,
 	Dto(body): Dto<SignInDto>,
@@ -130,11 +93,12 @@ pub(super) async fn sign_in_tg(
 	}
 
 	let user_id = match repo.get_user_for_signing_in_tg(body.id).await {
-		Ok(Some(user_id)) => user_id,
-		Ok(None) => {
-			return AppError::unauthorized("Некорректные авторизационные данные").into_response();
-		}
 		Err(err) => return err.into_response(),
+		Ok(Some(u)) => u,
+		Ok(None) => match registration_tg(repo, body).await {
+			Err(err) => return err.into_response(),
+			Ok(u) => u,
+		},
 	};
 
 	let jwt = match auth::generate_jwt(user_id, true) {
@@ -148,6 +112,18 @@ pub(super) async fn sign_in_tg(
 		Ok(()) => res,
 		Err(err) => err.into_response(),
 	}
+}
+
+async fn registration_tg(repo: Arc<Repository>, body: TelegramAuthDto) -> Result<Uuid, AppError> {
+	let nickname = body.username.unwrap_or_else(|| {
+		body
+			.first_name
+			.unwrap_or_else(|| format!("user_{}", body.id))
+	});
+
+	repo
+		.registration_tg(&nickname, body.id, &body.photo_url)
+		.await
 }
 
 pub(super) async fn logout() -> Response {

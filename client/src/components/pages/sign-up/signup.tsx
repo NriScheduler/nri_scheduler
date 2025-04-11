@@ -17,12 +17,7 @@ import {
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
 import { toaster } from "../../ui/toaster";
-import {
-	getMyProfile,
-	registration,
-	registrationTg,
-	TG_BOT_ID,
-} from "../../../api";
+import { getMyProfile, registration, signInTg, TG_BOT_ID } from "../../../api";
 import { ITelegramUser } from "../../../typings/telegram";
 
 interface IFormValues {
@@ -68,10 +63,8 @@ export const SingUpPage = () => {
 
 		setFetching(true);
 
-		registrationTg(user)
-			.then((res) => {
-				return res === null ? null : getMyProfile();
-			})
+		signInTg(user)
+			.then((res) => res && getMyProfile())
 			.then((res) => {
 				if (res !== null) {
 					reset();

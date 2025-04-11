@@ -64,9 +64,7 @@ export const SignInPage = () => {
 		setFetching(true);
 
 		signInTg(user)
-			.then((res) => {
-				return res === null ? null : getMyProfile();
-			})
+			.then((res) => res && getMyProfile())
 			.then((res) => {
 				if (res !== null) {
 					reset();
