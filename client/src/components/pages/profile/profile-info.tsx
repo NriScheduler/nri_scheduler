@@ -96,24 +96,28 @@ export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 						</DataList.ItemLabel>
 						<DataList.ItemValue color="black" fontWeight="500">
 							<HStack>
-								{user.email}
-								<HoverCard
-									content={`Электронная почта ${user.email_verified ? "" : "не "}подтверждена`}
-								>
-									{user.email_verified ? <Check /> : <Warning />}
-								</HoverCard>
-								{!user.email_verified && !verificationSent && (
-									<Button
-										type="button"
-										size="xs"
-										variant="surface"
-										colorPalette="blue"
-										disabled={fetching}
-										onClick={sendVerification}
+								{user.email || NOT_SET + "а"}
+								{user.email && (
+									<HoverCard
+										content={`Электронная почта ${user.email_verified ? "" : "не "}подтверждена`}
 									>
-										Подтвердить email
-									</Button>
+										{user.email_verified ? <Check /> : <Warning />}
+									</HoverCard>
 								)}
+								{user.email &&
+									!user.email_verified &&
+									!verificationSent && (
+										<Button
+											type="button"
+											size="xs"
+											variant="surface"
+											colorPalette="blue"
+											disabled={fetching}
+											onClick={sendVerification}
+										>
+											Подтвердить email
+										</Button>
+									)}
 							</HStack>
 						</DataList.ItemValue>
 					</DataList.Item>
