@@ -21,8 +21,8 @@ pub(super) fn init_static() {
 
 pub(crate) fn verify_telegram_hash(data: &TelegramAuthDto) -> Result<bool, Box<dyn Error>> {
 	let now = Utc::now().timestamp();
-	// 1. Проверяем что авторизационные данные получены не позднее 24 часов
-	if (now - data.auth_date) > 86400 {
+	// 1. Проверяем что авторизационные данные получены не позднее 5 минут
+	if (now - data.auth_date) > 300 {
 		return Err("Данные авторизации устарели".into());
 	}
 
