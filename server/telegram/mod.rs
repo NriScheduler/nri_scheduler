@@ -3,7 +3,7 @@ use chrono::Utc;
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
 
-use crate::dto::auth::TelegramAuthDto;
+use crate::{dto::auth::TelegramAuthDto, shared::prevent_timing_attack};
 
 static TG_BOT_SECRET_KEY: LazyLock<[u8; 32]> = LazyLock::new(|| {
 	let bot_token =
@@ -25,7 +25,9 @@ pub(super) fn init_static() {
 	println!("+ telegram static values are ok");
 }
 
-pub(crate) fn verify_telegram_hash(data: &TelegramAuthDto) -> bool {
+pub(crate) async fn verify_telegram_hash(data: &TelegramAuthDto) -> bool {
+	prevent_timing_attack().await;
+
 	let now = Utc::now().timestamp();
 	// 1. Проверяем что авторизационные данные получены не позднее 5 минут
 	if (now - data.auth_date) > 300 {

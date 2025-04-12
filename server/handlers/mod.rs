@@ -87,7 +87,7 @@ pub(super) async fn sign_in_tg(
 	State(repo): State<Arc<Repository>>,
 	Dto(body): Dto<TelegramAuthDto>,
 ) -> Response {
-	if !verify_telegram_hash(&body) {
+	if !verify_telegram_hash(&body).await {
 		return AppError::scenario_error("Некорректные авторизационные данные", None::<&str>)
 			.into_response();
 	}

@@ -1,7 +1,7 @@
 use std::{
 	fs::read_to_string as read_file_to_string,
 	sync::LazyLock,
-	time::{Duration, SystemTime, UNIX_EPOCH},
+	time::{SystemTime, UNIX_EPOCH},
 };
 
 use argon2::{
@@ -19,13 +19,12 @@ use jsonwebtoken::{
 	Algorithm::ES256, DecodingKey, EncodingKey, Header as JwtHeader, TokenData, Validation,
 	decode as decode_and_verify, encode,
 };
-use rand::Rng;
 use serde::{Deserialize, Serialize};
-use tokio::time::sleep;
 use uuid::Uuid;
 
 use crate::{
 	cookie::{extract_jwt_from_cookie, remove_auth_cookie},
+	shared::prevent_timing_attack,
 	system_models::{AppError, AppResponse, CoreResult},
 };
 
@@ -83,6 +82,8 @@ pub(super) fn hash_password(password: &str) -> CoreResult<String> {
 }
 
 pub(super) async fn verify_password(password: &str, password_hash: String) -> CoreResult {
+	prevent_timing_attack().await;
+
 	let full_hash = format!("$argon2id$v=19$m=19456,t=2,p=1${password_hash}");
 	let parsed_hash = PasswordHash::new(&full_hash).map_err(|e| {
 		eprintln!("Ошибка парсига пароля: {e}");
@@ -95,9 +96,6 @@ pub(super) async fn verify_password(password: &str, password_hash: String) -> Co
 			println!("Неверный пароль: {e}");
 			AppError::unauthorized("Неверный пароль")
 		})?;
-
-	let random_millis: u64 = rand::rng().random_range(1..=50);
-	sleep(Duration::from_millis(random_millis)).await;
 
 	Ok(())
 }
