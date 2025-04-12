@@ -10,9 +10,9 @@ use crate::{
 	system_models::{AppError, CoreResult},
 };
 
-#[cfg(not(all(feature = "cors", feature = "https")))]
+#[cfg(not(feature = "cors"))]
 const SAME_SITE: &str = "SameSite";
-#[cfg(all(feature = "cors", feature = "https"))]
+#[cfg(feature = "cors")]
 const SAME_SITE: &str = "SameSite=None";
 
 pub(super) fn set_auth_cookie(response: &mut Response, jwt: &str) -> CoreResult {
