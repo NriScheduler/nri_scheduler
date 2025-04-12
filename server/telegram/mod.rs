@@ -1,4 +1,4 @@
-use ::std::{error::Error, sync::LazyLock};
+use ::std::sync::LazyLock;
 use chrono::Utc;
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
@@ -25,11 +25,11 @@ pub(super) fn init_static() {
 	println!("+ telegram static values are ok");
 }
 
-pub(crate) fn verify_telegram_hash(data: &TelegramAuthDto) -> Result<bool, Box<dyn Error>> {
+pub(crate) fn verify_telegram_hash(data: &TelegramAuthDto) -> bool {
 	let now = Utc::now().timestamp();
 	// 1. Проверяем что авторизационные данные получены не позднее 5 минут
 	if (now - data.auth_date) > 300 {
-		return Err("Данные авторизации устарели".into());
+		return false;
 	}
 
 	// 2. Собираем данные для проверки
@@ -44,10 +44,13 @@ pub(crate) fn verify_telegram_hash(data: &TelegramAuthDto) -> Result<bool, Box<d
 	);
 
 	// 3. Вычисляем хэш
-	let mut mac = Hmac::<Sha256>::new_from_slice(&*TG_BOT_SECRET_KEY)?;
+	let Ok(mut mac) = Hmac::<Sha256>::new_from_slice(&*TG_BOT_SECRET_KEY) else {
+		// недостижимая ветка т.к. проверили при инициализации TG_BOT_SECRET_KEY
+		return false;
+	};
 	mac.update(data_check_string.as_bytes());
 	let computed_hash = hex::encode(mac.finalize().into_bytes());
 
 	// 4. Сравниваем хэши
-	Ok(computed_hash == data.hash)
+	computed_hash == data.hash
 }
