@@ -2,7 +2,8 @@ import { h } from "preact";
 import { useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { useForm } from "react-hook-form";
-import { FaTelegramPlane } from "react-icons/fa";
+import { FaTelegramPlane as TelegramIcon } from "react-icons/fa";
+import { MdOutlineAlternateEmail as EmailIcon } from "react-icons/md";
 
 import {
 	Button,
@@ -136,6 +137,7 @@ export const SingUpPage = () => {
 						/>
 					</Field>
 					<Button type="submit" disabled={fetching} w="full">
+						<EmailIcon />
 						Зарегистрироваться
 					</Button>
 					<Button
@@ -150,7 +152,7 @@ export const SingUpPage = () => {
 							);
 						}}
 					>
-						<FaTelegramPlane /> Зарегистрироваться при помощи Telegram
+						<TelegramIcon /> Зарегистрироваться при помощи Telegram
 					</Button>
 					<Text mx="auto" fontSize="sm">
 						Уже зарегистрированы?{" "}
