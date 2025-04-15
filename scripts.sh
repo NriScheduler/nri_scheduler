@@ -55,6 +55,11 @@ ed25519() {
 	openssl pkey -in private_key.pem -pubout -out public_key.pem;
 }
 
+x25519() {
+	openssl genpkey -algorithm X25519 -out private_key.pem;
+	openssl pkey -in private_key.pem -pubout -out public_key.pem;
+}
+
 cert() {
 	openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
 }

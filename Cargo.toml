@@ -30,7 +30,7 @@ derive-masked = "0.1.0"
 futures = "0.3.31"
 hex = "0.4.3"
 hmac = "0.12.1"
-jsonwebtoken = "9.3.1"
+josekit = "0.10.1"
 lettre = "0.11.15"
 rand = "0.9.0"
 regex = "1.11.1"
@@ -39,7 +39,7 @@ serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 serde_urlencoded = "0.7.1"
 sha2 = "0.10.8"
-sqlx = { version = "0.8.3", features = ["runtime-tokio", "tls-none", "postgres", "chrono", "uuid"] }
+sqlx = { version = "0.8.4", features = ["runtime-tokio", "tls-none", "postgres", "chrono", "uuid"] }
 tokio = { version = "1.44.2", features = ["full"] }
 tower-http = { version = "0.6.2", features = ["fs"], optional = true }
 utoipa = { version = "5.3.1", features = ["uuid", "chrono"], optional = true }
