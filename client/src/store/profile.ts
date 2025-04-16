@@ -6,7 +6,7 @@ import utc from "dayjs/plugin/utc";
 import { computed, map, task } from "nanostores";
 import { procetar } from "procetar";
 
-import { API_HOST, ETzVariant, IApiProfile, TG_AVA_KEY } from "../api";
+import { API_HOST, ETzVariant, IApiProfile } from "../api";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -59,7 +59,7 @@ export const $profile = computed(_profile, (p) =>
 
 		const avatar_link = p.avatar_link
 			? API_HOST + p.avatar_link
-			: sessionStorage.getItem(TG_AVA_KEY) || (await procetar(p.id));
+			: await procetar(p.id);
 
 		const prof: IStorePrifile = {
 			id: p.id,
