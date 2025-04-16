@@ -12,6 +12,7 @@ export const API_HOST = import.meta.env.PROD
 const CREDENTIALS = import.meta.env.PROD ? undefined : "include";
 
 export const TG_BOT_ID = import.meta.env.CLIENT_TG_BOT_ID as string | undefined;
+export const TG_AVA_KEY = "TG_AVA_KEY";
 
 const POST = "POST";
 const PUT = "PUT";
@@ -183,12 +184,18 @@ export const signIn = (email: string, password: string) => {
 };
 
 export const signInTg = (data: ITelegramUser) => {
-	return ajax<null>("/api/signin/tg", prepareAjax(data, POST));
+	return ajax<null>("/api/signin/tg", prepareAjax(data, POST)).then((res) => {
+		if (res && data.photo_url) {
+			sessionStorage.setItem(TG_AVA_KEY, data.photo_url);
+		}
+		return res;
+	});
 };
 
 export const logout = () =>
 	ajax<null>("/api/logout", prepareAjax(undefined, POST)).then((res) => {
 		if (res?.status === EScenarioStatus.SCENARIO_SUCCESS) {
+			sessionStorage.removeItem(TG_AVA_KEY);
 			leave();
 		}
 
