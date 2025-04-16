@@ -83,18 +83,12 @@ impl Store for PostgresStore {
 		Ok(verification_id)
 	}
 
-	async fn registration_tg(
-		&self,
-		nickname: &str,
-		tg_id: i64,
-		avatar_url: &Option<String>,
-	) -> CoreResult<Uuid> {
+	async fn registration_tg(&self, nickname: &str, tg_id: i64) -> CoreResult<Uuid> {
 		sqlx::query_scalar::<_, Uuid>(
-			"INSERT INTO users (nickname, tg_id, avatar_link) values ($1, $2, $3) returning id;",
+			"INSERT INTO users (nickname, tg_id) values ($1, $2) returning id;",
 		)
 		.bind(nickname)
 		.bind(tg_id)
-		.bind(avatar_url)
 		.fetch_one(&self.pool)
 		.await
 		.map_err(|err| {

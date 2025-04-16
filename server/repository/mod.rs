@@ -31,12 +31,7 @@ trait Store {
 		hashed_pass: &str,
 		timezone_offset: Option<i16>,
 	) -> CoreResult<Uuid>;
-	async fn registration_tg(
-		&self,
-		nickname: &str,
-		tg_id: i64,
-		avatar_url: &Option<String>,
-	) -> CoreResult<Uuid>;
+	async fn registration_tg(&self, nickname: &str, tg_id: i64) -> CoreResult<Uuid>;
 	async fn get_user_for_signing_in_email(
 		&self,
 		email: &str,
@@ -205,16 +200,8 @@ impl Repository {
 			.await;
 	}
 
-	pub(crate) async fn registration_tg(
-		&self,
-		nickname: &str,
-		tg_id: i64,
-		avatar_url: &Option<String>,
-	) -> CoreResult<Uuid> {
-		return self
-			.store
-			.registration_tg(nickname, tg_id, avatar_url)
-			.await;
+	pub(crate) async fn registration_tg(&self, nickname: &str, tg_id: i64) -> CoreResult<Uuid> {
+		return self.store.registration_tg(nickname, tg_id).await;
 	}
 
 	pub(crate) async fn get_user_for_signing_in_email(

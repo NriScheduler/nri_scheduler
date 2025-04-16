@@ -121,9 +121,7 @@ async fn registration_tg(repo: Arc<Repository>, body: TelegramAuthDto) -> Result
 			.unwrap_or_else(|| format!("user_{}", body.id))
 	});
 
-	repo
-		.registration_tg(&nickname, body.id, &body.photo_url)
-		.await
+	repo.registration_tg(&nickname, body.id).await
 }
 
 pub(super) async fn logout() -> Response {
