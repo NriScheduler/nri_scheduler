@@ -23,9 +23,9 @@ const persistentAtom = <T>(key: string, initialValue: T) => {
 	return store;
 };
 
-const MASTERY_KEY = "nri_checkboxState";
+const CHECKBOX_KEY = "nri_checkboxState";
 const TRUE = true;
 
-export const $checkboxState = persistentAtom<boolean>(MASTERY_KEY, TRUE);
+export const $checkboxState = persistentAtom<boolean>(CHECKBOX_KEY, TRUE);
 
 export const toggleCheckbox = () => $checkboxState.set(!$checkboxState.get());

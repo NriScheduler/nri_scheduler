@@ -1,8 +1,16 @@
 import { h } from "preact";
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 
-import { Button, Card, Container, Grid, Link, Tabs } from "@chakra-ui/react";
+import {
+	Button,
+	Card,
+	Container,
+	Grid,
+	Link,
+	Spinner,
+	Tabs,
+} from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 
 import { CampList } from "./camplist/camplist";
@@ -36,26 +44,27 @@ export const ProfilePage = () => {
 	const events: IEvent[] = [];
 
 	const [campList, setCampList] = useState<IApiCompany[]>([]);
+	const [fetching, setFetching] = useState(false);
 	const activeTab = useStore($activeTab);
 
 	useEffect(() => {
 		let isMounted = true;
 
 		const fetchCompanies = async () => {
-			try {
-				const response = await readMyCompanies();
-				if (isMounted && response?.payload) {
-					setCampList(response.payload);
-				}
-			} catch (error) {
-				console.error("Failed to fetch companies:", error);
-				if (isMounted) {
-					setCampList([]); // Сброс списка при ошибке
-				}
-			}
+			setFetching(true);
+			await readMyCompanies()
+				.then((response) => {
+					if (isMounted && response?.payload) {
+						setCampList(response.payload);
+					}
+				})
+				.finally(() => setFetching(false));
 		};
 
-		fetchCompanies();
+		if (activeTab === "camplist") {
+			fetchCompanies();
+			console.info(activeTab);
+		}
 
 		return () => {
 			isMounted = false; // Очистка при размонтировании
@@ -110,7 +119,9 @@ export const ProfilePage = () => {
 				</Tabs.Content>
 
 				<Tabs.Content value="camplist">
-					{campList.length > 0 ? (
+					{fetching ? (
+						<Spinner size="sm" />
+					) : campList.length > 0 ? (
 						<CampList list={campList} />
 					) : (
 						<EmptyList title="Кампаний не создано" />
