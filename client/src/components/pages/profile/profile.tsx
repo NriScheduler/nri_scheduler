@@ -50,19 +50,21 @@ export const ProfilePage = () => {
 	useEffect(() => {
 		// camplist
 		if (activeTab === tabList[2].id) {
+			let isMounted = true;
 			setFetching(true);
 
 			let abortController = new AbortController();
 
 			readMyCompanies(null, abortController)
 				.then((response) => {
-					if (response?.payload) {
+					if (isMounted && response?.payload) {
 						setCampList(response.payload);
 					}
 				})
 				.finally(() => setFetching(false));
 
 			return () => {
+				isMounted = false; // Очистка при размонтировании
 				abortController.abort(EAbortReason.UNMOUNT);
 			};
 		}
