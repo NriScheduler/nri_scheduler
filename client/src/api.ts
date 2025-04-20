@@ -17,6 +17,11 @@ const POST = "POST";
 const PUT = "PUT";
 const URL_ENCODED = true;
 
+export const enum EAbortReason {
+	TIMEOUT = "timeout",
+	UNMOUNT = "unmount",
+}
+
 export const enum EScenarioStatus {
 	SCENARIO_SUCCESS,
 	UNAUTHORIZED,
@@ -41,15 +46,16 @@ export interface IRequestInit {
 const ajax = <T>(
 	input: string,
 	init?: IRequestInit,
+	abort?: AbortController,
 	isSoft = false,
 ): Promise<IApiResponse<T> | null> => {
-	let controller: AbortController | undefined;
+	let controller = abort;
 	let timeoutId: ReturnType<typeof setTimeout>;
 
 	if (init?.timeoutMilliseconds) {
-		controller = new AbortController();
+		controller = controller || new AbortController();
 		timeoutId = setTimeout(
-			() => controller!.abort(),
+			() => controller!.abort(EAbortReason.TIMEOUT),
 			init.timeoutMilliseconds,
 		);
 	}
@@ -63,6 +69,25 @@ const ajax = <T>(
 		signal: controller?.signal,
 	})
 		.then((res) => checkResponse<T>(res, isSoft))
+		.catch((err) => {
+			if (controller && controller.signal.aborted) {
+				if (controller.signal.reason === EAbortReason.TIMEOUT) {
+					toaster.error({
+						title: "Истекло время ожидания ответа сервера",
+					});
+					return null;
+				} else if (controller.signal.reason === EAbortReason.UNMOUNT) {
+					// just ignore it
+					return null;
+				}
+			}
+
+			toaster.error({ title: "Неизвестная ошибка" });
+			console.info("Хрень какая-то...");
+			console.error(err);
+
+			return null;
+		})
 		.finally(() => {
 			clearTimeout(timeoutId);
 		});
@@ -130,13 +155,9 @@ const checkResponse = async <T>(
 
 		return null;
 	} catch (err) {
-		if (err instanceof Error && err.name === "AbortError") {
-			toaster.error({ title: "Истекло время ожидания ответа сервера" });
-		} else {
-			toaster.error({ title: "Неизвестная ошибка" });
-			console.info("Хрень какая-то...");
-			console.error(err);
-		}
+		toaster.error({ title: "Неизвестная ошибка" });
+		console.info("Хрень какая-то...");
+		console.error(err);
 
 		return null;
 	}
@@ -255,13 +276,20 @@ export interface IApiCompanyInfo {
 	readonly you_are_master: boolean;
 }
 
-export const readMyCompanies = (nameFilter?: string | null) => {
+export const readMyCompanies = (
+	nameFilter?: string | null,
+	abortController?: AbortController,
+) => {
 	const query = new URLSearchParams();
 	if (nameFilter) {
 		query.append("name", nameFilter);
 	}
 
-	return ajax<IApiCompany[]>(`/api/companies/my?${query}`);
+	return ajax<IApiCompany[]>(
+		`/api/companies/my?${query}`,
+		undefined,
+		abortController,
+	);
 };
 
 export const readCompanyById = (companyId: UUID) =>
@@ -468,7 +496,12 @@ export interface IApiProfile {
 
 export const getMyProfile: () => Promise<IApiResponse<IApiProfile> | null> =
 	async (isSoft = false) => {
-		const res = await ajax<IApiProfile>(`/api/profile/my`, undefined, isSoft);
+		const res = await ajax<IApiProfile>(
+			`/api/profile/my`,
+			undefined,
+			undefined,
+			isSoft,
+		);
 
 		if (res !== null) {
 			enter(res.payload);

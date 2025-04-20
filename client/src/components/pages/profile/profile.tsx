@@ -16,7 +16,7 @@ import { useStore } from "@nanostores/preact";
 import { CampList } from "./camplist/camplist";
 import { EmptyList } from "./empty-list";
 import { ProfileInfo } from "./profile-info";
-import { IApiCompany, readMyCompanies } from "../../../api";
+import { EAbortReason, IApiCompany, readMyCompanies } from "../../../api";
 import { $profile } from "../../../store/profile";
 import { $activeTab, setActiveTab } from "../../../store/tabsStore";
 
@@ -48,26 +48,24 @@ export const ProfilePage = () => {
 	const activeTab = useStore($activeTab);
 
 	useEffect(() => {
-		let isMounted = true;
-
-		const fetchCompanies = async () => {
+		// camplist
+		if (activeTab === tabList[2].id) {
 			setFetching(true);
-			await readMyCompanies()
+
+			let abortController = new AbortController();
+
+			readMyCompanies(null, abortController)
 				.then((response) => {
-					if (isMounted && response?.payload) {
+					if (response?.payload) {
 						setCampList(response.payload);
 					}
 				})
 				.finally(() => setFetching(false));
-		};
 
-		if (activeTab === "camplist") {
-			fetchCompanies();
+			return () => {
+				abortController.abort(EAbortReason.UNMOUNT);
+			};
 		}
-
-		return () => {
-			isMounted = false; // Очистка при размонтировании
-		};
 	}, [activeTab]);
 
 	return (
