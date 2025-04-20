@@ -5,7 +5,8 @@ use ::std::error::Error;
 use chrono::{DateTime, FixedOffset};
 use implementations::PostgresStore;
 use models::{
-	City, Company, CompanyInfo, Event, EventForApplying, Location, Profile, Region, UserForAuth,
+	AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
+	PlayerApp, Profile, Region, UserForAuthEmail,
 };
 use uuid::Uuid;
 
@@ -30,7 +31,12 @@ trait Store {
 		hashed_pass: &str,
 		timezone_offset: Option<i16>,
 	) -> CoreResult<Uuid>;
-	async fn get_user_for_signing_in(&self, email: &str) -> CoreResult<Option<UserForAuth>>;
+	async fn registration_tg(&self, nickname: &str, tg_id: i64) -> CoreResult<Uuid>;
+	async fn get_user_for_signing_in_email(
+		&self,
+		email: &str,
+	) -> CoreResult<Option<UserForAuthEmail>>;
+	async fn get_user_for_signing_in_tg(&self, tg_id: i64) -> CoreResult<Option<Uuid>>;
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>>;
 	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult;
 	async fn get_avatar_link(&self, user_id: Uuid) -> CoreResult<Option<String>>;
@@ -107,6 +113,43 @@ trait Store {
 		can_auto_approve: bool,
 	) -> CoreResult<RecordId>;
 
+	async fn read_player_apps_list(&self, player_id: Uuid) -> CoreResult<Vec<PlayerApp>>;
+	async fn read_player_app(&self, player_id: Uuid, app_id: Uuid) -> CoreResult<Option<PlayerApp>>;
+	async fn read_player_app_by_event(
+		&self,
+		player_id: Uuid,
+		event_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>>;
+	async fn read_player_app_company_closest(
+		&self,
+		player_id: Uuid,
+		company_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>>;
+
+	async fn read_master_apps_list(&self, master_id: Uuid) -> CoreResult<Vec<MasterApp>>;
+	async fn read_master_apps_list_by_event(
+		&self,
+		master_id: Uuid,
+		event_id: Uuid,
+	) -> CoreResult<Vec<MasterApp>>;
+	async fn read_master_apps_list_company_closest(
+		&self,
+		master_id: Uuid,
+		company_id: Uuid,
+	) -> CoreResult<Vec<MasterApp>>;
+	async fn read_master_app(&self, master_id: Uuid, app_id: Uuid) -> CoreResult<Option<MasterApp>>;
+
+	async fn read_app_for_approval(
+		&self,
+		master_id: Uuid,
+		app_id: Uuid,
+	) -> CoreResult<Option<AppForApproval>>;
+	async fn approve_app(&self, app_id: Uuid) -> CoreResult;
+	async fn reject_app(&self, app_id: Uuid) -> CoreResult;
+
+	async fn cancel_event(&self, event_id: Uuid) -> CoreResult;
+	async fn reopen_event(&self, event_id: Uuid) -> CoreResult;
+
 	async fn add_event(
 		&self,
 		company: Uuid,
@@ -157,11 +200,19 @@ impl Repository {
 			.await;
 	}
 
-	pub(crate) async fn get_user_for_signing_in(
+	pub(crate) async fn registration_tg(&self, nickname: &str, tg_id: i64) -> CoreResult<Uuid> {
+		return self.store.registration_tg(nickname, tg_id).await;
+	}
+
+	pub(crate) async fn get_user_for_signing_in_email(
 		&self,
 		email: &str,
-	) -> CoreResult<Option<UserForAuth>> {
-		return self.store.get_user_for_signing_in(email).await;
+	) -> CoreResult<Option<UserForAuthEmail>> {
+		return self.store.get_user_for_signing_in_email(email).await;
+	}
+
+	pub(crate) async fn get_user_for_signing_in_tg(&self, tg_id: i64) -> CoreResult<Option<Uuid>> {
+		return self.store.get_user_for_signing_in_tg(tg_id).await;
 	}
 
 	pub(crate) async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>> {
@@ -309,6 +360,14 @@ impl Repository {
 			.await;
 	}
 
+	pub(crate) async fn cancel_event(&self, event_id: Uuid) -> CoreResult {
+		return self.store.cancel_event(event_id).await;
+	}
+
+	pub(crate) async fn reopen_event(&self, event_id: Uuid) -> CoreResult {
+		return self.store.reopen_event(event_id).await;
+	}
+
 	pub(crate) async fn add_event(
 		&self,
 		company: Uuid,
@@ -330,6 +389,90 @@ impl Repository {
 		data: UpdateEventDto,
 	) -> CoreResult<bool> {
 		return self.store.update_event(event_id, master, data).await;
+	}
+
+	pub(crate) async fn read_player_apps_list(&self, player_id: Uuid) -> CoreResult<Vec<PlayerApp>> {
+		return self.store.read_player_apps_list(player_id).await;
+	}
+
+	pub(crate) async fn read_player_app(
+		&self,
+		player_id: Uuid,
+		app_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>> {
+		return self.store.read_player_app(player_id, app_id).await;
+	}
+
+	pub(crate) async fn read_player_app_by_event(
+		&self,
+		player_id: Uuid,
+		event_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>> {
+		return self
+			.store
+			.read_player_app_by_event(player_id, event_id)
+			.await;
+	}
+
+	pub(crate) async fn read_player_app_company_closest(
+		&self,
+		player_id: Uuid,
+		company_id: Uuid,
+	) -> CoreResult<Option<PlayerApp>> {
+		return self
+			.store
+			.read_player_app_company_closest(player_id, company_id)
+			.await;
+	}
+
+	pub(crate) async fn read_master_apps_list(&self, master_id: Uuid) -> CoreResult<Vec<MasterApp>> {
+		return self.store.read_master_apps_list(master_id).await;
+	}
+
+	pub(crate) async fn read_master_apps_list_by_event(
+		&self,
+		master_id: Uuid,
+		event_id: Uuid,
+	) -> CoreResult<Vec<MasterApp>> {
+		return self
+			.store
+			.read_master_apps_list_by_event(master_id, event_id)
+			.await;
+	}
+
+	pub(crate) async fn read_master_apps_list_company_closest(
+		&self,
+		master_id: Uuid,
+		company_id: Uuid,
+	) -> CoreResult<Vec<MasterApp>> {
+		return self
+			.store
+			.read_master_apps_list_company_closest(master_id, company_id)
+			.await;
+	}
+
+	pub(crate) async fn read_master_app(
+		&self,
+		master_id: Uuid,
+		app_id: Uuid,
+	) -> CoreResult<Option<MasterApp>> {
+		return self.store.read_master_app(master_id, app_id).await;
+	}
+
+	pub(crate) async fn read_app_for_approval(
+		&self,
+		master_id: Uuid,
+		app_id: Uuid,
+	) -> CoreResult<Option<AppForApproval>> {
+		return self.store.read_app_for_approval(master_id, app_id).await;
+	}
+
+	pub(crate) async fn approve_app(&self, app_id: Uuid) -> CoreResult {
+		return self.store.approve_app(app_id).await;
+	}
+
+	pub(crate) async fn reject_app(&self, app_id: Uuid) -> CoreResult {
+		return self.store.reject_app(app_id).await;
 	}
 
 	pub(crate) async fn read_regions_list(&self) -> CoreResult<Vec<Region>> {

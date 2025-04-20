@@ -3,7 +3,7 @@ import "./calendar.css";
 
 import type { UUID } from "node:crypto";
 
-import { Fragment, h } from "preact";
+import { h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 import { Controller, useForm } from "react-hook-form";
@@ -124,11 +124,15 @@ export const CalendarPage = () => {
 			if (res !== null) {
 				calendar.events.set(
 					res.payload.map((apiEv) => {
-						const start = dayjs(apiEv.date);
-						const end = start.add(
+						const start = dayjs(apiEv.date).tz(tz, KEEP_LOCAL_TIME);
+						let end = start.add(
 							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
 							"h",
 						);
+
+						if (!end.isSame(start, "day")) {
+							end = start.endOf("day");
+						}
 
 						return {
 							id: apiEv.id,
@@ -187,11 +191,15 @@ export const CalendarPage = () => {
 		readEvent(id).then((responce) => {
 			if (responce?.payload) {
 				const data = responce.payload;
-				const start = dayjs(data.date);
-				const end = start.add(
+				const start = dayjs(data.date).tz(tz, KEEP_LOCAL_TIME);
+				let end = start.add(
 					data.plan_duration || DEFAULT_EVENT_DURATION,
 					"h",
 				);
+
+				if (!end.isSame(start, "day")) {
+					end = start.endOf("day");
+				}
 
 				calendar.events.add({
 					...data,
@@ -312,16 +320,16 @@ export const CalendarPage = () => {
 		<section>
 			<Container>
 				<HStack flexWrap="wrap" mb="5" minHeight="40px" gap={10}>
-					{!profile?.email_verified && profile?.signed && (
-						<HoverCard content="Нельзя перейти в режим мастера - электронная почта не подтверждена">
+					{!profile?.verified && profile?.signed && (
+						<HoverCard content="Нельзя перейти в режим мастера - контактные данные не подтверждены">
 							<Warning />
 						</HoverCard>
 					)}
 					{showSwitch && (
 						<Switch.Root
 							size="lg"
-							checked={mastery && profile?.email_verified}
-							disabled={!profile?.email_verified}
+							checked={mastery && profile?.verified}
+							disabled={!profile?.verified}
 							onCheckedChange={() =>
 								mastery ? disableMastery() : enableMastery()
 							}
@@ -334,7 +342,7 @@ export const CalendarPage = () => {
 						</Switch.Root>
 					)}
 
-					{mastery && profile?.email_verified && showSwitch && (
+					{mastery && profile?.verified && showSwitch && (
 						<Stack direction="row" gap={4}>
 							<DrawerRoot
 								open={openDraw}
@@ -405,32 +413,26 @@ export const CalendarPage = () => {
 																	onBlur={field.onBlur}
 																	ref={field.ref}
 																	disabled={
-																		companies.items.length > 0
-																			? false
-																			: true
+																		companies.items.length < 1
 																	}
 																/>
 																<AutoCompleteList bg="inherit">
 																	<AutoCompleteGroup>
 																		{companies.items.map(
 																			(option) => (
-																				<Fragment
+																				<AutoCompleteItem
 																					key={option.id}
-																				>
-																					<AutoCompleteItem
-																						key={`option-${option.id}`}
-																						value={{
-																							title: `${option.id}`,
-																						}}
-																						label={
-																							option.name
-																						}
-																						textTransform="capitalize"
-																						_hover={{
-																							bg: "gray.200",
-																						}}
-																					/>
-																				</Fragment>
+																					value={{
+																						title: option.id,
+																					}}
+																					label={
+																						option.name
+																					}
+																					textTransform="capitalize"
+																					_hover={{
+																						bg: "gray.200",
+																					}}
+																				/>
 																			),
 																		)}
 																	</AutoCompleteGroup>
@@ -505,32 +507,26 @@ export const CalendarPage = () => {
 																	onBlur={field.onBlur}
 																	ref={field.ref}
 																	disabled={
-																		locations.items.length > 0
-																			? false
-																			: true
+																		locations.items.length < 1
 																	}
 																/>
 																<AutoCompleteList bg="inherit">
 																	<AutoCompleteGroup>
 																		{locations.items.map(
 																			(option) => (
-																				<Fragment
+																				<AutoCompleteItem
 																					key={option.id}
-																				>
-																					<AutoCompleteItem
-																						key={`option-${option.id}`}
-																						value={{
-																							title: `${option.id}`,
-																						}}
-																						label={
-																							option.name
-																						}
-																						textTransform="capitalize"
-																						_hover={{
-																							bg: "gray.200",
-																						}}
-																					/>
-																				</Fragment>
+																					value={{
+																						title: option.id,
+																					}}
+																					label={
+																						option.name
+																					}
+																					textTransform="capitalize"
+																					_hover={{
+																						bg: "gray.200",
+																					}}
+																				/>
 																			),
 																		)}
 																	</AutoCompleteGroup>

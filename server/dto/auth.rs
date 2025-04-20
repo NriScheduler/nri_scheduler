@@ -14,7 +14,7 @@ pub(super) fn init_static() {
 }
 
 #[derive(DebugMasked)]
-pub(crate) struct RegistrationDto {
+pub(crate) struct RegistrationEmailDto {
 	pub nickname: String,
 	pub email: String,
 	#[masked]
@@ -22,7 +22,7 @@ pub(crate) struct RegistrationDto {
 	pub timezone_offset: Option<i16>,
 }
 
-impl<'de> Deserialize<'de> for RegistrationDto {
+impl<'de> Deserialize<'de> for RegistrationEmailDto {
 	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
 	where
 		D: Deserializer<'de>,
@@ -168,4 +168,15 @@ impl<'de> Deserialize<'de> for UpdateProfileDto {
 pub(crate) struct VerificationDto {
 	pub channel: String,
 	pub code: Uuid,
+}
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct TelegramAuthDto {
+	pub auth_date: i64,
+	pub first_name: Option<String>,
+	pub id: i64,
+	pub last_name: Option<String>,
+	pub photo_url: Option<String>,
+	pub username: Option<String>,
+	pub hash: String,
 }

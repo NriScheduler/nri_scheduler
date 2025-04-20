@@ -4,11 +4,14 @@ import { route as navigate } from "preact-router";
 
 import { toaster } from "./components/ui/toaster";
 import { enter, leave } from "./store/profile";
+import { ITelegramUser } from "./typings/telegram";
 
 export const API_HOST = import.meta.env.PROD
 	? ""
 	: (import.meta.env.CLIENT_API_HOST as string | undefined) || "";
 const CREDENTIALS = import.meta.env.PROD ? undefined : "include";
+
+export const TG_BOT_ID = import.meta.env.CLIENT_TG_BOT_ID as string | undefined;
 
 const POST = "POST";
 const PUT = "PUT";
@@ -179,14 +182,12 @@ export const signIn = (email: string, password: string) => {
 	);
 };
 
-export const logout = () =>
-	ajax<null>("/api/logout", prepareAjax(undefined, POST)).then((res) => {
-		if (res?.status === EScenarioStatus.SCENARIO_SUCCESS) {
-			leave();
-		}
+export const signInTg = (data: ITelegramUser) => {
+	return ajax<null>("/api/signin/tg", prepareAjax(data, POST));
+};
 
-		return res;
-	});
+export const logout = () =>
+	ajax<null>("/api/logout", prepareAjax(undefined, POST));
 
 export const enum EVerificationChannel {
 	EMAIL = "email",
@@ -307,6 +308,7 @@ export interface IApiEvent {
 	readonly you_applied: boolean;
 	readonly you_are_master: boolean;
 	readonly your_approval: boolean | null;
+	readonly cancelled: boolean;
 }
 
 export interface IEventsFilter {
@@ -372,6 +374,77 @@ export const updateEvent = (
 	);
 };
 
+export const cancelEvent = (eventId: UUID) => {
+	return ajax<null>(
+		`/api/events/cancel/${eventId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+
+export const reopenEvent = (eventId: UUID) => {
+	return ajax<null>(
+		`/api/events/reopen/${eventId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+
+export interface IPlayerApp {
+	readonly approval: boolean | null;
+	readonly company_id: UUID;
+	readonly company_name: string;
+	readonly event_cancelled: boolean;
+	readonly event_date: string; // "2025-04-15T07:24:00Z"
+	readonly event_id: UUID;
+	readonly id: UUID;
+	readonly location_id: UUID;
+	readonly location_name: string;
+	readonly master_id: UUID;
+	readonly master_name: string;
+}
+
+export const readPlayerAppsList = () => ajax<IPlayerApp[]>(`/api/apps`);
+export const readPlayerApp = (appId: UUID) =>
+	ajax<IPlayerApp>(`/api/apps/${appId}`);
+export const readPlayerAppByEvent = (eventId: UUID) =>
+	ajax<IPlayerApp>(`/api/apps/by_event/${eventId}`);
+export const readPlayerAppCompanyClosest = (companyId: UUID) =>
+	ajax<IPlayerApp>(`/api/apps/company_closest/${companyId}`);
+
+export interface IMasterApp {
+	readonly approval: boolean | null;
+	readonly company_id: UUID;
+	readonly company_name: string;
+	readonly event_cancelled: boolean;
+	readonly event_date: string; // "2025-04-15T07:24:00Z"
+	readonly event_id: UUID;
+	readonly id: UUID;
+	readonly location_id: UUID;
+	readonly location_name: string;
+	readonly player_id: UUID;
+	readonly player_name: string;
+}
+
+export const readMasterAppsList = () => ajax<IMasterApp[]>(`/api/apps/master`);
+export const readMasterAppsListByEvent = (eventId: UUID) =>
+	ajax<IMasterApp[]>(`/api/apps/master/by_event/${eventId}`);
+export const readMasterAppsListCompanyClosest = (companyId: UUID) =>
+	ajax<IMasterApp[]>(`/api/apps/master/company_closest/${companyId}`);
+export const readMasterApp = (appId: UUID) =>
+	ajax<IMasterApp>(`/api/apps/master/${appId}`);
+
+export const approveApplication = (appId: UUID) => {
+	return ajax<null>(
+		`/api/apps/approve/${appId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+export const rejectApplication = (appId: UUID) => {
+	return ajax<null>(
+		`/api/apps/approve/${appId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+
 export const enum ETzVariant {
 	CITY = "city",
 	DEVICE = "device",
@@ -382,6 +455,7 @@ export interface IApiProfile {
 	readonly id: UUID;
 	readonly email: string | null;
 	readonly email_verified: boolean;
+	readonly tg_id: number | null;
 	readonly nickname: string;
 	readonly about_me: string | null;
 	readonly avatar_link: string | null;

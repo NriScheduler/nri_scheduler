@@ -1,3 +1,5 @@
+use ::std::time::Duration;
+use rand::Rng as _;
 use serde_json::Value;
 use sqlx::{
 	Decode, Encode, FromRow, Postgres, Type,
@@ -5,6 +7,7 @@ use sqlx::{
 	error::BoxDynError,
 	postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef},
 };
+use tokio::time::sleep;
 use uuid::Uuid;
 
 #[derive(FromRow)]
@@ -39,4 +42,9 @@ impl Encode<'_, Postgres> for RecordId {
 	fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> Result<IsNull, BoxDynError> {
 		<Uuid as Encode<Postgres>>::encode_by_ref(&self.0, buf)
 	}
+}
+
+pub(super) async fn prevent_timing_attack() {
+	let random_millis: u64 = rand::rng().random_range(1..=50);
+	sleep(Duration::from_millis(random_millis)).await;
 }

@@ -1,3 +1,4 @@
+pub(super) mod apps;
 pub(super) mod companies;
 pub(super) mod events;
 pub(super) mod locations;
@@ -19,16 +20,17 @@ use crate::{
 	cookie::{remove_auth_cookie, set_auth_cookie},
 	dto::{
 		Dto, FileLinkDto,
-		auth::{RegistrationDto, SignInDto, UpdateProfileDto},
+		auth::{RegistrationEmailDto, SignInDto, TelegramAuthDto, UpdateProfileDto},
 	},
 	image,
 	repository::Repository,
 	system_models::{AppError, AppResponse, AppResult},
+	telegram::verify_telegram_hash,
 };
 
-pub(super) async fn registration(
+pub(super) async fn registration_email(
 	State(repo): State<Arc<Repository>>,
-	Dto(body): Dto<RegistrationDto>,
+	Dto(body): Dto<RegistrationEmailDto>,
 ) -> AppResult {
 	let to = Mailbox::from_str(&body.email)
 		.map_err(|err| AppError::scenario_error("Введен некорректный email", Some(err)))?;
@@ -47,17 +49,21 @@ pub(super) async fn registration(
 	return AppResponse::user_registered();
 }
 
-pub(super) async fn sign_in(
+pub(super) async fn sign_in_email(
 	State(repo): State<Arc<Repository>>,
 	Dto(body): Dto<SignInDto>,
 ) -> Response {
-	let user = match repo.get_user_for_signing_in(&body.email).await {
+	let user = match repo.get_user_for_signing_in_email(&body.email).await {
 		Ok(Some(user)) => user,
 		Ok(None) => return AppError::unauthorized("Неверный пароль").into_response(),
 		Err(err) => return err.into_response(),
 	};
 
-	if auth::verify_password(&body.password, user.pw_hash)
+	let Some(pw_hash) = user.pw_hash else {
+		return AppError::unauthorized("Неверный пароль").into_response();
+	};
+
+	if auth::verify_password(&body.password, pw_hash)
 		.await
 		.is_err()
 	{
@@ -75,6 +81,47 @@ pub(super) async fn sign_in(
 		Ok(()) => res,
 		Err(err) => err.into_response(),
 	}
+}
+
+pub(super) async fn sign_in_tg(
+	State(repo): State<Arc<Repository>>,
+	Dto(body): Dto<TelegramAuthDto>,
+) -> Response {
+	if !verify_telegram_hash(&body).await {
+		return AppError::scenario_error("Некорректные авторизационные данные", None::<&str>)
+			.into_response();
+	}
+
+	let user_id = match repo.get_user_for_signing_in_tg(body.id).await {
+		Err(err) => return err.into_response(),
+		Ok(Some(u)) => u,
+		Ok(None) => match registration_tg(repo, body).await {
+			Err(err) => return err.into_response(),
+			Ok(u) => u,
+		},
+	};
+
+	let jwt = match auth::generate_jwt(user_id, true) {
+		Err(err) => return err.into_response(),
+		Ok(jwt) => jwt,
+	};
+
+	let mut res = AppResponse::scenario_success("Успешная авторизация", None).into_response();
+
+	match set_auth_cookie(&mut res, &jwt) {
+		Ok(()) => res,
+		Err(err) => err.into_response(),
+	}
+}
+
+async fn registration_tg(repo: Arc<Repository>, body: TelegramAuthDto) -> Result<Uuid, AppError> {
+	let nickname = body.username.unwrap_or_else(|| {
+		body
+			.first_name
+			.unwrap_or_else(|| format!("user_{}", body.id))
+	});
+
+	repo.registration_tg(&nickname, body.id).await
 }
 
 pub(super) async fn logout() -> Response {

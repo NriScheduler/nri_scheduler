@@ -1,5 +1,6 @@
-use ::std::error::Error;
+use ::std::{error::Error, path::Path};
 use sqlx::{PgPool, postgres::PgPoolOptions};
+use sqlx_core::migrate::Migrator;
 
 use crate::config;
 
@@ -11,7 +12,8 @@ pub(super) async fn create_db_connection() -> Result<PgPool, Box<dyn Error>> {
 		.await?;
 	println!(":) Connection to the database is successful");
 
-	sqlx::migrate!("./migrations").run(&pool).await?;
+	let migrator = Migrator::new(Path::new("./migrations")).await?;
+	migrator.run(&pool).await?;
 	println!(":) Migrations finished");
 
 	return Ok(pool);
