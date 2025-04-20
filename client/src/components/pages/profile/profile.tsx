@@ -63,7 +63,6 @@ export const ProfilePage = () => {
 
 		if (activeTab === "camplist") {
 			fetchCompanies();
-			console.info(activeTab);
 		}
 
 		return () => {
