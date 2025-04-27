@@ -540,25 +540,8 @@ WHERE id = $1;",
 			"SELECT
 					e.id
 					, c.name AS company
-					, c.id AS company_id
-					, m.nickname AS master
-					, m.id AS master_id
-					, l.name AS location
-					, l.id AS location_id
 					, e.date
-					, e.cancelled
-					, COALESCE(jsonb_agg(u.nickname) FILTER (WHERE u.nickname is not null), '[]') AS players
-					, e.max_slots
 					, e.plan_duration
-					, bool_or(y.id is not null) AS you_applied
-					, (",
-		);
-		qb.push_bind(player_id);
-		qb.push(" is not null and c.master = ");
-		qb.push_bind(player_id);
-		qb.push(
-			") as you_are_master
-					, y.approval AS your_approval
 				FROM events e
 				INNER JOIN companies c
 					ON c.id = e.company
