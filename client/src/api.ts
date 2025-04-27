@@ -23,11 +23,11 @@ export const enum EAbortReason {
 }
 
 export const enum EScenarioStatus {
-	SCENARIO_SUCCESS,
-	UNAUTHORIZED,
-	SCENARIO_FAIL,
-	SYSTEM_ERROR,
-	SESSION_EXPIRED,
+	SCENARIO_SUCCESS = 0,
+	SCENARIO_FAIL = 400,
+	UNAUTHORIZED = 401,
+	SESSION_EXPIRED = 419,
+	SYSTEM_ERROR = 500,
 }
 
 export interface IApiResponse<T = null> {

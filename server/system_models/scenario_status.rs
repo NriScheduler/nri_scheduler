@@ -5,10 +5,10 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error as _};
 #[derive(Debug, PartialEq)]
 pub(crate) enum EScenarioStatus {
 	SCENARIO_SUCCESS,
-	UNAUTHORIZED,
 	SCENARIO_FAIL,
-	SYSTEM_ERROR,
+	UNAUTHORIZED,
 	SESSION_EXPIRED,
+	SYSTEM_ERROR,
 }
 
 impl<'de> Deserialize<'de> for EScenarioStatus {
@@ -16,12 +16,12 @@ impl<'de> Deserialize<'de> for EScenarioStatus {
 	where
 		D: Deserializer<'de>,
 	{
-		match u8::deserialize(deserializer)? {
+		match u16::deserialize(deserializer)? {
 			0 => Ok(EScenarioStatus::SCENARIO_SUCCESS),
-			1 => Ok(EScenarioStatus::UNAUTHORIZED),
-			2 => Ok(EScenarioStatus::SCENARIO_FAIL),
-			3 => Ok(EScenarioStatus::SYSTEM_ERROR),
-			4 => Ok(EScenarioStatus::SESSION_EXPIRED),
+			400 => Ok(EScenarioStatus::SCENARIO_FAIL),
+			401 => Ok(EScenarioStatus::UNAUTHORIZED),
+			419 => Ok(EScenarioStatus::SESSION_EXPIRED),
+			500 => Ok(EScenarioStatus::SYSTEM_ERROR),
 			_ => Err(D::Error::custom("incorrect scenario status")),
 		}
 	}
@@ -32,13 +32,14 @@ impl Serialize for EScenarioStatus {
 	where
 		S: Serializer,
 	{
-		let numval: u8 = match self {
+		let numval: u16 = match self {
 			EScenarioStatus::SCENARIO_SUCCESS => 0,
-			EScenarioStatus::UNAUTHORIZED => 1,
-			EScenarioStatus::SCENARIO_FAIL => 2,
-			EScenarioStatus::SYSTEM_ERROR => 3,
-			EScenarioStatus::SESSION_EXPIRED => 4,
+			EScenarioStatus::SCENARIO_FAIL => 400,
+			EScenarioStatus::UNAUTHORIZED => 401,
+			EScenarioStatus::SESSION_EXPIRED => 419,
+			EScenarioStatus::SYSTEM_ERROR => 500,
 		};
-		return serializer.serialize_u8(numval);
+
+		serializer.serialize_u16(numval)
 	}
 }
