@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 
-import { CampList } from "./camplist/camplist";
+import { CompList } from "./complist/complist";
 import { EmptyList } from "./empty-list";
 import { ProfileInfo } from "./profile-info";
 import { EAbortReason, IApiCompany, readMyCompanies } from "../../../api";
@@ -30,7 +30,7 @@ interface IEvent {
 export const tabList = [
 	{ id: "user", label: "Профиль" },
 	{ id: "events", label: "Заявки" },
-	{ id: "camplist", label: "Кампания" },
+	{ id: "complist", label: "Кампания" },
 	{ id: "resetpass", label: "Сброс пароля" },
 ];
 
@@ -43,12 +43,12 @@ export const ProfilePage = () => {
 
 	const events: IEvent[] = [];
 
-	const [campList, setCampList] = useState<ReadonlyArray<IApiCompany>>([]);
+	const [compList, setCompList] = useState<ReadonlyArray<IApiCompany>>([]);
 	const [fetching, setFetching] = useState(false);
 	const activeTab = useStore($activeTab);
 
 	useEffect(() => {
-		// camplist
+		// complist
 		if (activeTab === tabList[2].id) {
 			let isMounted = true;
 			setFetching(true);
@@ -58,7 +58,7 @@ export const ProfilePage = () => {
 			readMyCompanies(null, abortController)
 				.then((response) => {
 					if (isMounted && response?.payload) {
-						setCampList(response.payload);
+						setCompList(response.payload);
 					}
 				})
 				.finally(() => setFetching(false));
@@ -117,11 +117,11 @@ export const ProfilePage = () => {
 					)}
 				</Tabs.Content>
 
-				<Tabs.Content value="camplist">
+				<Tabs.Content value="complist">
 					{fetching ? (
 						<Spinner size="sm" />
-					) : campList.length > 0 ? (
-						<CampList list={campList} />
+					) : compList.length > 0 ? (
+						<CompList list={compList} />
 					) : (
 						<EmptyList title="Кампаний не создано" />
 					)}

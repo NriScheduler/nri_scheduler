@@ -18,15 +18,15 @@ import {
 	toggleCheckbox,
 } from "../../../../store/checkboxStore";
 
-interface ICampList {
+interface ICompList {
 	readonly list: ReadonlyArray<IApiCompany>;
 }
 
-interface ICampItem {
+interface ICompItem {
 	item: IApiCompany;
 }
 
-const CampItem = ({ item }: ICampItem) => {
+const CompItem = ({ item }: ICompItem) => {
 	return (
 		<Link
 			href={`/company/${item.id}`}
@@ -51,7 +51,7 @@ const CampItem = ({ item }: ICampItem) => {
 	);
 };
 
-export const CampList = ({ list }: ICampList) => {
+export const CompList = ({ list }: ICompList) => {
 	const isChecked = useStore($checkboxState);
 
 	return (
@@ -80,7 +80,7 @@ export const CampList = ({ list }: ICampList) => {
 					gap="4"
 					key={item.id}
 				>
-					<CampItem item={item} />
+					<CompItem item={item} />
 				</Grid>
 			))}
 		</Stack>
