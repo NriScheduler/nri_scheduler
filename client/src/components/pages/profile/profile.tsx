@@ -16,6 +16,7 @@ import { useStore } from "@nanostores/preact";
 
 import { ProfileInfo } from "./profile-info";
 import { $profile } from "../../../store/profile";
+import { useAuthGuard } from "../../../utils";
 
 /** @todo сделать апишку для заявок */
 interface IEvent {
@@ -26,9 +27,10 @@ interface IEvent {
 
 export const ProfilePage = () => {
 	const user = useStore($profile);
-	if (!user?.signed) {
-		navigate("/signin");
-		return;
+	const { isAuthenticated } = useAuthGuard();
+
+	if (!isAuthenticated) {
+		return null;
 	}
 
 	const events: IEvent[] = [];

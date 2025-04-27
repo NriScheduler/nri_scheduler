@@ -28,13 +28,15 @@ import {
 	updateMyProfile,
 } from "../../../api";
 import { $profile, TIMEZONES } from "../../../store/profile";
-import { navBack } from "../../../utils";
+import { navBack, useAuthGuard } from "../../../utils";
 
 export const ProfileEdit = () => {
 	const user = useStore($profile);
-	if (!user?.signed) {
-		navigate("/signin");
-		return;
+
+	const { isAuthenticated } = useAuthGuard();
+
+	if (!isAuthenticated) {
+		return null;
 	}
 
 	const [nickname, setNickname] = useState(user.nickname);
