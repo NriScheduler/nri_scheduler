@@ -25,6 +25,7 @@ export interface IStorePrifile {
 	readonly timezone_offset: number | null;
 	readonly tz_variant: ETzVariant | null;
 	readonly signed: true;
+	readonly tg_id?: string | null;
 }
 
 export interface IEmptyStorePrifile {
@@ -39,6 +40,7 @@ export interface IEmptyStorePrifile {
 	readonly timezone_offset: undefined;
 	readonly tz_variant: undefined;
 	readonly signed: false;
+	readonly tg_id: undefined;
 }
 
 const EMPTY_USER = {};

@@ -1,5 +1,4 @@
 import { h } from "preact";
-import { route as navigate } from "preact-router";
 import { MdOutlineEvent } from "react-icons/md";
 
 import {

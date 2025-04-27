@@ -15,6 +15,7 @@ import { TimesonesList } from "./timezones";
 import { Field } from "../../ui/field";
 import { toaster } from "../../ui/toaster";
 import { addRegion } from "../../../api";
+import { loadRegions } from "../../../store/regions";
 
 interface IFormAddRegion {
 	readonly name: string;
@@ -47,6 +48,7 @@ export const RegionForm = () => {
 				toaster.success({
 					title: res.result,
 				});
+				loadRegions();
 				setValue("name", "");
 				setValue("timezone", "");
 			}
@@ -79,8 +81,8 @@ export const RegionForm = () => {
 									message: "Минимум 2 символа",
 								},
 								maxLength: {
-									value: 50,
-									message: "Максимум 50 символов",
+									value: 32,
+									message: "Максимум 32 символов",
 								},
 							})}
 						/>

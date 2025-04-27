@@ -84,7 +84,7 @@ const checkResponse = async <T>(
 			console.info("http response body parsing error");
 			console.error(err);
 		}
-		toaster.warning({ title: "Ошибка обращения к серверу" });
+		toaster.loading({ title: "Ошибка обращения к серверу" });
 		console.info("Http response is not ok");
 		console.error({
 			status: response.status,
@@ -119,7 +119,6 @@ const checkResponse = async <T>(
 				break;
 
 			default:
-				toaster.warning({ title: "Неизвестный статус ответа" });
 				console.info("Неизвестный статус");
 				console.error(apiRes);
 				break;
@@ -128,7 +127,7 @@ const checkResponse = async <T>(
 		return null;
 	} catch (err) {
 		if (err instanceof Error && err.name === "AbortError") {
-			toaster.warning({ title: "Истекло время ожидания ответа сервера" });
+			toaster.loading({ title: "Истекло время ожидания ответа сервера" });
 		} else {
 			toaster.error({ title: "Неизвестная ошибка" });
 			console.info("Хрень какая-то...");

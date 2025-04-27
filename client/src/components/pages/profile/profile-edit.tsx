@@ -1,6 +1,5 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import { route as navigate } from "preact-router";
 
 import {
 	Button,
@@ -35,11 +34,11 @@ export const ProfileEdit = () => {
 
 	const { isAuthenticated } = useAuthGuard();
 
-	if (!isAuthenticated) {
+	if (!isAuthenticated || !user) {
 		return null;
 	}
 
-	const [nickname, setNickname] = useState(user.nickname);
+	const [nickname, setNickname] = useState(user?.nickname ?? "");
 	const [about, setAbout] = useState(user.about_me);
 	const [selectedRegion, setRegion] = useState(user.region);
 	const [selectedCity, setCity] = useState(user.city);
@@ -96,7 +95,7 @@ export const ProfileEdit = () => {
 					<Separator flex="1" />
 				</HStack>
 				<Stack>
-					<ProfilePicture link={user.avatar_link} />
+					<ProfilePicture link={user.avatar_link ?? ""} />
 					<Field label="Имя пользователя" invalid={!nickname}>
 						<Input
 							name="nickname"

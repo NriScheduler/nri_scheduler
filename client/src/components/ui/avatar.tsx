@@ -4,7 +4,7 @@ import { Avatar as Ava } from "@chakra-ui/react";
 
 export interface IAvatarProps {
 	readonly fallback?: string;
-	readonly src: string;
+	readonly src?: string;
 	readonly w?: string;
 	readonly h?: string;
 }

@@ -4,6 +4,7 @@ import { Controller, useForm } from "react-hook-form";
 
 import {
 	Button,
+	Checkbox,
 	Heading,
 	HStack,
 	Input,
@@ -37,6 +38,7 @@ interface IFormAddCity {
 	readonly name: string;
 	readonly timezone: string;
 	readonly region: string;
+	readonly useRegionTimezone: boolean;
 }
 
 export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
@@ -46,7 +48,7 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 		register,
 		handleSubmit,
 		setValue,
-		// watch,
+		watch,
 		control,
 		formState: { errors },
 	} = useForm<IFormAddCity>({
@@ -55,24 +57,31 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 			timezone: "",
 			region: "",
 			name: "",
+			useRegionTimezone: true,
 		},
 	});
 
-	// const selectedRegion = watch("region");
+	const selectedRegionName = watch("region");
+	const shouldUseRegionTimezone = watch("useRegionTimezone");
+	const selectedRegion = regionOptions.find(
+		(r) => r.name === selectedRegionName,
+	);
 
 	// Автоматически устанавливаем часовой пояс города при выборе региона
 	const handleRegionChange = (regionName: string) => {
 		const region = regionOptions.find((r) => r.name === regionName);
-		if (region) {
+		if (region && shouldUseRegionTimezone) {
 			setValue("timezone", region.timezone, { shouldValidate: true });
 		}
 	};
+
 	const onSubmit = handleSubmit(async (data: IFormAddCity) => {
-		const { name, timezone, region } = data;
+		const { name, timezone, region, useRegionTimezone } = data;
 		setCityLoading(true);
 
 		try {
-			const res = await addCity(name, region, timezone);
+			const timezoneToSend = useRegionTimezone ? null : timezone;
+			const res = await addCity(name, region, timezoneToSend);
 			if (res) {
 				toaster.success({
 					title: res.result,
@@ -80,11 +89,21 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 				setValue("name", "");
 				setValue("timezone", "");
 				setValue("region", "");
+				setValue("useRegionTimezone", true);
 			}
 		} finally {
 			setCityLoading(false);
 		}
 	});
+
+	// Обработчик изменения чекбокса
+	const handleCheckboxChange = (checked: boolean) => {
+		setValue("useRegionTimezone", checked);
+		if (checked && selectedRegion) {
+			// Если включаем "Брать из региона", устанавливаем таймзону региона
+			setValue("timezone", selectedRegion.timezone);
+		}
+	};
 
 	return (
 		<Stack py={6}>
@@ -158,27 +177,49 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 									message: "Минимум 2 символа",
 								},
 								maxLength: {
-									value: 50,
-									message: "Максимум 50 символов",
+									value: 32,
+									message: "Максимум 32 символов",
 								},
 							})}
 						/>
 					</Field>
 
-					<Field
-						label="Часовой пояс"
-						errorText={errors.timezone?.message}
-						invalid={!!errors.timezone}
-					>
-						<Controller
-							name="timezone"
-							control={control}
-							rules={{
-								required: "Выберите часовой пояс",
-							}}
-							render={({ field }) => <TimesonesList {...field} />}
-						/>
-					</Field>
+					<Controller
+						control={control}
+						name="useRegionTimezone"
+						render={({ field }) => (
+							<Checkbox.Root
+								checked={field.value}
+								onCheckedChange={({ checked }) => {
+									const isChecked = !!checked;
+									handleCheckboxChange(isChecked);
+								}}
+							>
+								<Checkbox.HiddenInput />
+								<Checkbox.Control />
+								<Checkbox.Label>Брать из региона</Checkbox.Label>
+							</Checkbox.Root>
+						)}
+					/>
+
+					{!shouldUseRegionTimezone && (
+						<Field
+							label="Часовой пояс"
+							errorText={errors.timezone?.message}
+							invalid={!!errors.timezone}
+						>
+							<Controller
+								name="timezone"
+								control={control}
+								rules={{
+									required: !shouldUseRegionTimezone
+										? "Выберите часовой пояс"
+										: false,
+								}}
+								render={({ field }) => <TimesonesList {...field} />}
+							/>
+						</Field>
+					)}
 
 					<Button
 						disabled={cityLoading}

@@ -4,13 +4,13 @@ import { $regions, $regionsLoading } from "../../../store/regions";
 import { Container } from "@chakra-ui/react";
 import { RegionForm } from "./regionForm";
 import { CityForm } from "./cityForm";
-import { useEmailVerifyGuard } from "../../../utils";
+import { useAuthVerification } from "../../../utils";
 
 export const RegionsPage = () => {
    const allRegions = useStore($regions);
    const loading = useStore($regionsLoading);
 
-   const { isVerified } = useEmailVerifyGuard();
+   const { isVerified } = useAuthVerification();
 
    if (!isVerified) {
       return null; // Или лоадер
