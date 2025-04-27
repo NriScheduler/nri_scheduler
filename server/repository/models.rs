@@ -65,6 +65,7 @@ pub(crate) struct Location {
 	pub description: Option<String>,
 	pub region: Option<String>,
 	pub city: Option<String>,
+	pub map_link: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]

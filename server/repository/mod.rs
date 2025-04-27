@@ -53,6 +53,7 @@ trait Store {
 		address: &Option<String>,
 		descr: &Option<String>,
 		city: &Option<String>,
+		map_link: &Option<String>,
 	) -> CoreResult<RecordId>;
 
 	async fn get_company_by_id(
@@ -267,8 +268,12 @@ impl Repository {
 		address: &Option<String>,
 		descr: &Option<String>,
 		city: &Option<String>,
+		map_link: &Option<String>,
 	) -> CoreResult<RecordId> {
-		return self.store.add_location(name, address, descr, city).await;
+		return self
+			.store
+			.add_location(name, address, descr, city, map_link)
+			.await;
 	}
 
 	pub(crate) async fn get_company_by_id(

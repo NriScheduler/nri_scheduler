@@ -240,6 +240,7 @@ export interface IApiLocation {
 	readonly description: string | null;
 	readonly region: string | null;
 	readonly city: string | null;
+	readonly map_link: string | null;
 }
 
 export const readLocations = (nameFilter?: string | null) => {
@@ -259,10 +260,11 @@ export const addLocation = (
 	address?: string | null,
 	description?: string | null,
 	city?: string | null,
+	map_link?: string | null,
 ) =>
 	ajax<UUID>(
 		"/api/locations",
-		prepareAjax({ name, address, description, city }, POST),
+		prepareAjax({ name, address, description, city, map_link }, POST),
 	);
 
 export interface IApiCompany {

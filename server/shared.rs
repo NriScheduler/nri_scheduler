@@ -1,5 +1,6 @@
 use ::std::time::Duration;
 use rand::Rng as _;
+use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 use sqlx::{
 	Decode, Encode, FromRow, Postgres, Type,
@@ -9,6 +10,14 @@ use sqlx::{
 };
 use tokio::time::sleep;
 use uuid::Uuid;
+
+pub(super) fn deser_empty_str_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+	D: Deserializer<'de>,
+{
+	let s = Option::<String>::deserialize(deserializer)?;
+	Ok(s.filter(|s| !s.is_empty()))
+}
 
 #[derive(FromRow)]
 pub(super) struct RecordId(Uuid);

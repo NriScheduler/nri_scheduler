@@ -1,0 +1,2 @@
+ALTER TABLE "locations"
+ADD COLUMN "map_link" TEXT DEFAULT NULL;

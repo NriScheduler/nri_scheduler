@@ -362,14 +362,16 @@ WHERE id = $1;",
 		address: &Option<String>,
 		descr: &Option<String>,
 		city: &Option<String>,
+		map_link: &Option<String>,
 	) -> CoreResult<RecordId> {
 		let query_result = sqlx::query_scalar::<_, RecordId>(
-			"INSERT INTO locations (name, address, description, city) values ($1, $2, $3, $4) returning id;",
+			"INSERT INTO locations (name, address, description, city, map_link) values ($1, $2, $3, $4, $5) returning id;",
 		)
 		.bind(name)
 		.bind(address)
 		.bind(descr)
 		.bind(city)
+		.bind(map_link)
 		.fetch_one(&self.pool)
 		.await;
 

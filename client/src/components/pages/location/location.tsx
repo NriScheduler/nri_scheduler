@@ -11,12 +11,32 @@ import {
 	DataList,
 	Heading,
 	HStack,
+	Image,
 	Skeleton,
 } from "@chakra-ui/react";
 
 import { NotFoundPage } from "../not-found/not-found";
 import { IApiLocation, readLocationById } from "../../../api";
 import { navBack } from "../../../utils";
+
+const calcMapIconLink = (mapLink: string | null): string => {
+	if (!mapLink) {
+		return "";
+	} else if (mapLink.startsWith("https://2gis.ru/")) {
+		return "/assets/2gis.svg";
+	} else if (mapLink.startsWith("https://yandex.ru/maps/")) {
+		return "/assets/ym.svg";
+	} else if (
+		mapLink.startsWith("https://google.ru/maps/") ||
+		mapLink.startsWith("https://www/google.ru/maps/") ||
+		mapLink.startsWith("https://google.com/maps/") ||
+		mapLink.startsWith("https://www.google.com/maps/")
+	) {
+		return "/assets/gm.svg";
+	} else {
+		return "";
+	}
+};
 
 const LocationCard = ({ location }: { location: IApiLocation }) => {
 	const stats = [
@@ -26,11 +46,30 @@ const LocationCard = ({ location }: { location: IApiLocation }) => {
 		{ label: "Описание", value: location.description },
 	];
 
+	const mapLink = calcMapIconLink(location.map_link);
+
 	return (
 		<Card.Root width="full">
 			<Card.Body>
 				<HStack mb="6" gap="3">
-					<Heading size="3xl">Локация - {location.name}</Heading>
+					<Heading size="3xl">
+						<HStack>
+							<span>Локация - {location.name}</span>
+							{mapLink && (
+								<a
+									target="_blank"
+									href={location.map_link as string}
+									rel="noreferrer"
+								>
+									<Image
+										height="2.375rem"
+										src={mapLink}
+										alt="Показать локацию на карте"
+									/>
+								</a>
+							)}
+						</HStack>
+					</Heading>
 				</HStack>
 				<DataList.Root orientation="horizontal">
 					{stats.map((item) => (

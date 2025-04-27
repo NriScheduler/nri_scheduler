@@ -44,12 +44,36 @@ pub(crate) async fn add_location(
 	State(repo): State<Arc<Repository>>,
 	Dto(body): Dto<NewLocationDto>,
 ) -> AppResult {
+	if !validate_map_link(&body.map_link) {
+		return Ok(AppResponse::scenario_fail(
+			"Некорректная ссылка на карту. Разрешены только сервисы 2gis, Яндекс Карты и Google Maps",
+			None,
+		));
+	}
+
 	let new_loc_id = repo
-		.add_location(&body.name, &body.address, &body.description, &body.city)
+		.add_location(
+			&body.name,
+			&body.address,
+			&body.description,
+			&body.city,
+			&body.map_link,
+		)
 		.await?;
 
 	return Ok(AppResponse::scenario_success(
 		"Локация успешно добавлена",
 		new_loc_id.into_api(),
 	));
+}
+
+fn validate_map_link(map_link: &Option<String>) -> bool {
+	map_link.as_ref().is_none_or(|link| {
+		link.starts_with("https://2gis.ru/")
+			|| link.starts_with("https://yandex.ru/maps/")
+			|| link.starts_with("https://google.ru/maps/")
+			|| link.starts_with("https://www/google.ru/maps/")
+			|| link.starts_with("https://google.com/maps/")
+			|| link.starts_with("https://www/google.com/maps/")
+	})
 }

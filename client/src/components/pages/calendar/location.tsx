@@ -46,9 +46,15 @@ const Location = () => {
 	}, []);
 
 	const onSubmit = handleSubmit((data) => {
-		const { name, address, description } = data;
+		const { name, address, description, map_link } = data;
 		if (data) {
-			addLocation(name, address, description).then((res) => {
+			addLocation(
+				name,
+				address,
+				description,
+				null /* city */,
+				map_link,
+			).then((res) => {
 				if (res !== null) {
 					reset();
 					setOpen(false);
@@ -92,6 +98,13 @@ const Location = () => {
 								<Input
 									placeholder="Заполните поле"
 									{...register("address")}
+								/>
+							</Field>
+							<Field label="Ссылка на карту">
+								<Input
+									placeholder="Укажите ссылку на карту"
+									type="url"
+									{...register("map_link")}
 								/>
 							</Field>
 							<Field label="Описание">
