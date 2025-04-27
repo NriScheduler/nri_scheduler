@@ -6,7 +6,7 @@ use chrono::{DateTime, FixedOffset};
 use implementations::PostgresStore;
 use models::{
 	AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
-	PlayerApp, Profile, Region, UserForAuthEmail,
+	PlayerApp, Profile, Region, ShortEvent, UserForAuthEmail,
 };
 use uuid::Uuid;
 
@@ -97,7 +97,7 @@ trait Store {
 		&self,
 		query: ReadEventsDto,
 		player_id: Option<Uuid>,
-	) -> CoreResult<Vec<Event>>;
+	) -> CoreResult<Vec<ShortEvent>>;
 
 	async fn read_event(&self, event_id: Uuid, player_id: Option<Uuid>)
 	-> CoreResult<Option<Event>>;
@@ -335,7 +335,7 @@ impl Repository {
 		&self,
 		query: ReadEventsDto,
 		player_id: Option<Uuid>,
-	) -> CoreResult<Vec<Event>> {
+	) -> CoreResult<Vec<ShortEvent>> {
 		return self.store.read_events_list(query, player_id).await;
 	}
 

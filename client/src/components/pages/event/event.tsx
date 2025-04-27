@@ -14,6 +14,7 @@ import {
 	Group,
 	Heading,
 	HStack,
+	Image,
 	Input,
 	InputAddon,
 	Link,
@@ -53,7 +54,7 @@ import {
 	updateEvent,
 } from "../../../api";
 import { $profile, $tz } from "../../../store/profile";
-import { navBack } from "../../../utils";
+import { calcMapIconLink, navBack } from "../../../utils";
 
 dayjs.locale("ru");
 
@@ -78,6 +79,7 @@ const EventCard = ({
 			label: "Место проведения",
 			value: event.location,
 			href: `/location/${event.location_id}`,
+			mapLink: event.location_map_link,
 		},
 		{ label: "Дата", value: eventDate.format("DD MMMM") },
 		{ label: "Время", value: eventDate.format("HH:mm") },
@@ -146,22 +148,41 @@ const EventCard = ({
 					</Heading>
 				</HStack>
 				<DataList.Root orientation="horizontal">
-					{stats.map((item) => (
-						<DataList.Item key={item.label}>
-							<DataList.ItemLabel minW="150px">
-								{item.label}
-							</DataList.ItemLabel>
-							<DataList.ItemValue color="black" fontWeight="500">
-								{item.href ? (
-									<Link href={item.href} colorPalette="blue">
-										{item.value}
-									</Link>
-								) : (
-									<p>{item.value}</p>
-								)}
-							</DataList.ItemValue>
-						</DataList.Item>
-					))}
+					{stats.map((item) => {
+						const iconLink = calcMapIconLink(item.mapLink);
+
+						return (
+							<DataList.Item key={item.label}>
+								<DataList.ItemLabel minW="150px">
+									{item.label}
+								</DataList.ItemLabel>
+								<DataList.ItemValue color="black" fontWeight="500">
+									{item.href ? (
+										<HStack>
+											<Link href={item.href} colorPalette="blue">
+												{item.value}
+											</Link>
+											{iconLink && (
+												<a
+													target="_blank"
+													href={item.mapLink as string}
+													rel="noreferrer"
+												>
+													<Image
+														height="1.75rem"
+														src={iconLink}
+														alt="Показать локацию на карте"
+													/>
+												</a>
+											)}
+										</HStack>
+									) : (
+										<p>{item.value}</p>
+									)}
+								</DataList.ItemValue>
+							</DataList.Item>
+						);
+					})}
 				</DataList.Root>
 			</Card.Body>
 			<Card.Footer>

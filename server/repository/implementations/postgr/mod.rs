@@ -15,7 +15,7 @@ use crate::{
 	},
 	repository::models::{
 		AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
-		PlayerApp, Profile, Region, UserForAuthEmail,
+		PlayerApp, Profile, Region, ShortEvent, UserForAuthEmail,
 	},
 	shared::RecordId,
 	system_models::{AppError, CoreResult},
@@ -535,7 +535,7 @@ WHERE id = $1;",
 		&self,
 		query_args: ReadEventsDto,
 		player_id: Option<Uuid>,
-	) -> CoreResult<Vec<Event>> {
+	) -> CoreResult<Vec<ShortEvent>> {
 		let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new(
 			"SELECT
 					e.id
@@ -620,7 +620,10 @@ WHERE id = $1;",
 			" GROUP BY e.id, c.name, c.id, m.nickname, m.id, l.name, l.id, e.date, e.cancelled, y.approval;",
 		);
 
-		let events = qb.build_query_as::<Event>().fetch_all(&self.pool).await?;
+		let events = qb
+			.build_query_as::<ShortEvent>()
+			.fetch_all(&self.pool)
+			.await?;
 
 		Ok(events)
 	}
@@ -639,6 +642,7 @@ WHERE id = $1;",
 				, m.id AS master_id
 				, l.name AS location
 				, l.id AS location_id
+				, l.map_link AS location_map_link
 				, e.date
 				, e.cancelled
 				, COALESCE(jsonb_agg(u.nickname) FILTER (WHERE u.nickname is not null), '[]') AS players

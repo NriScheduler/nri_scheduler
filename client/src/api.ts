@@ -332,6 +332,25 @@ export const updateCompany = (
 export const setCompanyCover = (companyId: UUID, url: string) =>
 	ajax<null>(`/api/companies/${companyId}/cover`, prepareAjax({ url }, PUT));
 
+/** @todo оставить только то что нужно для отображения на календаре */
+export interface IApiShortEvent {
+	readonly id: UUID;
+	readonly company: string;
+	readonly company_id: UUID;
+	readonly master: string;
+	readonly master_id: UUID;
+	readonly location: string;
+	readonly location_id: UUID;
+	readonly date: string;
+	readonly max_slots: number | null;
+	readonly plan_duration: number | null;
+	readonly players: ReadonlyArray<string>;
+	readonly you_applied: boolean;
+	readonly you_are_master: boolean;
+	readonly your_approval: boolean | null;
+	readonly cancelled: boolean;
+}
+
 export interface IApiEvent {
 	readonly id: UUID;
 	readonly company: string;
@@ -340,6 +359,7 @@ export interface IApiEvent {
 	readonly master_id: UUID;
 	readonly location: string;
 	readonly location_id: UUID;
+	readonly location_map_link: string | null;
 	readonly date: string;
 	readonly max_slots: number | null;
 	readonly plan_duration: number | null;
@@ -373,7 +393,7 @@ export const readEventsList = (
 		});
 	}
 
-	return ajax<ReadonlyArray<IApiEvent>>(
+	return ajax<ReadonlyArray<IApiShortEvent>>(
 		`/api/events?${new URLSearchParams(query)}`,
 	);
 };

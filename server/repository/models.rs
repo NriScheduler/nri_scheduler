@@ -68,6 +68,26 @@ pub(crate) struct Location {
 	pub map_link: Option<String>,
 }
 
+/** @todo оставить только то что нужно для отображения на календаре */
+#[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct ShortEvent {
+	pub id: Uuid,
+	pub company: String,
+	pub company_id: Uuid,
+	pub master: String,
+	pub master_id: Uuid,
+	pub location: String,
+	pub location_id: Uuid,
+	pub date: DateTime<Utc>,
+	pub players: SqlxJson<Vec<String>>,
+	pub max_slots: Option<i16>,
+	pub plan_duration: Option<i16>,
+	pub you_applied: bool,
+	pub you_are_master: bool,
+	pub your_approval: Option<bool>,
+	pub cancelled: bool,
+}
+
 #[derive(Debug, Deserialize, Serialize, FromRow)]
 pub(crate) struct Event {
 	pub id: Uuid,
@@ -77,6 +97,7 @@ pub(crate) struct Event {
 	pub master_id: Uuid,
 	pub location: String,
 	pub location_id: Uuid,
+	pub location_map_link: Option<String>,
 	pub date: DateTime<Utc>,
 	pub players: SqlxJson<Vec<String>>,
 	pub max_slots: Option<i16>,
