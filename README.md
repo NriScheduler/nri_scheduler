@@ -5,7 +5,7 @@ my outstanding trpg scheduler
 - install [node.js](https://nodejs.org/en)
 - clone the repository ¯\\\_(ツ)_/¯
 - exec `cp env.example .env`
-- fill a `VITE_PORT` value to the `.env` file
+- fill a `VITE_PORT` value at the `.env` file
 - set a `CLIENT_API_HOST` value to `https://nrischeduler.fun` in the `.env` file
 - exec `npm ci` to install client dependencies  
   (or `npm i` in case of installation problems)
