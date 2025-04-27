@@ -43,7 +43,7 @@ export const ProfilePage = () => {
 
 	const events: IEvent[] = [];
 
-	const [campList, setCampList] = useState<IApiCompany[]>([]);
+	const [campList, setCampList] = useState<ReadonlyArray<IApiCompany>>([]);
 	const [fetching, setFetching] = useState(false);
 	const activeTab = useStore($activeTab);
 

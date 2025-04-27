@@ -45,7 +45,7 @@ pub(crate) async fn add_location(
 	Dto(body): Dto<NewLocationDto>,
 ) -> AppResult {
 	let new_loc_id = repo
-		.add_location(&body.name, &body.address, &body.description)
+		.add_location(&body.name, &body.address, &body.description, &body.city)
 		.await?;
 
 	return Ok(AppResponse::scenario_success(

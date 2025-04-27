@@ -20,6 +20,8 @@ import { navBack } from "../../../utils";
 
 const LocationCard = ({ location }: { location: IApiLocation }) => {
 	const stats = [
+		{ label: "Регион", value: location.region },
+		{ label: "Город", value: location.city },
 		{ label: "Адрес", value: location.address },
 		{ label: "Описание", value: location.description },
 	];
@@ -37,7 +39,7 @@ const LocationCard = ({ location }: { location: IApiLocation }) => {
 								{item.label}
 							</DataList.ItemLabel>
 							<DataList.ItemValue color="black" fontWeight="500">
-								<span>{item.value}</span>
+								<span>{item.value || "—"}</span>
 							</DataList.ItemValue>
 						</DataList.Item>
 					))}

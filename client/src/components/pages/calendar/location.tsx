@@ -19,7 +19,7 @@ import { Field } from "../../ui/field";
 import { addLocation, IApiLocation } from "../../../api";
 import { $profile } from "../../../store/profile";
 
-export const Location = () => {
+const Location = () => {
 	const [open, setOpen] = useState(false);
 
 	const {
@@ -61,7 +61,7 @@ export const Location = () => {
 		<DrawerRoot open={open} onOpenChange={(e) => setOpen(e.open)}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button disabled={!profile?.signed} variant="outline">
+				<Button w="30%" disabled={!profile?.signed} variant="outline">
 					Создать локацию
 				</Button>
 			</DrawerTrigger>
@@ -111,3 +111,5 @@ export const Location = () => {
 		</DrawerRoot>
 	);
 };
+
+export default Location;

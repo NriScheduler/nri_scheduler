@@ -287,7 +287,9 @@ export const EventPage = () => {
 	const [fetching, setFetching] = useState(false);
 	const [event, setEvent] = useState<IApiEvent | null>(null);
 	const [open, setOpen] = useState(false);
-	const [locationList, setLocationList] = useState<IApiLocation[]>([]);
+	const [locationList, setLocationList] = useState<
+		ReadonlyArray<IApiLocation>
+	>([]);
 	const [isDisableEditEventSubmitButton, setIsDisableEditEventSubmitButton] =
 		useState(false);
 	const tz = useStore($tz);

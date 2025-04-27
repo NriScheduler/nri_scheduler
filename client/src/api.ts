@@ -232,6 +232,8 @@ export interface IApiLocation {
 	readonly name: string;
 	readonly address: string | null;
 	readonly description: string | null;
+	readonly region: string | null;
+	readonly city: string | null;
 }
 
 export const readLocations = (nameFilter?: string | null) => {
@@ -240,7 +242,7 @@ export const readLocations = (nameFilter?: string | null) => {
 		query.append("name", nameFilter);
 	}
 
-	return ajax<IApiLocation[]>(`/api/locations?${query}`);
+	return ajax<ReadonlyArray<IApiLocation>>(`/api/locations?${query}`);
 };
 
 export const readLocationById = (locId: UUID) =>
@@ -250,10 +252,11 @@ export const addLocation = (
 	name: string,
 	address?: string | null,
 	description?: string | null,
+	city?: string | null,
 ) =>
 	ajax<UUID>(
 		"/api/locations",
-		prepareAjax({ name, address, description }, POST),
+		prepareAjax({ name, address, description, city }, POST),
 	);
 
 export interface IApiCompany {
@@ -285,7 +288,7 @@ export const readMyCompanies = (
 		query.append("name", nameFilter);
 	}
 
-	return ajax<IApiCompany[]>(
+	return ajax<ReadonlyArray<IApiCompany>>(
 		`/api/companies/my?${query}`,
 		undefined,
 		abortController,
@@ -332,7 +335,7 @@ export interface IApiEvent {
 	readonly date: string;
 	readonly max_slots: number | null;
 	readonly plan_duration: number | null;
-	readonly players: string[];
+	readonly players: ReadonlyArray<string>;
 	readonly you_applied: boolean;
 	readonly you_are_master: boolean;
 	readonly your_approval: boolean | null;
@@ -362,7 +365,9 @@ export const readEventsList = (
 		});
 	}
 
-	return ajax<IApiEvent[]>(`/api/events?${new URLSearchParams(query)}`);
+	return ajax<ReadonlyArray<IApiEvent>>(
+		`/api/events?${new URLSearchParams(query)}`,
+	);
 };
 
 export const readEvent = (eventId: UUID) => {
@@ -430,7 +435,8 @@ export interface IPlayerApp {
 	readonly master_name: string;
 }
 
-export const readPlayerAppsList = () => ajax<IPlayerApp[]>(`/api/apps`);
+export const readPlayerAppsList = () =>
+	ajax<ReadonlyArray<IPlayerApp>>(`/api/apps`);
 export const readPlayerApp = (appId: UUID) =>
 	ajax<IPlayerApp>(`/api/apps/${appId}`);
 export const readPlayerAppByEvent = (eventId: UUID) =>
@@ -452,11 +458,14 @@ export interface IMasterApp {
 	readonly player_name: string;
 }
 
-export const readMasterAppsList = () => ajax<IMasterApp[]>(`/api/apps/master`);
+export const readMasterAppsList = () =>
+	ajax<ReadonlyArray<IMasterApp>>(`/api/apps/master`);
 export const readMasterAppsListByEvent = (eventId: UUID) =>
-	ajax<IMasterApp[]>(`/api/apps/master/by_event/${eventId}`);
+	ajax<ReadonlyArray<IMasterApp>>(`/api/apps/master/by_event/${eventId}`);
 export const readMasterAppsListCompanyClosest = (companyId: UUID) =>
-	ajax<IMasterApp[]>(`/api/apps/master/company_closest/${companyId}`);
+	ajax<ReadonlyArray<IMasterApp>>(
+		`/api/apps/master/company_closest/${companyId}`,
+	);
 export const readMasterApp = (appId: UUID) =>
 	ajax<IMasterApp>(`/api/apps/master/${appId}`);
 
@@ -542,7 +551,7 @@ export interface IApiRegion {
 }
 
 export const readRegionsList = () => {
-	return ajax<IApiRegion[]>(`/api/regions`);
+	return ajax<ReadonlyArray<IApiRegion>>(`/api/regions`);
 };
 
 export interface IApiCity {
@@ -558,7 +567,7 @@ export const readCitiesList = (region?: string | null) => {
 		query.set("region", region);
 	}
 
-	return ajax<IApiCity[]>(`/api/cities?${query}`);
+	return ajax<ReadonlyArray<IApiCity>>(`/api/cities?${query}`);
 };
 
 export const addRegion = (name: string, timezone: string) => {

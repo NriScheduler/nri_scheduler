@@ -274,33 +274,62 @@ impl Store for PostgresStore {
 	}
 
 	async fn get_locations_list(&self, query_args: ReadLocationDto) -> CoreResult<Vec<Location>> {
-		let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new("SELECT *");
+		let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new("SELECT l.*, r.name as region");
 
-		let query_name = query_args.name.unwrap_or_default();
+		let query_name = query_args.name.as_deref().unwrap_or_default();
+		let query_region = query_args.region.as_deref().unwrap_or_default();
+		let query_city = query_args.city.as_deref().unwrap_or_default();
 
 		if !query_name.is_empty() {
-			qb.push(", CASE WHEN LOWER(name) LIKE LOWER(");
-			qb.push_bind(&query_name);
+			qb.push(", CASE WHEN LOWER(l.name) LIKE LOWER(");
+			qb.push_bind(query_name);
 			qb.push(") || '%' THEN 1 ");
 
-			qb.push("WHEN LOWER(name) LIKE '%' || LOWER(");
-			qb.push_bind(&query_name);
+			qb.push("WHEN LOWER(l.name) LIKE '%' || LOWER(");
+			qb.push_bind(query_name);
 			qb.push(") || '%' THEN 2 ");
 			qb.push("END AS rank");
 		}
 
-		qb.push(" FROM locations");
-		if !query_name.is_empty() {
-			qb.push(" WHERE LOWER(name) LIKE '%' || LOWER(");
-			qb.push_bind(&query_name);
-			qb.push(") || '%'");
+		qb.push(
+			" FROM locations l
+LEFT JOIN cities c ON c.name = l.city
+LEFT JOIN regions r ON r.name = c.region",
+		);
+
+		if !query_name.is_empty() || !query_region.is_empty() || !query_city.is_empty() {
+			qb.push(" WHERE ");
+
+			if !query_name.is_empty() {
+				qb.push("LOWER(l.name) LIKE '%' || LOWER(");
+				qb.push_bind(query_name);
+				qb.push(") || '%'");
+			}
+
+			if !query_region.is_empty() {
+				if !query_name.is_empty() {
+					qb.push(" AND ");
+				}
+
+				qb.push("r.name = ");
+				qb.push_bind(query_region);
+			}
+
+			if !query_city.is_empty() {
+				if !query_name.is_empty() || !query_region.is_empty() {
+					qb.push(" AND ");
+				}
+
+				qb.push("c.name = ");
+				qb.push_bind(query_city);
+			}
 		}
 
 		qb.push(" order by");
 		if !query_name.is_empty() {
 			qb.push(" rank,");
 		}
-		qb.push(" name asc");
+		qb.push(" l.name asc");
 
 		let locations = qb
 			.build_query_as::<Location>()
@@ -311,10 +340,18 @@ impl Store for PostgresStore {
 	}
 
 	async fn get_location_by_id(&self, location_id: Uuid) -> CoreResult<Option<Location>> {
-		let may_be_location = sqlx::query_as::<_, Location>("SELECT * FROM locations WHERE id = $1;")
-			.bind(location_id)
-			.fetch_optional(&self.pool)
-			.await?;
+		let may_be_location = sqlx::query_as::<_, Location>(
+			"SELECT
+	l.*
+	, r.name as region
+FROM locations l
+LEFT JOIN cities c ON c.name = l.city
+LEFT JOIN regions r ON r.name = c.region
+WHERE id = $1;",
+		)
+		.bind(location_id)
+		.fetch_optional(&self.pool)
+		.await?;
 
 		Ok(may_be_location)
 	}
@@ -324,13 +361,15 @@ impl Store for PostgresStore {
 		name: &str,
 		address: &Option<String>,
 		descr: &Option<String>,
+		city: &Option<String>,
 	) -> CoreResult<RecordId> {
 		let query_result = sqlx::query_scalar::<_, RecordId>(
-			"INSERT INTO locations (name, address, description) values ($1, $2, $3) returning id;",
+			"INSERT INTO locations (name, address, description, city) values ($1, $2, $3, $4) returning id;",
 		)
 		.bind(name)
 		.bind(address)
 		.bind(descr)
+		.bind(city)
 		.fetch_one(&self.pool)
 		.await;
 

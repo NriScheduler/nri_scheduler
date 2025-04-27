@@ -19,7 +19,7 @@ import {
 } from "../../../../store/checkboxStore";
 
 interface ICampList {
-	list: IApiCompany[];
+	readonly list: ReadonlyArray<IApiCompany>;
 }
 
 interface ICampItem {
