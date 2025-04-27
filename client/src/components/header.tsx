@@ -12,20 +12,16 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
 
 import { Avatar } from "./ui/avatar";
 import { Popover } from "./ui/popover";
 import { logout } from "../api";
-import { $profile } from "../store/profile";
 import { useAuthVerification } from "../utils";
 
 export const Header = () => {
 	const [{ path }] = useRouter();
 	const [open, setOpen] = useState(false);
-
-	const profile = useStore($profile);
-	const { isAuthenticated, isVerified } = useAuthVerification();
+	const { profile, isAuthenticated, isVerified } = useAuthVerification();
 
 	return (
 		<header>

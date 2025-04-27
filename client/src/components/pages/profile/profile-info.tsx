@@ -16,12 +16,12 @@ import { HoverCard } from "../../ui/hover-card";
 import { Check, Warning } from "../../ui/icons";
 import { toaster } from "../../ui/toaster";
 import { sendVerificationLink } from "../../../api";
-import { TIMEZONES, TStorePrifile } from "../../../store/profile";
+import { IStorePrifile, TIMEZONES } from "../../../store/profile";
 
 const NOT_SET = "Не установлен";
 
 interface IProfileInfoProps {
-	user?: TStorePrifile;
+	user: IStorePrifile | null;
 }
 
 export const ProfileInfo = ({ user }: IProfileInfoProps) => {
@@ -96,17 +96,16 @@ export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 						</DataList.ItemLabel>
 						<DataList.ItemValue color="black" fontWeight="500">
 							<HStack>
-								{user.email || NOT_SET + "а"}
-								{user.email && (
+								{user?.email || NOT_SET + "а"}
+								{user?.email && (
 									<HoverCard
 										content={`Электронная почта ${user.email_verified ? "" : "не "}подтверждена`}
-
 									>
 										{user.email_verified ? <Check /> : <Warning />}
 									</HoverCard>
 								)}
-								{user.email &&
-									!user.email_verified &&
+								{user?.email &&
+									!user?.email_verified &&
 									!verificationSent && (
 										<Button
 											type="button"

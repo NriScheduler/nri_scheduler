@@ -4,7 +4,7 @@ import { type IApiRegion, readRegionsList } from "../api";
 
 type RegionsStore = {
 	loading: boolean;
-	data: IApiRegion[] | null;
+	data: readonly IApiRegion[] | null;
 };
 
 // Инициализация хранилища

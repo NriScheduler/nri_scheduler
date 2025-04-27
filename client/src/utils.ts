@@ -3,7 +3,7 @@ import { route } from "preact-router";
 
 import { useStore } from "@nanostores/preact";
 
-import { $profile, TStorePrifile } from "./store/profile";
+import { $profile, IStorePrifile, TStorePrifile } from "./store/profile";
 
 export const navBack = () => history.back();
 
@@ -64,11 +64,7 @@ export const useAuthGuard = () => {
  * Хук для проверки верификации пользователя (email или telegram)
  */
 export const useVerificationGuard = () => {
-	const { isAllowed } = useAuthCheck((profile) => {
-		return (
-			(!!profile?.email && !!profile?.email_verified) || !!profile?.tg_id
-		);
-	}, "/");
+	const { isAllowed } = useAuthCheck((profile) => !!profile?.verified, "/");
 
 	return { isVerified: isAllowed };
 };
@@ -77,6 +73,7 @@ export const useVerificationGuard = () => {
  * Комбинированный хук для защиты страниц
  */
 export const useAuthVerification = () => {
+	const profile = useStore($profile);
 	const { isAuthenticated, isLoading } = useAuthGuard();
 	const { isVerified } = useVerificationGuard();
 	const [shouldRedirect, setShouldRedirect] = useState(false);
@@ -95,11 +92,13 @@ export const useAuthVerification = () => {
 	}, [shouldRedirect]);
 
 	return {
+		profile: isAuthenticated ? (profile as IStorePrifile) : null,
 		isAuthenticated,
 		isVerified: isAuthenticated ? isVerified : null,
 		isLoading,
 		reset: () => window.location.reload(),
 	};
+};
 
 export const calcMapIconLink = (mapLink: string | null | undefined): string => {
 	if (!mapLink) {

@@ -47,7 +47,9 @@ export interface IEmptyStorePrifile {
 
 const EMPTY_USER = {};
 
-export type TStorePrifile = IStorePrifile | IEmptyStorePrifile;
+export type TStorePrifile = {
+	signed: boolean;
+} & (IStorePrifile | IEmptyStorePrifile);
 
 const _profile = map<IApiProfile | typeof EMPTY_USER>(EMPTY_USER);
 
