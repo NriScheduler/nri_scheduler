@@ -208,7 +208,13 @@ export const signInTg = (data: ITelegramUser) => {
 };
 
 export const logout = () =>
-	ajax<null>("/api/logout", prepareAjax(undefined, POST));
+	ajax<null>("/api/logout", prepareAjax(undefined, POST)).then((res) => {
+		if (res) {
+			leave();
+		}
+
+		return res;
+	});
 
 export const enum EVerificationChannel {
 	EMAIL = "email",
