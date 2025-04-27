@@ -1,3 +1,6 @@
+use ::std::time::Duration;
+use rand::Rng as _;
+use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 use sqlx::{
 	Decode, Encode, FromRow, Postgres, Type,
@@ -5,7 +8,16 @@ use sqlx::{
 	error::BoxDynError,
 	postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef},
 };
+use tokio::time::sleep;
 use uuid::Uuid;
+
+pub(super) fn deser_empty_str_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+	D: Deserializer<'de>,
+{
+	let s = Option::<String>::deserialize(deserializer)?;
+	Ok(s.filter(|s| !s.is_empty()))
+}
 
 #[derive(FromRow)]
 pub(super) struct RecordId(Uuid);
@@ -39,4 +51,9 @@ impl Encode<'_, Postgres> for RecordId {
 	fn encode_by_ref(&self, buf: &mut PgArgumentBuffer) -> Result<IsNull, BoxDynError> {
 		<Uuid as Encode<Postgres>>::encode_by_ref(&self.0, buf)
 	}
+}
+
+pub(super) async fn prevent_timing_attack() {
+	let random_millis: u64 = rand::rng().random_range(1..=50);
+	sleep(Duration::from_millis(random_millis)).await;
 }

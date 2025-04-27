@@ -1,5 +1,4 @@
 use std::{
-	fs::read_to_string as read_file_to_string,
 	sync::LazyLock,
 	time::{Duration, SystemTime, UNIX_EPOCH},
 };
@@ -15,21 +14,22 @@ use axum::{
 	response::{IntoResponse, Response},
 };
 use axum_extra::extract::cookie::CookieJar;
-use jsonwebtoken::{
-	Algorithm::ES256, DecodingKey, EncodingKey, Header as JwtHeader, TokenData, Validation,
-	decode as decode_and_verify, encode,
+use josekit::{
+	jwe::{ECDH_ES, JweHeader},
+	jwt::{self, JwtPayload},
 };
-use rand::Rng;
 use serde::{Deserialize, Serialize};
-use tokio::time::sleep;
 use uuid::Uuid;
 
 use crate::{
 	cookie::{extract_jwt_from_cookie, remove_auth_cookie},
+	shared::prevent_timing_attack,
 	system_models::{AppError, AppResponse, CoreResult},
 };
 
 pub(super) const SESSION_LIFETIME: u64 = 3600; // 1 час в секундах
+
+const A256GCM: &str = "A256GCM";
 
 // default params
 // alg: argon2id
@@ -41,26 +41,11 @@ pub(super) const SESSION_LIFETIME: u64 = 3600; // 1 час в секундах
 // suf.len = 66
 static ARGON: LazyLock<Argon2<'static>> = LazyLock::new(Argon2::default);
 
-static PRIVATE_KEY: LazyLock<EncodingKey> = LazyLock::new(|| {
-	EncodingKey::from_ec_pem(
-		read_file_to_string("private_key.pem")
-			.expect("can't read a private key")
-			.as_bytes(),
-	)
-	.expect("can't parse private key")
-});
+static PRIVATE_KEY: LazyLock<Vec<u8>> =
+	LazyLock::new(|| ::std::fs::read("private_key.pem").expect("can't read a private key"));
 
-static PUBLIC_KEY: LazyLock<DecodingKey> = LazyLock::new(|| {
-	DecodingKey::from_ec_pem(
-		read_file_to_string("public_key.pem")
-			.expect("can't read a public key")
-			.as_bytes(),
-	)
-	.expect("can't parse a public key")
-});
-
-static JWT_HEADER: LazyLock<JwtHeader> = LazyLock::new(|| JwtHeader::new(ES256));
-static JWT_VALIDATION: LazyLock<Validation> = LazyLock::new(|| Validation::new(ES256));
+static PUBLIC_KEY: LazyLock<Vec<u8>> =
+	LazyLock::new(|| ::std::fs::read("public_key.pem").expect("can't read a public key"));
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Claims {
@@ -83,6 +68,8 @@ pub(super) fn hash_password(password: &str) -> CoreResult<String> {
 }
 
 pub(super) async fn verify_password(password: &str, password_hash: String) -> CoreResult {
+	prevent_timing_attack().await;
+
 	let full_hash = format!("$argon2id$v=19$m=19456,t=2,p=1${password_hash}");
 	let parsed_hash = PasswordHash::new(&full_hash).map_err(|e| {
 		eprintln!("Ошибка парсига пароля: {e}");
@@ -96,9 +83,6 @@ pub(super) async fn verify_password(password: &str, password_hash: String) -> Co
 			AppError::unauthorized("Неверный пароль")
 		})?;
 
-	let random_millis: u64 = rand::rng().random_range(1..=50);
-	sleep(Duration::from_millis(random_millis)).await;
-
 	Ok(())
 }
 
@@ -111,9 +95,7 @@ pub(super) async fn auth_middleware(
 		return AppError::unauthorized("Необходима авторизация").into_response();
 	};
 
-	let Ok(TokenData { claims, .. }) =
-		decode_and_verify::<Claims>(jwt, &PUBLIC_KEY, &JWT_VALIDATION)
-	else {
+	let Some(claims) = get_claims_from_token(jwt) else {
 		return AppError::unauthorized("Неверный пароль").into_response();
 	};
 
@@ -142,9 +124,7 @@ pub(super) async fn auth_and_verified_middleware(
 		return AppError::unauthorized("Необходима авторизация").into_response();
 	};
 
-	let Ok(TokenData { claims, .. }) =
-		decode_and_verify::<Claims>(jwt, &PUBLIC_KEY, &JWT_VALIDATION)
-	else {
+	let Some(claims) = get_claims_from_token(jwt) else {
 		return AppError::unauthorized("Неверный пароль").into_response();
 	};
 
@@ -179,9 +159,7 @@ pub(super) async fn optional_auth_middleware(
 		return next.run(req).await;
 	};
 
-	let Ok(TokenData { claims, .. }) =
-		decode_and_verify::<Claims>(jwt, &PUBLIC_KEY, &JWT_VALIDATION)
-	else {
+	let Some(claims) = get_claims_from_token(jwt) else {
 		return handle_invalid_jwt_for_optional_auth(req, next).await;
 	};
 
@@ -201,6 +179,17 @@ pub(super) async fn optional_auth_middleware(
 	next.run(req).await
 }
 
+fn get_claims_from_token(token: &str) -> Option<Claims> {
+	let decrypter = ECDH_ES.decrypter_from_pem(&*PRIVATE_KEY).ok()?;
+	let (payload, header) = jwt::decode_with_decrypter(token, &decrypter).ok()?;
+
+	if header.algorithm() != Some(ECDH_ES.name()) || header.content_encryption() != Some(A256GCM) {
+		return None;
+	}
+
+	serde_json::from_str::<Claims>(&payload.to_string()).ok()
+}
+
 async fn handle_invalid_jwt_for_optional_auth(mut req: Request<Body>, next: Next) -> Response {
 	req.extensions_mut().insert(None::<Uuid>);
 	let mut res = next.run(req).await;
@@ -214,21 +203,26 @@ async fn handle_invalid_jwt_for_optional_auth(mut req: Request<Body>, next: Next
 pub(super) fn generate_jwt(user_id: Uuid, verified: bool) -> CoreResult<String> {
 	// Время истечения срока действия токена (текущее время + время жизни сессии)
 	let expiration_time = SystemTime::now()
-		.duration_since(UNIX_EPOCH)
-		.map_err(|_| AppError::system_error("Time went backwards"))?
-		.as_secs()
-		+ SESSION_LIFETIME;
+		.checked_add(Duration::from_secs(SESSION_LIFETIME))
+		.ok_or_else(|| AppError::system_error("Time went backwards"))?;
 
-	let claims = Claims {
-		sub: user_id,
-		exp: expiration_time,
-		verified,
-	};
+	let mut header = JweHeader::new();
+	header.set_content_encryption(A256GCM);
 
-	let token = encode(&JWT_HEADER, &claims, &PRIVATE_KEY).map_err(|e| {
-		println!("Ошибка формирования JWT: {e}");
-		AppError::system_error("Ошибка формирования JWT")
-	})?;
+	let verified = serde_json::to_value(verified)?;
+
+	let mut payload = JwtPayload::new();
+	payload.set_subject(user_id);
+	payload.set_expires_at(&expiration_time);
+	payload
+		.set_claim("verified", Some(verified))
+		.map_err(AppError::system_error)?;
+
+	let encrypter = ECDH_ES
+		.encrypter_from_pem(&*PUBLIC_KEY)
+		.map_err(AppError::system_error)?;
+	let token =
+		jwt::encode_with_encrypter(&payload, &header, &encrypter).map_err(AppError::system_error)?;
 
 	Ok(token)
 }
@@ -241,6 +235,4 @@ pub(super) fn init_static() {
 	println!("+ a public key is ok");
 
 	let _ = *ARGON;
-	let _ = *JWT_HEADER;
-	let _ = *JWT_VALIDATION;
 }

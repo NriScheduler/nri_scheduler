@@ -26,6 +26,7 @@ export interface IStorePrifile {
 	readonly tz_variant: ETzVariant | null;
 	readonly signed: true;
 	readonly tg_id?: string | null;
+	readonly verified: boolean;
 }
 
 export interface IEmptyStorePrifile {
@@ -41,6 +42,7 @@ export interface IEmptyStorePrifile {
 	readonly tz_variant: undefined;
 	readonly signed: false;
 	readonly tg_id: undefined;
+	readonly verified: undefined;
 }
 
 const EMPTY_USER = {};
@@ -73,6 +75,7 @@ export const $profile = computed(_profile, (p) =>
 			timezone_offset: p.timezone_offset,
 			tz_variant: p.tz_variant,
 			signed: true,
+			verified: p.email_verified || Boolean(p.tg_id),
 		};
 
 		return prof;

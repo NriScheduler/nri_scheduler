@@ -28,10 +28,10 @@ import { addCompany, IApiCompany } from "../../../api";
 import { $profile } from "../../../store/profile";
 
 export interface ICompanyProps {
-	data: IApiCompany[];
+	readonly data: ReadonlyArray<IApiCompany>;
 }
 
-export const Company = ({ data }: ICompanyProps) => {
+const Company = ({ data }: ICompanyProps) => {
 	const [open, setOpen] = useState(false);
 	const {
 		register,
@@ -72,7 +72,7 @@ export const Company = ({ data }: ICompanyProps) => {
 		<DrawerRoot open={open} onOpenChange={(e) => setOpen(e.open)}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button disabled={!profile?.signed} variant="outline">
+				<Button w="30%" disabled={!profile?.signed} variant="outline">
 					Создать кампанию
 				</Button>
 			</DrawerTrigger>
@@ -140,3 +140,5 @@ export const Company = ({ data }: ICompanyProps) => {
 		</DrawerRoot>
 	);
 };
+
+export default Company;

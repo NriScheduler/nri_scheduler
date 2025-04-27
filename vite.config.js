@@ -17,6 +17,7 @@ export default defineConfig(({ command }) => {
 			cssMinify: 'esbuild',
 			minify:    'terser',
 			outDir:    '../static',
+			emptyOutDir: true,
 		},
 		server: {
 			host:       '0.0.0.0',

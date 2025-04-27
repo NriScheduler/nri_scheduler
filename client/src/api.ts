@@ -4,22 +4,30 @@ import { route as navigate } from "preact-router";
 
 import { toaster } from "./components/ui/toaster";
 import { enter, leave } from "./store/profile";
+import { ITelegramUser } from "./typings/telegram";
 
 export const API_HOST = import.meta.env.PROD
 	? ""
 	: (import.meta.env.CLIENT_API_HOST as string | undefined) || "";
 const CREDENTIALS = import.meta.env.PROD ? undefined : "include";
 
+export const TG_BOT_ID = import.meta.env.CLIENT_TG_BOT_ID as string | undefined;
+
 const POST = "POST";
 const PUT = "PUT";
 const URL_ENCODED = true;
 
+export const enum EAbortReason {
+	TIMEOUT = "timeout",
+	UNMOUNT = "unmount",
+}
+
 export const enum EScenarioStatus {
-	SCENARIO_SUCCESS,
-	UNAUTHORIZED,
-	SCENARIO_FAIL,
-	SYSTEM_ERROR,
-	SESSION_EXPIRED,
+	SCENARIO_SUCCESS = 0,
+	SCENARIO_FAIL = 400,
+	UNAUTHORIZED = 401,
+	SESSION_EXPIRED = 419,
+	SYSTEM_ERROR = 500,
 }
 
 export interface IApiResponse<T = null> {
@@ -38,15 +46,16 @@ export interface IRequestInit {
 const ajax = <T>(
 	input: string,
 	init?: IRequestInit,
+	abort?: AbortController,
 	isSoft = false,
 ): Promise<IApiResponse<T> | null> => {
-	let controller: AbortController | undefined;
+	let controller = abort;
 	let timeoutId: ReturnType<typeof setTimeout>;
 
 	if (init?.timeoutMilliseconds) {
-		controller = new AbortController();
+		controller = controller || new AbortController();
 		timeoutId = setTimeout(
-			() => controller!.abort(),
+			() => controller!.abort(EAbortReason.TIMEOUT),
 			init.timeoutMilliseconds,
 		);
 	}
@@ -60,6 +69,25 @@ const ajax = <T>(
 		signal: controller?.signal,
 	})
 		.then((res) => checkResponse<T>(res, isSoft))
+		.catch((err) => {
+			if (controller && controller.signal.aborted) {
+				if (controller.signal.reason === EAbortReason.TIMEOUT) {
+					toaster.error({
+						title: "Истекло время ожидания ответа сервера",
+					});
+					return null;
+				} else if (controller.signal.reason === EAbortReason.UNMOUNT) {
+					// just ignore it
+					return null;
+				}
+			}
+
+			toaster.error({ title: "Неизвестная ошибка" });
+			console.info("Хрень какая-то...");
+			console.error(err);
+
+			return null;
+		})
 		.finally(() => {
 			clearTimeout(timeoutId);
 		});
@@ -133,7 +161,6 @@ const checkResponse = async <T>(
 			console.info("Хрень какая-то...");
 			console.error(err);
 		}
-
 		return null;
 	}
 };
@@ -178,9 +205,13 @@ export const signIn = (email: string, password: string) => {
 	);
 };
 
+export const signInTg = (data: ITelegramUser) => {
+	return ajax<null>("/api/signin/tg", prepareAjax(data, POST));
+};
+
 export const logout = () =>
 	ajax<null>("/api/logout", prepareAjax(undefined, POST)).then((res) => {
-		if (res?.status === EScenarioStatus.SCENARIO_SUCCESS) {
+		if (res) {
 			leave();
 		}
 
@@ -209,6 +240,9 @@ export interface IApiLocation {
 	readonly name: string;
 	readonly address: string | null;
 	readonly description: string | null;
+	readonly region: string | null;
+	readonly city: string | null;
+	readonly map_link: string | null;
 }
 
 export const readLocations = (nameFilter?: string | null) => {
@@ -217,7 +251,7 @@ export const readLocations = (nameFilter?: string | null) => {
 		query.append("name", nameFilter);
 	}
 
-	return ajax<IApiLocation[]>(`/api/locations?${query}`);
+	return ajax<ReadonlyArray<IApiLocation>>(`/api/locations?${query}`);
 };
 
 export const readLocationById = (locId: UUID) =>
@@ -227,10 +261,12 @@ export const addLocation = (
 	name: string,
 	address?: string | null,
 	description?: string | null,
+	city?: string | null,
+	map_link?: string | null,
 ) =>
 	ajax<UUID>(
 		"/api/locations",
-		prepareAjax({ name, address, description }, POST),
+		prepareAjax({ name, address, description, city, map_link }, POST),
 	);
 
 export interface IApiCompany {
@@ -253,13 +289,20 @@ export interface IApiCompanyInfo {
 	readonly you_are_master: boolean;
 }
 
-export const readMyCompanies = (nameFilter?: string | null) => {
+export const readMyCompanies = (
+	nameFilter?: string | null,
+	abortController?: AbortController,
+) => {
 	const query = new URLSearchParams();
 	if (nameFilter) {
 		query.append("name", nameFilter);
 	}
 
-	return ajax<IApiCompany[]>(`/api/companies/my?${query}`);
+	return ajax<ReadonlyArray<IApiCompany>>(
+		`/api/companies/my?${query}`,
+		undefined,
+		abortController,
+	);
 };
 
 export const readCompanyById = (companyId: UUID) =>
@@ -291,7 +334,8 @@ export const updateCompany = (
 export const setCompanyCover = (companyId: UUID, url: string) =>
 	ajax<null>(`/api/companies/${companyId}/cover`, prepareAjax({ url }, PUT));
 
-export interface IApiEvent {
+/** @todo оставить только то что нужно для отображения на календаре */
+export interface IApiShortEvent {
 	readonly id: UUID;
 	readonly company: string;
 	readonly company_id: UUID;
@@ -302,10 +346,30 @@ export interface IApiEvent {
 	readonly date: string;
 	readonly max_slots: number | null;
 	readonly plan_duration: number | null;
-	readonly players: string[];
+	readonly players: ReadonlyArray<string>;
 	readonly you_applied: boolean;
 	readonly you_are_master: boolean;
 	readonly your_approval: boolean | null;
+	readonly cancelled: boolean;
+}
+
+export interface IApiEvent {
+	readonly id: UUID;
+	readonly company: string;
+	readonly company_id: UUID;
+	readonly master: string;
+	readonly master_id: UUID;
+	readonly location: string;
+	readonly location_id: UUID;
+	readonly location_map_link: string | null;
+	readonly date: string;
+	readonly max_slots: number | null;
+	readonly plan_duration: number | null;
+	readonly players: ReadonlyArray<string>;
+	readonly you_applied: boolean;
+	readonly you_are_master: boolean;
+	readonly your_approval: boolean | null;
+	readonly cancelled: boolean;
 }
 
 export interface IEventsFilter {
@@ -331,7 +395,9 @@ export const readEventsList = (
 		});
 	}
 
-	return ajax<IApiEvent[]>(`/api/events?${new URLSearchParams(query)}`);
+	return ajax<ReadonlyArray<IApiShortEvent>>(
+		`/api/events?${new URLSearchParams(query)}`,
+	);
 };
 
 export const readEvent = (eventId: UUID) => {
@@ -371,6 +437,81 @@ export const updateEvent = (
 	);
 };
 
+export const cancelEvent = (eventId: UUID) => {
+	return ajax<null>(
+		`/api/events/cancel/${eventId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+
+export const reopenEvent = (eventId: UUID) => {
+	return ajax<null>(
+		`/api/events/reopen/${eventId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+
+export interface IPlayerApp {
+	readonly approval: boolean | null;
+	readonly company_id: UUID;
+	readonly company_name: string;
+	readonly event_cancelled: boolean;
+	readonly event_date: string; // "2025-04-15T07:24:00Z"
+	readonly event_id: UUID;
+	readonly id: UUID;
+	readonly location_id: UUID;
+	readonly location_name: string;
+	readonly master_id: UUID;
+	readonly master_name: string;
+}
+
+export const readPlayerAppsList = () =>
+	ajax<ReadonlyArray<IPlayerApp>>(`/api/apps`);
+export const readPlayerApp = (appId: UUID) =>
+	ajax<IPlayerApp>(`/api/apps/${appId}`);
+export const readPlayerAppByEvent = (eventId: UUID) =>
+	ajax<IPlayerApp>(`/api/apps/by_event/${eventId}`);
+export const readPlayerAppCompanyClosest = (companyId: UUID) =>
+	ajax<IPlayerApp>(`/api/apps/company_closest/${companyId}`);
+
+export interface IMasterApp {
+	readonly approval: boolean | null;
+	readonly company_id: UUID;
+	readonly company_name: string;
+	readonly event_cancelled: boolean;
+	readonly event_date: string; // "2025-04-15T07:24:00Z"
+	readonly event_id: UUID;
+	readonly id: UUID;
+	readonly location_id: UUID;
+	readonly location_name: string;
+	readonly player_id: UUID;
+	readonly player_name: string;
+}
+
+export const readMasterAppsList = () =>
+	ajax<ReadonlyArray<IMasterApp>>(`/api/apps/master`);
+export const readMasterAppsListByEvent = (eventId: UUID) =>
+	ajax<ReadonlyArray<IMasterApp>>(`/api/apps/master/by_event/${eventId}`);
+export const readMasterAppsListCompanyClosest = (companyId: UUID) =>
+	ajax<ReadonlyArray<IMasterApp>>(
+		`/api/apps/master/company_closest/${companyId}`,
+	);
+export const readMasterApp = (appId: UUID) =>
+	ajax<IMasterApp>(`/api/apps/master/${appId}`);
+
+export const approveApplication = (appId: UUID) => {
+	return ajax<null>(
+		`/api/apps/approve/${appId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+export const rejectApplication = (appId: UUID) => {
+	return ajax<null>(
+		`/api/apps/approve/${appId}`,
+		prepareAjax(undefined, POST),
+	);
+};
+
 export const enum ETzVariant {
 	CITY = "city",
 	DEVICE = "device",
@@ -381,6 +522,7 @@ export interface IApiProfile {
 	readonly id: UUID;
 	readonly email: string | null;
 	readonly email_verified: boolean;
+	readonly tg_id: number | null;
 	readonly nickname: string;
 	readonly about_me: string | null;
 	readonly avatar_link: string | null;
@@ -393,7 +535,12 @@ export interface IApiProfile {
 
 export const getMyProfile: () => Promise<IApiResponse<IApiProfile> | null> =
 	async (isSoft = false) => {
-		const res = await ajax<IApiProfile>(`/api/profile/my`, undefined, isSoft);
+		const res = await ajax<IApiProfile>(
+			`/api/profile/my`,
+			undefined,
+			undefined,
+			isSoft,
+		);
 
 		if (res !== null) {
 			enter(res.payload);
@@ -434,7 +581,7 @@ export interface IApiRegion {
 }
 
 export const readRegionsList = () => {
-	return ajax<IApiRegion[]>(`/api/regions`);
+	return ajax<ReadonlyArray<IApiRegion>>(`/api/regions`);
 };
 
 export interface IApiCity {
@@ -450,7 +597,7 @@ export const readCitiesList = (region?: string | null) => {
 		query.set("region", region);
 	}
 
-	return ajax<IApiCity[]>(`/api/cities?${query}`);
+	return ajax<ReadonlyArray<IApiCity>>(`/api/cities?${query}`);
 };
 
 export const addRegion = (name: string, timezone: string) => {

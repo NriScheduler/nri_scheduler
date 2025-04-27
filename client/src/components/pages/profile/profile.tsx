@@ -1,21 +1,27 @@
 import { h } from "preact";
+
 import { MdOutlineEvent } from "react-icons/md";
+import { useEffect, useState } from "preact/hooks";
+import { route as navigate } from "preact-router";
 
 import {
 	Button,
 	Card,
 	Container,
-	EmptyState,
 	Grid,
 	Link,
+	Spinner,
 	Tabs,
-	VStack,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 
+import { CompList } from "./complist/complist";
+import { EmptyList } from "./empty-list";
 import { ProfileInfo } from "./profile-info";
+import { EAbortReason, IApiCompany, readMyCompanies } from "../../../api";
 import { $profile } from "../../../store/profile";
 import { useAuthGuard } from "../../../utils";
+import { $activeTab, setActiveTab } from "../../../store/tabsStore";
 
 /** @todo сделать апишку для заявок */
 interface IEvent {
@@ -23,6 +29,13 @@ interface IEvent {
 	value?: string;
 	href?: string;
 }
+
+export const tabList = [
+	{ id: "user", label: "Профиль" },
+	{ id: "events", label: "Заявки" },
+	{ id: "complist", label: "Кампания" },
+	{ id: "resetpass", label: "Сброс пароля" },
+];
 
 export const ProfilePage = () => {
 	const user = useStore($profile);
@@ -34,14 +47,49 @@ export const ProfilePage = () => {
 
 	const events: IEvent[] = [];
 
+	const [compList, setCompList] = useState<ReadonlyArray<IApiCompany>>([]);
+	const [fetching, setFetching] = useState(false);
+	const activeTab = useStore($activeTab);
+
+	useEffect(() => {
+		// complist
+		if (activeTab === tabList[2].id) {
+			let isMounted = true;
+			setFetching(true);
+
+			let abortController = new AbortController();
+
+			readMyCompanies(null, abortController)
+				.then((response) => {
+					if (isMounted && response?.payload) {
+						setCompList(response.payload);
+					}
+				})
+				.finally(() => setFetching(false));
+
+			return () => {
+				isMounted = false; // Очистка при размонтировании
+				abortController.abort(EAbortReason.UNMOUNT);
+			};
+		}
+	}, [activeTab]);
+
 	return (
 		<Container mb={6}>
-			<Tabs.Root defaultValue="user" variant="outline">
+			<Tabs.Root
+				defaultValue="user"
+				variant="outline"
+				value={activeTab}
+				onValueChange={(e) => setActiveTab(e.value)}
+			>
 				<Tabs.List>
-					<Tabs.Trigger value="user">Профиль</Tabs.Trigger>
-					<Tabs.Trigger value="events">Заявки</Tabs.Trigger>
-					<Tabs.Trigger value="resetpass">Сброс пароля</Tabs.Trigger>
+					{tabList.map((tab) => (
+						<Tabs.Trigger key={tab.id} value={tab.id}>
+							{tab.label}
+						</Tabs.Trigger>
+					))}
 				</Tabs.List>
+
 				<Tabs.Content value="user" maxW="2xl">
 					<ProfileInfo user={user} />
 				</Tabs.Content>
@@ -66,21 +114,20 @@ export const ProfilePage = () => {
 							</Grid>
 						))
 					) : (
-						<EmptyState.Root w="full">
-							<EmptyState.Content>
-								<EmptyState.Indicator>
-									<MdOutlineEvent />
-								</EmptyState.Indicator>
-								<VStack textAlign="center">
-									<EmptyState.Title>
-										Заявок на подтверждение нет
-									</EmptyState.Title>
-									<EmptyState.Description>
-										Как только... так сразу
-									</EmptyState.Description>
-								</VStack>
-							</EmptyState.Content>
-						</EmptyState.Root>
+						<EmptyList
+							title="Заявок на подтверждение нет"
+							description="Как только... так сразу"
+						/>
+					)}
+				</Tabs.Content>
+
+				<Tabs.Content value="complist">
+					{fetching ? (
+						<Spinner size="sm" />
+					) : compList.length > 0 ? (
+						<CompList list={compList} />
+					) : (
+						<EmptyList title="Кампаний не создано" />
 					)}
 				</Tabs.Content>
 

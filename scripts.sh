@@ -30,7 +30,7 @@ check() {
 }
 
 clippy() {
-	(cargo clippy --all --all-features --tests -- -D warnings && echo "clippy is ok") || exit 1;
+	(cargo clippy --workspace --all-features --tests -- -D warnings && echo "clippy is ok") || exit 1;
 }
 
 fmt() {
@@ -52,6 +52,11 @@ ecdsa() {
 
 ed25519() {
 	openssl genpkey -algorithm ED25519 -out private_key.pem;
+	openssl pkey -in private_key.pem -pubout -out public_key.pem;
+}
+
+x25519() {
+	openssl genpkey -algorithm X25519 -out private_key.pem;
 	openssl pkey -in private_key.pem -pubout -out public_key.pem;
 }
 

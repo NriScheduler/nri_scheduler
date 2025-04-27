@@ -14,6 +14,7 @@ import {
 	Group,
 	Heading,
 	HStack,
+	Image,
 	Input,
 	InputAddon,
 	Link,
@@ -43,19 +44,27 @@ import { Warning } from "../../ui/icons";
 import { toaster } from "../../ui/toaster";
 import {
 	applyEvent,
+	cancelEvent,
 	EScenarioStatus,
 	IApiEvent,
 	IApiLocation,
 	readEvent,
 	readLocations,
+	reopenEvent,
 	updateEvent,
 } from "../../../api";
 import { $profile, $tz } from "../../../store/profile";
-import { navBack } from "../../../utils";
+import { calcMapIconLink, navBack } from "../../../utils";
 
 dayjs.locale("ru");
 
-const EventCard = ({ event }: { event: IApiEvent }) => {
+const EventCard = ({
+	event,
+	updateEventData,
+}: {
+	event: IApiEvent;
+	updateEventData: () => void;
+}) => {
 	const tz = useStore($tz);
 	const profile = useStore($profile);
 
@@ -70,6 +79,7 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 			label: "Место проведения",
 			value: event.location,
 			href: `/location/${event.location_id}`,
+			mapLink: event.location_map_link,
 		},
 		{ label: "Дата", value: eventDate.format("DD MMMM") },
 		{ label: "Время", value: eventDate.format("HH:mm") },
@@ -108,6 +118,20 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 	};
 	const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
 
+	const onCancelEvent = () => {
+		cancelEvent(event.id).then(() => {
+			toaster.success({ title: "Событие отменено" });
+			updateEventData();
+		});
+	};
+
+	const onReopenEvent = () => {
+		reopenEvent(event.id).then(() => {
+			toaster.success({ title: "Событие открыто" });
+			updateEventData();
+		});
+	};
+
 	return (
 		<Card.Root width="full">
 			<Card.Body>
@@ -124,38 +148,56 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 					</Heading>
 				</HStack>
 				<DataList.Root orientation="horizontal">
-					{stats.map((item) => (
-						<DataList.Item key={item.label}>
-							<DataList.ItemLabel minW="150px">
-								{item.label}
-							</DataList.ItemLabel>
-							<DataList.ItemValue color="black" fontWeight="500">
-								{item.href ? (
-									<Link href={item.href} colorPalette="blue">
-										{item.value}
-									</Link>
-								) : (
-									<p>{item.value}</p>
-								)}
-							</DataList.ItemValue>
-						</DataList.Item>
-					))}
+					{stats.map((item) => {
+						const iconLink = calcMapIconLink(item.mapLink);
+
+						return (
+							<DataList.Item key={item.label}>
+								<DataList.ItemLabel minW="150px">
+									{item.label}
+								</DataList.ItemLabel>
+								<DataList.ItemValue color="black" fontWeight="500">
+									{item.href ? (
+										<HStack>
+											<Link href={item.href} colorPalette="blue">
+												{item.value}
+											</Link>
+											{iconLink && (
+												<a
+													target="_blank"
+													href={item.mapLink as string}
+													rel="noreferrer"
+												>
+													<Image
+														height="1.75rem"
+														src={iconLink}
+														alt="Показать локацию на карте"
+													/>
+												</a>
+											)}
+										</HStack>
+									) : (
+										<p>{item.value}</p>
+									)}
+								</DataList.ItemValue>
+							</DataList.Item>
+						);
+					})}
 				</DataList.Root>
 			</Card.Body>
 			<Card.Footer>
 				{profile?.signed ? (
 					!event.you_are_master &&
 					(nowDate.isSame(eventDate, "minute") ||
-						eventDate.isAfter(nowDate, "minute")) ? (
+						eventDate.isAfter(nowDate, "minute")) &&
+					!event.cancelled ? (
 						<>
 							<Button
 								variant="subtle"
 								colorPalette="blue"
 								minW="115px"
 								onClick={handleSubscribe}
-								disabled={
-									isLoading || youApplied || !profile.email_verified
-								}
+								disabled={isLoading || youApplied || !profile.verified}
 							>
 								{isLoading
 									? "..."
@@ -163,14 +205,15 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 										? "Вы записаны"
 										: "Записаться"}
 							</Button>
-							{!profile.email_verified && (
-								<HoverCard content="Нельзя записаться на событие - электронная почта не подтверждена">
+							{!profile.verified && (
+								<HoverCard content="Нельзя записаться на событие - контактные данные не подтверждены">
 									<Warning />
 								</HoverCard>
 							)}
 						</>
 					) : null
 				) : (
+					!event.cancelled &&
 					"необходимо авторизоваться для записи на игру"
 				)}
 				{eventDate.isBefore(nowDate, "minute") && (
@@ -180,6 +223,34 @@ const EventCard = ({ event }: { event: IApiEvent }) => {
 						</HoverCard>
 						<Text>Запись закрыта</Text>
 					</>
+				)}
+				{event.cancelled && (
+					<>
+						<HoverCard content="Запись закрыта потому что мастер отменил событие">
+							<Warning />
+						</HoverCard>
+						<Text>Запись закрыта мастером</Text>
+					</>
+				)}
+				{event.you_are_master && !event.cancelled && (
+					<Button
+						onClick={onCancelEvent}
+						variant="subtle"
+						colorPalette="blue"
+						minW="115px"
+					>
+						Отменить событие
+					</Button>
+				)}
+				{event.you_are_master && event.cancelled && (
+					<Button
+						onClick={onReopenEvent}
+						variant="subtle"
+						colorPalette="blue"
+						minW="115px"
+					>
+						Переоткрыть событие
+					</Button>
 				)}
 			</Card.Footer>
 		</Card.Root>
@@ -237,7 +308,9 @@ export const EventPage = () => {
 	const [fetching, setFetching] = useState(false);
 	const [event, setEvent] = useState<IApiEvent | null>(null);
 	const [open, setOpen] = useState(false);
-	const [locationList, setLocationList] = useState<IApiLocation[]>([]);
+	const [locationList, setLocationList] = useState<
+		ReadonlyArray<IApiLocation>
+	>([]);
 	const [isDisableEditEventSubmitButton, setIsDisableEditEventSubmitButton] =
 		useState(false);
 	const tz = useStore($tz);
@@ -351,6 +424,27 @@ export const EventPage = () => {
 	}, [route.matches?.id]);
 
 	const eventDate = dayjs(event?.date).tz(tz);
+
+	const updateEventData = () => {
+		if (eventId) {
+			setFetching(true);
+			readEvent(eventId)
+				.then((res) => {
+					if (res !== null) {
+						setEvent(res.payload);
+						return res?.payload;
+					}
+				})
+				.then((eventData) => {
+					if (eventData?.you_are_master) {
+						return getLocations();
+					}
+				})
+				.finally(() => {
+					setFetching(false);
+				});
+		}
+	};
 
 	return (
 		<section>
@@ -499,7 +593,7 @@ export const EventPage = () => {
 				{fetching ? (
 					<EventCardSkeleton />
 				) : event !== null ? (
-					<EventCard event={event} />
+					<EventCard event={event} updateEventData={updateEventData} />
 				) : (
 					<NotFoundPage
 						checkButton={false}
