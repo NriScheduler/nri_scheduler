@@ -10,13 +10,11 @@ interface TimesonesListProps {
 }
 
 export const TimesonesList = ({ value, onChange }: TimesonesListProps) => {
-	const tzOptions = Array.from(TIMEZONES)
-		.sort((a, b) => b[0] - a[0])
-		.map(([offset, tzName]) => (
-			<option value={tzName} key={tzName}>
-				{`${offset < 0 ? offset : "+" + offset} (${tzName})`}
-			</option>
-		));
+	const tzOptions = Array.from(TIMEZONES).map(([offset, tzName]) => (
+		<option value={tzName} key={tzName}>
+			{`${offset < 0 ? offset : "+" + offset} (${tzName})`}
+		</option>
+	));
 
 	return (
 		<NativeSelect.Root>
