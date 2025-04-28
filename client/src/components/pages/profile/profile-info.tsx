@@ -21,7 +21,7 @@ import { IStorePrifile, TIMEZONES } from "../../../store/profile";
 const NOT_SET = "Не установлен";
 
 interface IProfileInfoProps {
-	readonly user: IStorePrifile;
+	user: IStorePrifile | null;
 }
 
 export const ProfileInfo = ({ user }: IProfileInfoProps) => {
@@ -31,11 +31,11 @@ export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 
 	useEffect(() => {
 		setTimeZone(
-			user.timezone_offset || user.timezone_offset === 0
+			user?.timezone_offset || user?.timezone_offset === 0
 				? `UTC ${user.timezone_offset >= 0 ? "+" : ""}${user.timezone_offset} (${TIMEZONES.get(user.timezone_offset)})`
 				: NOT_SET,
 		);
-	}, [user.timezone_offset]);
+	}, [user?.timezone_offset]);
 
 	const sendVerification = useCallback(() => {
 		setFetching(true);
@@ -62,20 +62,20 @@ export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 				<Separator flex="1" />
 			</HStack>
 			<Stack>
-				<Avatar src={user.avatar_link} w="100px" h="100px" />
+				<Avatar src={user?.avatar_link} w="100px" h="100px" />
 				<DataList.Root orientation="horizontal">
 					<DataList.Item key="nickname">
 						<DataList.ItemLabel minW="150px">
 							Имя пользователя
 						</DataList.ItemLabel>
 						<DataList.ItemValue color="black" fontWeight="500">
-							<p>{user.nickname}</p>
+							<p>{user?.nickname}</p>
 						</DataList.ItemValue>
 					</DataList.Item>
 					<DataList.Item key="about_me">
 						<DataList.ItemLabel minW="150px">О себе</DataList.ItemLabel>
 						<DataList.ItemValue color="black" fontWeight="500">
-							<p>{user.about_me}</p>
+							<p>{user?.about_me}</p>
 						</DataList.ItemValue>
 					</DataList.Item>
 				</DataList.Root>
@@ -96,16 +96,16 @@ export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 						</DataList.ItemLabel>
 						<DataList.ItemValue color="black" fontWeight="500">
 							<HStack>
-								{user.email || NOT_SET + "а"}
-								{user.email && (
+								{user?.email || NOT_SET + "а"}
+								{user?.email && (
 									<HoverCard
 										content={`Электронная почта ${user.email_verified ? "" : "не "}подтверждена`}
 									>
 										{user.email_verified ? <Check /> : <Warning />}
 									</HoverCard>
 								)}
-								{user.email &&
-									!user.email_verified &&
+								{user?.email &&
+									!user?.email_verified &&
 									!verificationSent && (
 										<Button
 											type="button"
@@ -124,13 +124,13 @@ export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 					<DataList.Item key="region">
 						<DataList.ItemLabel minW="150px">Регион</DataList.ItemLabel>
 						<DataList.ItemValue color="black" fontWeight="500">
-							<p>{user.region || NOT_SET}</p>
+							<p>{user?.region || NOT_SET}</p>
 						</DataList.ItemValue>
 					</DataList.Item>
 					<DataList.Item key="city">
 						<DataList.ItemLabel minW="150px">Город</DataList.ItemLabel>
 						<DataList.ItemValue color="black" fontWeight="500">
-							<p>{user.city || NOT_SET}</p>
+							<p>{user?.city || NOT_SET}</p>
 						</DataList.ItemValue>
 					</DataList.Item>
 					<DataList.Item key="timezone">

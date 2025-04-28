@@ -12,18 +12,16 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
 
 import { Avatar } from "./ui/avatar";
 import { Popover } from "./ui/popover";
 import { logout } from "../api";
-import { $profile } from "../store/profile";
+import { useAuthVerification } from "../utils";
 
 export const Header = () => {
 	const [{ path }] = useRouter();
 	const [open, setOpen] = useState(false);
-
-	const profile = useStore($profile);
+	const { profile, isAuthenticated, isVerified } = useAuthVerification();
 
 	return (
 		<header>
@@ -39,7 +37,7 @@ export const Header = () => {
 						>
 							НРИ Календарь
 						</Link>
-						{profile?.signed ? (
+						{isAuthenticated ? (
 							<Popover
 								open={open}
 								onOpenChange={(e) => setOpen(e.open)}
@@ -51,6 +49,20 @@ export const Header = () => {
 											onClick={() => setOpen(false)}
 										>
 											Профиль
+										</Link>
+										<Link
+											href={isVerified ? "/regions" : ""}
+											onClick={(e) => {
+												if (!isVerified) {
+													e.preventDefault();
+												}
+												setOpen(false);
+											}}
+											cursor={isVerified ? "pointer" : "not-allowed"}
+										>
+											{isVerified
+												? "Регионы и города"
+												: "Регионы и города (подтвердите эл. почту)"}
 										</Link>
 										<Link
 											href="/signin"
@@ -66,7 +78,7 @@ export const Header = () => {
 								}
 							>
 								<HStack key={profile?.email} gap="4">
-									<Avatar src={profile.avatar_link} />
+									<Avatar src={profile?.avatar_link} />
 									<Stack gap="0">
 										<Text fontWeight="medium">
 											{profile?.nickname}

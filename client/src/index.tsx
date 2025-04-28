@@ -62,6 +62,14 @@ const App = () => (
 						)
 					}
 				/>
+				<AsyncRoute
+					path="/regions"
+					getComponent={() =>
+						import("./components/pages/regions/regions").then(
+							(module) => module.RegionsPage,
+						)
+					}
+				/>
 
 				<Route default component={() => <NotFoundPage />} />
 			</Router>

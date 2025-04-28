@@ -1,6 +1,5 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import { route as navigate } from "preact-router";
 
 import {
 	Button,
@@ -17,8 +16,8 @@ import { CompList } from "./complist/complist";
 import { EmptyList } from "./empty-list";
 import { ProfileInfo } from "./profile-info";
 import { EAbortReason, IApiCompany, readMyCompanies } from "../../../api";
-import { $profile } from "../../../store/profile";
 import { $activeTab, setActiveTab } from "../../../store/tabsStore";
+import { useAuthVerification } from "../../../utils";
 
 /** @todo сделать апишку для заявок */
 interface IEvent {
@@ -35,10 +34,10 @@ export const tabList = [
 ];
 
 export const ProfilePage = () => {
-	const user = useStore($profile);
-	if (!user?.signed) {
-		navigate("/signin");
-		return;
+	const { profile, isAuthenticated } = useAuthVerification();
+
+	if (!isAuthenticated) {
+		return null;
 	}
 
 	const events: IEvent[] = [];
@@ -87,7 +86,7 @@ export const ProfilePage = () => {
 				</Tabs.List>
 
 				<Tabs.Content value="user" maxW="2xl">
-					<ProfileInfo user={user} />
+					<ProfileInfo user={profile} />
 				</Tabs.Content>
 
 				<Tabs.Content value="events">
