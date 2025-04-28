@@ -34,7 +34,6 @@ export const tabList = [
 ];
 
 export const ProfilePage = () => {
-	// const user = useStore($profile);
 	const { profile, isAuthenticated } = useAuthVerification();
 
 	if (!isAuthenticated) {

@@ -147,6 +147,7 @@ const checkResponse = async <T>(
 				break;
 
 			default:
+				toaster.error({ title: "Неизвестный статус ответа" });
 				console.info("Неизвестный статус");
 				console.error(apiRes);
 				break;

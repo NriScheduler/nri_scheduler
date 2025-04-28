@@ -38,7 +38,7 @@ export const ProfileEdit = () => {
 		return null;
 	}
 
-	const [nickname, setNickname] = useState(user?.nickname ?? "");
+	const [nickname, setNickname] = useState(user.nickname ?? "");
 	const [about, setAbout] = useState(user.about_me);
 	const [selectedRegion, setRegion] = useState(user.region);
 	const [selectedCity, setCity] = useState(user.city);
