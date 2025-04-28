@@ -184,6 +184,24 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 						/>
 					</Field>
 
+					<Field
+						label="Часовой пояс"
+						errorText={errors.timezone?.message}
+						invalid={!!errors.timezone}
+						disabled={shouldUseRegionTimezone}
+					>
+						<Controller
+							name="timezone"
+							control={control}
+							rules={{
+								required: !shouldUseRegionTimezone
+									? "Выберите часовой пояс"
+									: false,
+							}}
+							render={({ field }) => <TimesonesList {...field} />}
+						/>
+					</Field>
+
 					<Controller
 						control={control}
 						name="useRegionTimezone"
@@ -201,26 +219,6 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 							</Checkbox.Root>
 						)}
 					/>
-
-					{!shouldUseRegionTimezone && (
-						<Field
-							label="Часовой пояс"
-							errorText={errors.timezone?.message}
-							invalid={!!errors.timezone}
-						>
-							<Controller
-								name="timezone"
-								control={control}
-								rules={{
-									required: !shouldUseRegionTimezone
-										? "Выберите часовой пояс"
-										: false,
-								}}
-								render={({ field }) => <TimesonesList {...field} />}
-							/>
-						</Field>
-					)}
-
 					<Button
 						disabled={cityLoading}
 						type="submit"
