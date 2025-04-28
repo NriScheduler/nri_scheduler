@@ -71,8 +71,6 @@ export const CalendarPage = () => {
 						return {
 							id: apiEv.id,
 							title: apiEv.company,
-							location: apiEv.location,
-							people: apiEv.players as string[],
 							start: start.format(EVENT_FORMAT),
 							end: end.format(EVENT_FORMAT),
 						};

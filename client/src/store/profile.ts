@@ -25,7 +25,6 @@ export interface IStorePrifile {
 	readonly timezone_offset: number | null;
 	readonly tz_variant: ETzVariant | null;
 	readonly signed: true;
-	readonly tg_id?: string | null;
 	readonly verified: boolean;
 }
 
@@ -41,15 +40,12 @@ export interface IEmptyStorePrifile {
 	readonly timezone_offset: undefined;
 	readonly tz_variant: undefined;
 	readonly signed: false;
-	readonly tg_id: undefined;
 	readonly verified: undefined;
 }
 
 const EMPTY_USER = {};
 
-export type TStorePrifile = {
-	signed: boolean;
-} & (IStorePrifile | IEmptyStorePrifile);
+export type TStorePrifile = IStorePrifile | IEmptyStorePrifile;
 
 const _profile = map<IApiProfile | typeof EMPTY_USER>(EMPTY_USER);
 

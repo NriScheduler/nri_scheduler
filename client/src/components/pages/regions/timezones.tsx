@@ -1,6 +1,6 @@
 import { h } from "preact";
 
-import { createListCollection, Portal, Select } from "@chakra-ui/react";
+import { NativeSelect } from "@chakra-ui/react";
 
 import { TIMEZONES } from "../../../store/profile";
 
@@ -9,105 +9,25 @@ interface TimesonesListProps {
 	onChange: (value: number | null) => void;
 }
 
-const RUSSIAN_TIMEZONES = new Set([
-	"Europe/Kaliningrad",
-	"Europe/Moscow",
-	"Europe/Samara",
-	"Asia/Yekaterinburg",
-	"Asia/Omsk",
-	"Asia/Krasnoyarsk",
-	"Asia/Irkutsk",
-	"Asia/Yakutsk",
-	"Asia/Vladivostok",
-	"Asia/Magadan",
-	"Asia/Kamchatka",
-]);
-
 export const TimesonesList = ({ value, onChange }: TimesonesListProps) => {
-	// Создаем коллекцию с сортировкой
-	const collection = createListCollection({
-		items: Array.from(TIMEZONES)
-			.map(([offset, tzName]) => ({
-				label: `${offset < 0 ? offset : "+" + offset} (${tzName})`,
-				value: offset.toString(),
-				tzName,
-				category: RUSSIAN_TIMEZONES.has(tzName) ? "Россия" : "Другие",
-				offset: offset, // Сохраняем оригинальное смещение для сортировки
-			}))
-			.sort((a, b) => {
-				// Сначала российские, потом остальные
-				if (a.category === "Россия" && b.category !== "Россия") {
-					return -1;
-				}
-				if (a.category !== "Россия" && b.category === "Россия") {
-					return 1;
-				}
-				// Внутри групп сортируем по смещению (от меньшего к большему)
-				return a.offset - b.offset;
-			}),
-	});
-
-	// Группируем по категориям
-	const categories = Object.entries(
-		groupBy(collection.items, (item) => item.category),
-	);
-
-	function groupBy<T>(
-		array: T[],
-		keyGetter: (item: T) => string,
-	): Record<string, T[]> {
-		return array.reduce(
-			(result, item) => {
-				const key = keyGetter(item);
-				if (!result[key]) {
-					result[key] = [];
-				}
-				result[key].push(item);
-				return result;
-			},
-			{} as Record<string, T[]>,
-		);
-	}
+	const tzOptions = Array.from(TIMEZONES).map(([offset, tzName]) => (
+		<option value={tzName} key={tzName}>
+			{`${offset < 0 ? offset : "+" + offset} (${tzName})`}
+		</option>
+	));
 
 	return (
-		<Select.Root
-			collection={collection}
-			value={value !== null ? [value.toString()] : []}
-			onValueChange={(details) => {
-				const selectedValue = details.value[0];
-				onChange(selectedValue ? parseInt(selectedValue, 10) : null);
-			}}
-			size="sm"
-			width="100%"
-		>
-			<Select.HiddenSelect />
-			<Select.Control>
-				<Select.Trigger>
-					<Select.ValueText placeholder="Выберите часовой пояс" />
-				</Select.Trigger>
-				<Select.IndicatorGroup>
-					<Select.Indicator />
-				</Select.IndicatorGroup>
-			</Select.Control>
-			<Portal>
-				<Select.Positioner>
-					<Select.Content>
-						{categories.map(([category, items]) => (
-							<Select.ItemGroup key={category}>
-								<Select.ItemGroupLabel>
-									{category}
-								</Select.ItemGroupLabel>
-								{items.map((item) => (
-									<Select.Item item={item} key={item.value}>
-										{item.label}
-										<Select.ItemIndicator />
-									</Select.Item>
-								))}
-							</Select.ItemGroup>
-						))}
-					</Select.Content>
-				</Select.Positioner>
-			</Portal>
-		</Select.Root>
+		<NativeSelect.Root>
+			<NativeSelect.Field
+				placeholder="Выберите часовой пояс"
+				value={value}
+				onChange={(e: { currentTarget: { value: string } }) =>
+					onChange(e.currentTarget.value)
+				}
+			>
+				{tzOptions}
+			</NativeSelect.Field>
+			<NativeSelect.Indicator />
+		</NativeSelect.Root>
 	);
 };
