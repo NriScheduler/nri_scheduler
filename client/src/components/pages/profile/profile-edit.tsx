@@ -4,11 +4,9 @@ import { useEffect, useState } from "preact/hooks";
 import {
 	Button,
 	Container,
-	Group,
 	Heading,
 	HStack,
 	Input,
-	NativeSelect,
 	RadioGroup,
 	Separator,
 	Stack,
@@ -16,73 +14,103 @@ import {
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 
+import { ProfileComplete } from "./profile-autocomplete";
 import { ProfilePicture } from "./profile-picture";
+import { TimesonesList } from "../regions/timezones";
 import { Field } from "../../ui/field";
 import { toaster } from "../../ui/toaster";
 import {
 	ETzVariant,
 	getMyProfile,
 	readCitiesList,
-	readRegionsList,
 	updateMyProfile,
 } from "../../../api";
-import { $profile, TIMEZONES } from "../../../store/profile";
-import { navBack, useAuthGuard } from "../../../utils";
+import { $regions } from "../../../store/regions";
+import { navBack, useAuthVerification } from "../../../utils";
+
+type ProfileFormData = {
+	nickname: string;
+	about: string | null;
+	region: string | null;
+	city: string | null;
+	timezoneOffset: number | null;
+	tzVariant: ETzVariant;
+};
 
 export const ProfileEdit = () => {
-	const user = useStore($profile);
+	const { profile, isAuthenticated } = useAuthVerification();
+	const allRegions = useStore($regions);
 
-	const { isAuthenticated } = useAuthGuard();
-
-	if (!isAuthenticated || !user) {
+	if (!isAuthenticated || !profile) {
 		return null;
 	}
 
-	const [nickname, setNickname] = useState(user?.nickname ?? "");
-	const [about, setAbout] = useState(user.about_me);
-	const [selectedRegion, setRegion] = useState(user.region);
-	const [selectedCity, setCity] = useState(user.city);
-	const [selectedTimezone, setSelectedTimezone] = useState(
-		user.timezone_offset,
-	);
-	const [tzVariant, setTzVariant] = useState(
-		user.tz_variant || ETzVariant.DEVICE,
-	);
+	const [formData, setFormData] = useState<ProfileFormData>({
+		nickname: profile.nickname ?? "",
+		about: profile.about_me ?? null,
+		region: profile.region ?? null,
+		city: profile.city ?? null,
+		timezoneOffset: profile.timezone_offset ?? null,
+		tzVariant: profile.tz_variant ?? ETzVariant.DEVICE,
+	});
 
-	const [regionsOptions, setRegionsOptions] = useState<string[]>(
-		[user.region || ""].filter(Boolean),
-	);
-	const [citiesOptions, setCitiesOptions] = useState<string[]>(
-		[user.city || ""].filter(Boolean),
-	);
+	const [citiesOptions, setCitiesOptions] = useState<string[]>([]);
 
 	useEffect(() => {
-		readRegionsList().then((res) => {
-			if (res) {
-				setRegionsOptions(res.payload.map(({ name }) => name));
+		const loadCities = async () => {
+			if (formData.region) {
+				const res = await readCitiesList(formData.region);
+				if (res) {
+					setCitiesOptions(res.payload.map(({ name }) => name));
+				}
 			}
-		});
-	}, []);
+		};
+		loadCities();
+	}, [formData.region]);
 
-	useEffect(() => {
-		readCitiesList(selectedRegion).then((res) => {
-			if (res) {
-				setCitiesOptions(res.payload.map(({ name }) => name));
-			}
-		});
-	}, [selectedRegion]);
+	const handleInputChange = (
+		field: keyof ProfileFormData,
+		value: string | number | null,
+	) => {
+		setFormData((prev) => ({ ...prev, [field]: value }));
+	};
 
-	const tzOptions = Array.from(TIMEZONES.entries())
-		.sort(([a], [b]) => b - a)
-		.map(([offset, tzName]) => (
-			<option value={offset} key={offset}>
-				{`${offset < 0 ? offset : "+" + offset} (${tzName})`}
-			</option>
-		));
+	const handleSubmit = async () => {
+		const { nickname, about, city, timezoneOffset, tzVariant } = formData;
+
+		if (
+			!nickname ||
+			(tzVariant === ETzVariant.CITY && !city) ||
+			(tzVariant === ETzVariant.OWN && !timezoneOffset)
+		) {
+			return;
+		}
+
+		const res = await updateMyProfile(
+			nickname,
+			about,
+			city,
+			timezoneOffset,
+			tzVariant,
+		);
+
+		if (res) {
+			await getMyProfile();
+			navBack();
+			toaster.success({
+				title: res.result,
+			});
+		}
+	};
+
+	const isSubmitDisabled =
+		!formData.nickname ||
+		(formData.tzVariant === ETzVariant.CITY && !formData.city) ||
+		(formData.tzVariant === ETzVariant.OWN && !formData.timezoneOffset);
 
 	return (
 		<Container mb={6}>
-			<Button type="button" onClick={navBack} mb={4}>
+			<Button type="button" onClick={navBack}>
 				Вернуться назад
 			</Button>
 
@@ -94,15 +122,17 @@ export const ProfileEdit = () => {
 					</Heading>
 					<Separator flex="1" />
 				</HStack>
-				<Stack>
-					<ProfilePicture link={user.avatar_link ?? ""} />
-					<Field label="Имя пользователя" invalid={!nickname}>
+				<Stack w="1/2" gap={4}>
+					<ProfilePicture link={profile.avatar_link} />
+					<Field label="Имя пользователя" invalid={!formData.nickname}>
 						<Input
 							name="nickname"
 							placeholder="Заполните поле"
 							required
-							value={nickname}
-							onChange={(e) => setNickname(e.currentTarget.value)}
+							value={formData.nickname}
+							onChange={(e) =>
+								handleInputChange("nickname", e.currentTarget.value)
+							}
 						/>
 					</Field>
 					<Field label="О себе">
@@ -111,8 +141,10 @@ export const ProfileEdit = () => {
 							placeholder="Расскажите о себе"
 							variant="outline"
 							autoresize
-							value={about as string}
-							onChange={(e) => setAbout(e.currentTarget.value)}
+							value={formData.about || ""}
+							onChange={(e) =>
+								handleInputChange("about", e.currentTarget.value)
+							}
 						/>
 					</Field>
 				</Stack>
@@ -124,156 +156,118 @@ export const ProfileEdit = () => {
 					</Heading>
 					<Separator flex="1" />
 				</HStack>
-				<Stack>
-					<Group w="full">
-						<Field
-							label="Город"
-							invalid={tzVariant === ETzVariant.CITY && !selectedCity}
-						>
-							<NativeSelect.Root>
-								<NativeSelect.Field
-									name="city"
-									placeholder="Выберите город"
-									value={selectedCity as string}
-									onChange={(e) =>
-										setCity(e.currentTarget.value || null)
-									}
-								>
-									{citiesOptions.map((city) => (
-										<option value={city} key={city}>
-											{city}
-										</option>
-									))}
-								</NativeSelect.Field>
-								<NativeSelect.Indicator />
-							</NativeSelect.Root>
-						</Field>
-						<Field label="Регион">
-							<NativeSelect.Root>
-								<NativeSelect.Field
-									placeholder="Выберите регион"
-									value={selectedRegion as string}
-									onChange={(event) => {
-										const reg = event.currentTarget.value;
-										if (
-											reg &&
-											selectedRegion &&
-											reg !== selectedRegion
-										) {
-											setCity(null);
-										}
-										setRegion(event.currentTarget.value || null);
-									}}
-								>
-									{regionsOptions.map((reg) => (
-										<option value={reg} key={reg}>
-											{reg}
-										</option>
-									))}
-								</NativeSelect.Field>
-								<NativeSelect.Indicator />
-							</NativeSelect.Root>
-						</Field>
-					</Group>
-					<Group mt={2}>
-						<Field
-							label="Часовой пояс"
-							disabled={tzVariant !== ETzVariant.OWN}
-							invalid={tzVariant === ETzVariant.OWN && !selectedTimezone}
-						>
-							<NativeSelect.Root>
-								<NativeSelect.Field
-									placeholder="Выберите часовой пояс"
-									value={selectedTimezone as number}
-									onChange={(event) =>
-										setSelectedTimezone(
-											event.currentTarget.value
-												? Number(event.currentTarget.value)
-												: null,
-										)
-									}
-								>
-									{tzOptions}
-								</NativeSelect.Field>
-								<NativeSelect.Indicator />
-							</NativeSelect.Root>
-						</Field>
-						<RadioGroup.Root
-							value={tzVariant}
-							onValueChange={(e) => {
-								let tzVar = e.value as ETzVariant;
-								if (tzVar !== ETzVariant.OWN) {
-									setSelectedTimezone(null);
+				<Stack w="1/2" gap={4}>
+					<Field
+						label="Город"
+						invalid={
+							formData.tzVariant === ETzVariant.CITY && !formData.city
+						}
+					>
+						<ProfileComplete
+							value={formData.city || ""}
+							placeholder="Выберите город"
+							options={citiesOptions}
+							handleChange={(e) => handleInputChange("city", e)}
+						/>
+					</Field>
+					<Field label="Регион">
+						<ProfileComplete
+							value={formData.region || ""}
+							placeholder="Выберите регион"
+							options={allRegions.map((region) => region.name)}
+							handleChange={(value) => {
+								if (
+									value &&
+									formData.region &&
+									value !== formData.region
+								) {
+									handleInputChange("city", null);
 								}
-								setTzVariant(tzVar);
+								handleInputChange("region", value);
 							}}
-						>
-							<HStack gap="6">
-								<RadioGroup.Item
-									key={ETzVariant.CITY}
-									value={ETzVariant.CITY}
-								>
-									<RadioGroup.ItemHiddenInput />
-									<RadioGroup.ItemIndicator />
-									<RadioGroup.ItemText>
-										Брать из города
-									</RadioGroup.ItemText>
-								</RadioGroup.Item>
-								<RadioGroup.Item
-									key={ETzVariant.DEVICE}
-									value={ETzVariant.DEVICE}
-								>
-									<RadioGroup.ItemHiddenInput />
-									<RadioGroup.ItemIndicator />
-									<RadioGroup.ItemText>
-										Брать с устройства
-									</RadioGroup.ItemText>
-								</RadioGroup.Item>
-								<RadioGroup.Item
-									key={ETzVariant.OWN}
-									value={ETzVariant.OWN}
-								>
-									<RadioGroup.ItemHiddenInput />
-									<RadioGroup.ItemIndicator />
-									<RadioGroup.ItemText>
-										Указать вручную
-									</RadioGroup.ItemText>
-								</RadioGroup.Item>
-							</HStack>
-						</RadioGroup.Root>
-					</Group>
+						/>
+					</Field>
+					<Field
+						label="Часовой пояс"
+						disabled={formData.tzVariant !== ETzVariant.OWN}
+						invalid={
+							formData.tzVariant === ETzVariant.OWN &&
+							!formData.timezoneOffset
+						}
+					>
+						<TimesonesList
+							value={formData.timezoneOffset}
+							onChange={(value) =>
+								handleInputChange("timezoneOffset", value)
+							}
+						/>
+					</Field>
+					<TimezoneRadioGroup
+						value={formData.tzVariant}
+						onChange={(value) => {
+							if (value !== ETzVariant.OWN) {
+								handleInputChange("timezoneOffset", null);
+							}
+							handleInputChange("tzVariant", value);
+						}}
+					/>
 				</Stack>
 
 				<Button
 					mt={6}
 					type="button"
-					disabled={
-						!nickname ||
-						(tzVariant === ETzVariant.CITY && !selectedCity) ||
-						(tzVariant === ETzVariant.OWN && !selectedTimezone)
-					}
-					onClick={() => {
-						updateMyProfile(
-							nickname,
-							about,
-							selectedCity,
-							selectedTimezone,
-							tzVariant,
-						)
-							.then((res) => res && getMyProfile())
-							.then(
-								(res) =>
-									res &&
-									(navBack(),
-									toaster.success({
-										title: "Данные профиля обновлены",
-									})),
-							);
-					}}
+					disabled={isSubmitDisabled}
+					onClick={handleSubmit}
 				>
 					Сохранить изменения
 				</Button>
 			</form>
 		</Container>
 	);
+};
+
+const TimezoneRadioGroup = ({
+	value,
+	onChange,
+}: {
+	value: ETzVariant;
+	onChange: (value: ETzVariant) => void;
+}) => {
+	const timezoneVariants = [
+		ETzVariant.CITY,
+		ETzVariant.DEVICE,
+		ETzVariant.OWN,
+	] as const;
+
+	return (
+		<RadioGroup.Root
+			value={value}
+			onValueChange={(e) => onChange(e.value as ETzVariant)}
+		>
+			<HStack gap="6">
+				{timezoneVariants.map((variant) => (
+					<RadioGroup.Item key={variant} value={variant}>
+						<RadioGroup.ItemHiddenInput />
+						<RadioGroup.ItemIndicator />
+						<RadioGroup.ItemText>
+							{getTimezoneVariantLabel(variant)}
+						</RadioGroup.ItemText>
+					</RadioGroup.Item>
+				))}
+			</HStack>
+		</RadioGroup.Root>
+	);
+};
+
+const getTimezoneVariantLabel = (variant: ETzVariant) => {
+	switch (variant) {
+		case ETzVariant.CITY:
+			return "Брать из города";
+		case ETzVariant.DEVICE:
+			return "Брать с устройства";
+		case ETzVariant.OWN:
+			return "Указать вручную";
+		default:
+			return variant;
+	}
 };

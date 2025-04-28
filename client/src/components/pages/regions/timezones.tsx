@@ -5,8 +5,8 @@ import { createListCollection, Portal, Select } from "@chakra-ui/react";
 import { TIMEZONES } from "../../../store/profile";
 
 interface TimesonesListProps {
-	value: string;
-	onChange: (value: string) => void;
+	value: number | string | null;
+	onChange: (value: number | null) => void;
 }
 
 const RUSSIAN_TIMEZONES = new Set([
@@ -29,7 +29,8 @@ export const TimesonesList = ({ value, onChange }: TimesonesListProps) => {
 		items: Array.from(TIMEZONES)
 			.map(([offset, tzName]) => ({
 				label: `${offset < 0 ? offset : "+" + offset} (${tzName})`,
-				value: tzName,
+				value: offset.toString(),
+				tzName,
 				category: RUSSIAN_TIMEZONES.has(tzName) ? "Россия" : "Другие",
 				offset: offset, // Сохраняем оригинальное смещение для сортировки
 			}))
@@ -71,8 +72,11 @@ export const TimesonesList = ({ value, onChange }: TimesonesListProps) => {
 	return (
 		<Select.Root
 			collection={collection}
-			value={[value]}
-			onValueChange={(details) => onChange(details.value[0])}
+			value={value !== null ? [value.toString()] : []}
+			onValueChange={(details) => {
+				const selectedValue = details.value[0];
+				onChange(selectedValue ? parseInt(selectedValue, 10) : null);
+			}}
 			size="sm"
 			width="100%"
 		>
