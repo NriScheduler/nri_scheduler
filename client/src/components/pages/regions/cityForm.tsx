@@ -202,31 +202,34 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 						/>
 					</Field>
 
-					<Controller
-						control={control}
-						name="useRegionTimezone"
-						render={({ field }) => (
-							<Checkbox.Root
-								checked={field.value}
-								onCheckedChange={({ checked }) => {
-									const isChecked = !!checked;
-									handleCheckboxChange(isChecked);
-								}}
-							>
-								<Checkbox.HiddenInput />
-								<Checkbox.Control />
-								<Checkbox.Label>Брать из региона</Checkbox.Label>
-							</Checkbox.Root>
-						)}
-					/>
-					<Button
-						disabled={cityLoading}
-						type="submit"
-						w="fit-content"
-						ml="auto"
-					>
-						{cityLoading ? "Добавление..." : "Добавить город"}
-					</Button>
+					<HStack>
+						<Controller
+							control={control}
+							name="useRegionTimezone"
+							render={({ field }) => (
+								<Checkbox.Root
+									checked={field.value}
+									alignSelf="start"
+									onCheckedChange={({ checked }) => {
+										const isChecked = !!checked;
+										handleCheckboxChange(isChecked);
+									}}
+								>
+									<Checkbox.HiddenInput />
+									<Checkbox.Control />
+									<Checkbox.Label>Брать из региона</Checkbox.Label>
+								</Checkbox.Root>
+							)}
+						/>
+						<Button
+							disabled={cityLoading}
+							type="submit"
+							w="fit-content"
+							ml="auto"
+						>
+							{cityLoading ? "Добавление..." : "Добавить город"}
+						</Button>
+					</HStack>
 				</Stack>
 			</form>
 		</Stack>
