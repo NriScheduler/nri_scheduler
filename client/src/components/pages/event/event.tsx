@@ -54,7 +54,7 @@ import {
 	updateEvent,
 } from "../../../api";
 import { $profile, $tz } from "../../../store/profile";
-import { calcMapIconLink, navBack } from "../../../utils";
+import { calcMapIconLink, EVENT_FORMAT, navBack } from "../../../utils";
 
 dayjs.locale("ru");
 
@@ -116,7 +116,7 @@ const EventCard = ({
 				setIsLoading(false);
 			});
 	};
-	const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+	const nowDate = dayjs().tz(tz);
 
 	const onCancelEvent = () => {
 		cancelEvent(event.id).then(() => {
@@ -300,8 +300,6 @@ interface IFormEditEvent {
 	readonly plan_duration: string;
 }
 
-const KEEP_LOCAL_TIME = true;
-
 export const EventPage = () => {
 	const [route] = useRouter();
 	const eventId = route.matches?.id as UUID | undefined;
@@ -342,7 +340,7 @@ export const EventPage = () => {
 		const { location, start, startTime, max_slots, plan_duration } = data;
 
 		if (data) {
-			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
+			const date = dayjs.tz(`${start} ${startTime}`, EVENT_FORMAT, tz);
 			setIsDisableEditEventSubmitButton(true);
 			if (!eventId) {
 				return;
@@ -375,8 +373,8 @@ export const EventPage = () => {
 	const [start] = watch(["start"]);
 	const validateDate = (value: string) => {
 		clearErrors("startTime");
-		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
-		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+		const fieldDate = dayjs.tz(`${value} 12:00`, EVENT_FORMAT, tz);
+		const nowDate = dayjs().tz(tz);
 		if (
 			nowDate.isSame(fieldDate, "day") ||
 			fieldDate.isAfter(nowDate, "day")
@@ -391,8 +389,8 @@ export const EventPage = () => {
 		if (!start) {
 			return "Укажите дату";
 		}
-		const fultime = dayjs(`${start} ${value}`).tz(tz, KEEP_LOCAL_TIME);
-		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+		const fultime = dayjs.tz(`${start} ${value}`, EVENT_FORMAT, tz);
+		const nowDate = dayjs().tz(tz);
 		if (
 			nowDate.isSame(fultime, "minute") ||
 			fultime.isAfter(nowDate, "minute")
@@ -494,7 +492,7 @@ export const EventPage = () => {
 															"YYYY-MM-DD",
 														)}
 														min={dayjs()
-															.tz(tz, KEEP_LOCAL_TIME)
+															.tz(tz)
 															.format("YYYY-MM-DD")}
 														{...register("start", {
 															required: "Заполните поле",

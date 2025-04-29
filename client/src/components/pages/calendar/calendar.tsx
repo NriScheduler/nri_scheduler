@@ -24,15 +24,14 @@ import {
 	enableMastery,
 } from "../../../store/mastery";
 import { $profile, $tz } from "../../../store/profile";
+import { EVENT_FORMAT } from "../../../utils";
 
 const Company = lazy(() => import("./company"));
 const Location = lazy(() => import("./location"));
 const Event = lazy(() => import("./event"));
 const sceleton = <Skeleton alignSelf="100%" w="30%" />;
 
-const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 const DEFAULT_EVENT_DURATION = 4;
-const KEEP_LOCAL_TIME = true;
 
 export const CalendarPage = () => {
 	const [showSwitch, setShowSwitch] = useState(false);
@@ -50,15 +49,15 @@ export const CalendarPage = () => {
 		dateEnd: string,
 		calendar: CalendarApp,
 	) => {
-		const dateStartWithTz = dayjs(dateStart).tz(tz, KEEP_LOCAL_TIME).format();
-		const dateEndWithTz = dayjs(dateEnd).tz(tz, KEEP_LOCAL_TIME).format();
+		const dateStartWithTz = dayjs.tz(dateStart, EVENT_FORMAT, tz).format();
+		const dateEndWithTz = dayjs.tz(dateEnd, EVENT_FORMAT, tz).format();
 		readEventsList(dateStartWithTz, dateEndWithTz, {
 			imamaster: $mastery.get(),
 		}).then((res) => {
 			if (res !== null) {
 				calendar.events.set(
 					res.payload.map((apiEv) => {
-						const start = dayjs(apiEv.date).tz(tz, KEEP_LOCAL_TIME);
+						const start = dayjs(apiEv.date).tz(tz);
 						let end = start.add(
 							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
 							"h",
@@ -105,7 +104,7 @@ export const CalendarPage = () => {
 		readEvent(id).then((responce) => {
 			if (responce?.payload) {
 				const data = responce.payload;
-				const start = dayjs(data.date).tz(tz, KEEP_LOCAL_TIME);
+				const start = dayjs(data.date).tz(tz);
 				let end = start.add(
 					data.plan_duration || DEFAULT_EVENT_DURATION,
 					"h",
@@ -176,7 +175,6 @@ export const CalendarPage = () => {
 									setOpenDraw={setOpenDraw}
 									companyList={companyList}
 									setCompanyList={setCompanyList}
-									keepLocalTome={KEEP_LOCAL_TIME}
 									tz={tz}
 									getNewEvent={getNewEvent}
 									profileRegion={profile.region}
