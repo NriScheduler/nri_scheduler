@@ -195,3 +195,5 @@ export const CalendarPage = () => {
 		</section>
 	);
 };
+
+export default CalendarPage;

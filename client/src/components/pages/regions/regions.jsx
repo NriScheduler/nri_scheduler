@@ -23,3 +23,5 @@ export const RegionsPage = () => {
       </Container>
    );
 };
+
+export default RegionsPage

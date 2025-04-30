@@ -23,7 +23,6 @@
 		"dayjs": "^1.11.13",
 		"nanostores": "^1.0.1",
 		"preact": "^10.26.5",
-		"preact-async-route": "^2.2.1",
 		"preact-router": "^4.1.2",
 		"procetar": "^0.3.2",
 		"react-hook-form": "^7.56.1",

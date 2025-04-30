@@ -1,5 +1,5 @@
 import { h, render } from "preact";
-import AsyncRoute from "preact-async-route";
+import { lazy } from "preact/compat";
 import { Route, Router } from "preact-router";
 
 import { softCheck } from "./api";
@@ -13,64 +13,32 @@ import {
 	SignInPage,
 } from "./components/pages";
 
+const SingUpPage = lazy(() => import("./components/pages/sign-up/signup"));
+const CalendarPage = lazy(() => import("./components/pages/calendar/calendar"));
+const ProfilePage = lazy(() => import("./components/pages/profile/profile"));
+const ProfileEdit = lazy(
+	() => import("./components/pages/profile/profile-edit"),
+);
+const VerificationPage = lazy(
+	() => import("./components/pages/verification/verification"),
+);
+const RegionsPage = lazy(() => import("./components/pages/regions/regions"));
+
 const App = () => (
 	<Layout
 		page={
 			<Router>
 				<Route path="/" component={HomePage} />
-				<AsyncRoute
-					path="/signup"
-					getComponent={() =>
-						import("./components/pages/sign-up/signup").then(
-							(module) => module.SingUpPage,
-						)
-					}
-				/>
+				<Route path="/signup" component={SingUpPage} />
 				<Route path="/signin" component={SignInPage} />
-				<AsyncRoute
-					path="/calendar"
-					getComponent={() =>
-						import("./components/pages/calendar/calendar").then(
-							(module) => module.CalendarPage,
-						)
-					}
-				/>
+				<Route path="/calendar" component={CalendarPage} />
 				<Route path="/event/:id" component={EventPage} />
 				<Route path="/company/:id" component={CompanyPage} />
 				<Route path="/location/:id" component={LocationPage} />
-				<AsyncRoute
-					path="/profile"
-					getComponent={() =>
-						import("./components/pages/profile/profile").then(
-							(module) => module.ProfilePage,
-						)
-					}
-				/>
-				<AsyncRoute
-					path="/profile/edit"
-					getComponent={() =>
-						import("./components/pages/profile/profile-edit").then(
-							(module) => module.ProfileEdit,
-						)
-					}
-				/>
-				<AsyncRoute
-					path="/verification"
-					getComponent={() =>
-						import("./components/pages/verification/verification").then(
-							(module) => module.VerificationPage,
-						)
-					}
-				/>
-				<AsyncRoute
-					path="/regions"
-					getComponent={() =>
-						import("./components/pages/regions/regions").then(
-							(module) => module.RegionsPage,
-						)
-					}
-				/>
-
+				<Route path="/profile" component={ProfilePage} />
+				<Route path="/profile/edit" component={ProfileEdit} />
+				<Route path="/verification" component={VerificationPage} />
+				<Route path="/regions" component={RegionsPage} />
 				<Route default component={() => <NotFoundPage />} />
 			</Router>
 		}

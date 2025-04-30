@@ -277,3 +277,5 @@ export const ProfileEdit = () => {
 		</Container>
 	);
 };
+
+export default ProfileEdit;
