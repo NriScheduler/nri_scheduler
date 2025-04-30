@@ -1,4 +1,3 @@
-import { h } from "preact";
 import { MdOutlineEvent } from "react-icons/md";
 
 import { EmptyState, VStack } from "@chakra-ui/react";

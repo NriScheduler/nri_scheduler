@@ -1,4 +1,4 @@
-import { h } from "preact";
+import { ReactNode } from "react";
 
 import { ChakraProvider, createSystem, defaultConfig } from "@chakra-ui/react";
 
@@ -9,7 +9,7 @@ const system = createSystem(defaultConfig, {
 });
 
 interface IProviderProps {
-	children: h.JSX.Element | h.JSX.Element[];
+	children: ReactNode | ReactNode[];
 }
 
 export function Provider({ children }: IProviderProps) {

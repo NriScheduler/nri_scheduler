@@ -1,5 +1,3 @@
-import { h } from "preact";
-
 import { Avatar as Ava } from "@chakra-ui/react";
 
 export interface IAvatarProps {

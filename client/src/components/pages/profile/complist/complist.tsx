@@ -1,4 +1,3 @@
-import { h } from "preact";
 import { FaBars, FaBorderAll } from "react-icons/fa";
 
 import {
@@ -10,7 +9,7 @@ import {
 	Stack,
 	Switch,
 } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
+import { useStore } from "@nanostores/react";
 
 import { IApiCompany } from "../../../../api";
 import {

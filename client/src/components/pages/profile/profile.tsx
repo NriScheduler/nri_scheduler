@@ -1,5 +1,4 @@
-import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useState } from "react";
 
 import {
 	Button,
@@ -10,7 +9,7 @@ import {
 	Spinner,
 	Tabs,
 } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
+import { useStore } from "@nanostores/react";
 
 import { CompList } from "./complist/complist";
 import { EmptyList } from "./empty-list";
@@ -131,3 +130,5 @@ export const ProfilePage = () => {
 		</Container>
 	);
 };
+
+export default ProfilePage;

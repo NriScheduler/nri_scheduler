@@ -1,9 +1,8 @@
-import { h } from "preact";
-import { useState } from "preact/hooks";
-import { route as navigate } from "preact-router";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaTelegramPlane as TelegramIcon } from "react-icons/fa";
 import { MdOutlineAlternateEmail as EmailIcon } from "react-icons/md";
+import { useNavigate } from "react-router";
 
 import {
 	Button,
@@ -37,6 +36,8 @@ export const SingUpPage = () => {
 		formState: { errors },
 	} = useForm<IFormValues>();
 
+	const navigate = useNavigate();
+
 	const [fetching, setFetching] = useState(false);
 
 	const onSubmit = handleSubmit(({ name, email, password }) => {
@@ -47,7 +48,7 @@ export const SingUpPage = () => {
 				toaster.success({
 					title: "Вам отправлено письмо для подтверждения email",
 				});
-				navigate("/signin", true);
+				navigate("/signin");
 			} else {
 				setFetching(false);
 			}
@@ -114,7 +115,7 @@ export const SingUpPage = () => {
 					>
 						<PasswordInput
 							placeholder="******"
-							autocomplete="off"
+							autoComplete="off"
 							{...register("password", {
 								required: "Заполните поле",
 							})}
@@ -127,7 +128,7 @@ export const SingUpPage = () => {
 					>
 						<PasswordInput
 							placeholder="******"
-							autocomplete="off"
+							autoComplete="off"
 							{...register("repassword", {
 								required: "Заполните поле",
 								validate: (value) =>
@@ -165,3 +166,5 @@ export const SingUpPage = () => {
 		</Container>
 	);
 };
+
+export default SingUpPage;

@@ -1,5 +1,4 @@
-import { h } from "preact";
-import { useState } from "preact/hooks";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import {

@@ -1,9 +1,8 @@
-import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button, Input, Stack, Textarea } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
+import { useStore } from "@nanostores/react";
 
 import {
 	DrawerBackdrop,

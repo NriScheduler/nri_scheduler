@@ -1,5 +1,4 @@
-import { h, RefObject } from "preact";
-import { forwardRef } from "preact/compat";
+import { forwardRef, RefObject } from "react";
 
 import { Drawer as ChakraDrawer, Portal } from "@chakra-ui/react";
 

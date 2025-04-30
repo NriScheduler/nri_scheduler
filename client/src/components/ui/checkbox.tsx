@@ -1,4 +1,4 @@
-import { h } from "preact";
+import { ReactNode } from "react";
 
 import {
 	Checkbox as Cbox,
@@ -7,7 +7,7 @@ import {
 
 export interface ICheckboxProps {
 	readonly checked?: boolean;
-	readonly children: h.JSX.Element | string;
+	readonly children: ReactNode | string;
 	readonly onChange?: (e: CheckboxCheckedChangeDetails) => void;
 }
 

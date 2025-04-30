@@ -1,4 +1,3 @@
-import { h } from "preact";
 import { FaCheck } from "react-icons/fa";
 import { MdCancel, MdWarning } from "react-icons/md";
 

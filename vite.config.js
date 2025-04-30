@@ -1,4 +1,4 @@
-import { preact } from '@preact/preset-vite';
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 const VITE_PORT = parseInt(process.env.VITE_PORT);
@@ -37,10 +37,6 @@ export default defineConfig(({ command }) => {
 		},
 		resolve: {
 			alias: {
-				'react':             'preact/compat',
-				'react-dom':         'preact/compat',
-				'react/jsx-runtime': 'preact/jsx-runtime',
-
 				...(command === 'build' ? {} : {
 					'fs':            '',
 					'path':          '',
@@ -53,6 +49,6 @@ export default defineConfig(({ command }) => {
 			factory: 'h',
 			fragment: 'Fragment',
 		},
-		plugins: [preact()],
+		plugins: [react()],
 	};
 });

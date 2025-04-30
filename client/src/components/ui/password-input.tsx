@@ -1,6 +1,4 @@
-import { ComponentChild, h } from "preact";
-import { forwardRef } from "preact/compat";
-import { useRef } from "preact/hooks";
+import { forwardRef, ReactNode, useRef } from "react";
 import { LuEye, LuEyeOff } from "react-icons/lu";
 
 import {
@@ -23,7 +21,7 @@ export interface IPasswordVisibilityProps {
 	defaultVisible?: boolean;
 	visible?: boolean;
 	onVisibleChange?: (visible: boolean) => void;
-	visibilityIcon?: { on: ComponentChild; off: ComponentChild };
+	visibilityIcon?: { on: ReactNode; off: ReactNode };
 }
 
 export interface IPasswordInputProps

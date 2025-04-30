@@ -1,5 +1,4 @@
-import { h } from "preact";
-import { useStore } from "@nanostores/preact";
+import { useStore } from "@nanostores/react";
 import { $regions, $regionsLoading } from "../../../store/regions";
 import { Container } from "@chakra-ui/react";
 import { RegionForm } from "./regionForm";
@@ -23,3 +22,5 @@ export const RegionsPage = () => {
       </Container>
    );
 };
+
+export default RegionsPage;

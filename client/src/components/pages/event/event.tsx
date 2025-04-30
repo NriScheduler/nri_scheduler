@@ -1,9 +1,8 @@
 import type { UUID } from "node:crypto";
 
-import { Fragment, h } from "preact";
-import { useEffect, useMemo, useState } from "preact/hooks";
-import { useRouter } from "preact-router";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useParams } from "react-router";
 
 import {
 	Button,
@@ -23,7 +22,7 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
+import { useStore } from "@nanostores/react";
 import "dayjs/locale/ru";
 import dayjs from "dayjs";
 
@@ -301,8 +300,7 @@ interface IFormEditEvent {
 }
 
 export const EventPage = () => {
-	const [route] = useRouter();
-	const eventId = route.matches?.id as UUID | undefined;
+	const { id: eventId } = useParams<{ id: UUID }>();
 	const [fetching, setFetching] = useState(false);
 	const [event, setEvent] = useState<IApiEvent | null>(null);
 	const [open, setOpen] = useState(false);
@@ -419,7 +417,7 @@ export const EventPage = () => {
 					setFetching(false);
 				});
 		}
-	}, [route.matches?.id]);
+	}, [eventId]);
 
 	const eventDate = dayjs(event?.date).tz(tz);
 

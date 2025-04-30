@@ -1,6 +1,5 @@
-import { Fragment, h } from "preact";
-import { useCallback, useEffect, useState } from "preact/hooks";
-import { route as navigate } from "preact-router";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
 import {
 	Button,
@@ -25,6 +24,8 @@ interface IProfileInfoProps {
 }
 
 export const ProfileInfo = ({ user }: IProfileInfoProps) => {
+	const navigate = useNavigate();
+
 	const [timeZone, setTimeZone] = useState(NOT_SET);
 	const [fetching, setFetching] = useState(false);
 	const [verificationSent, setVerificationSent] = useState(false);

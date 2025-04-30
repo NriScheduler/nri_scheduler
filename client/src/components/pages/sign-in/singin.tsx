@@ -1,9 +1,8 @@
-import { Fragment, h } from "preact";
-import { useState } from "preact/hooks";
-import { route as navigate } from "preact-router";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaTelegramPlane as TelegramIcon } from "react-icons/fa";
 import { MdOutlineAlternateEmail as EmailIcon } from "react-icons/md";
+import { useNavigate } from "react-router";
 
 import {
 	Button,
@@ -37,6 +36,8 @@ export const SignInPage = () => {
 
 	const [fetching, setFetching] = useState(false);
 	const [isEmailVisible, setEmailVisibility] = useState(false);
+
+	const navigate = useNavigate();
 
 	const onSubmit = handleSubmit(({ email, password }) => {
 		setFetching(true);
@@ -118,7 +119,7 @@ export const SignInPage = () => {
 							>
 								<Input
 									placeholder="me@example.ru"
-									autocomplete="email"
+									autoComplete="email"
 									{...register("email", {
 										required: "Заполните поле",
 										pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -132,7 +133,7 @@ export const SignInPage = () => {
 							>
 								<PasswordInput
 									placeholder="******"
-									autocomplete="password"
+									autoComplete="password"
 									{...register("password", {
 										required: "Заполните поле",
 									})}

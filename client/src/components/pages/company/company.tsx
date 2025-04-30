@@ -1,9 +1,8 @@
 import type { UUID } from "node:crypto";
 
-import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
-import { useRouter } from "preact-router";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useParams } from "react-router";
 
 import {
 	Button,
@@ -103,8 +102,7 @@ const CompanyCardSkeleton = () => {
 };
 
 export const CompanyPage = () => {
-	const [route] = useRouter();
-	const companyId = route.matches?.id as UUID;
+	const { id: companyId } = useParams<{ id: UUID }>();
 	const [fetching, setFetching] = useState(false);
 	const [company, setCompany] = useState<IApiCompanyInfo | null>(null);
 	const [open, setOpen] = useState(false);

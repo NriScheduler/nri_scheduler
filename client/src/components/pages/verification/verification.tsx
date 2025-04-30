@@ -1,6 +1,5 @@
-import { Fragment, h } from "preact";
-import { useEffect, useState } from "preact/hooks";
-import { route as navigate, useRouter } from "preact-router";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 
 import { Box, Button, Container, HStack, Image, Link } from "@chakra-ui/react";
 
@@ -9,8 +8,9 @@ import { toaster } from "../../ui/toaster";
 import { EVerificationChannel, softCheck, verifyEmail } from "../../../api";
 
 export const VerificationPage = () => {
-	const [{ matches }] = useRouter();
-	const { channel, code } = matches || {};
+	const navigate = useNavigate();
+
+	const { channel, code } = useParams<{ channel: string; code: string }>();
 
 	if (channel !== EVerificationChannel.EMAIL || !code) {
 		toaster.error({ title: "Некорректная ссылка подтверждения" });
@@ -68,3 +68,5 @@ export const VerificationPage = () => {
 		</Container>
 	);
 };
+
+export default VerificationPage;

@@ -1,7 +1,6 @@
 import type { UUID } from "node:crypto";
 
-import { h } from "preact";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import {

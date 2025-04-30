@@ -1,7 +1,7 @@
-import { useEffect, useState } from "preact/hooks";
-import { route } from "preact-router";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
-import { useStore } from "@nanostores/preact";
+import { useStore } from "@nanostores/react";
 
 import { $profile, IStorePrifile, TStorePrifile } from "./store/profile";
 
@@ -16,6 +16,8 @@ const useAuthCheck = (
 	checkFn: (profile: TStorePrifile | null) => boolean,
 	redirectPath: string,
 ) => {
+	const route = useNavigate();
+
 	const profile = useStore($profile);
 	const [isLoading, setIsLoading] = useState(true);
 	const [shouldRedirect, setShouldRedirect] = useState(false);
@@ -33,7 +35,7 @@ const useAuthCheck = (
 
 	useEffect(() => {
 		if (shouldRedirect && window.location.pathname !== redirectPath) {
-			route(redirectPath, true);
+			route(redirectPath);
 			setShouldRedirect(false);
 		}
 	}, [shouldRedirect, redirectPath]);
@@ -87,8 +89,10 @@ export const useAuthVerification = () => {
 	}, [isAuthenticated, isLoading]);
 
 	useEffect(() => {
+		const route = useNavigate();
+
 		if (shouldRedirect) {
-			route("/", true);
+			route("/");
 			setShouldRedirect(false);
 		}
 	}, [shouldRedirect]);

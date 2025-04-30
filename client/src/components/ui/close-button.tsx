@@ -1,5 +1,4 @@
-import { h } from "preact";
-import { forwardRef } from "preact/compat";
+import { forwardRef } from "react";
 import { LuX } from "react-icons/lu";
 
 import { ButtonProps, IconButton as ChakraIconButton } from "@chakra-ui/react";

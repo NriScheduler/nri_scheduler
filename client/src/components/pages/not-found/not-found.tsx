@@ -1,5 +1,3 @@
-import { h } from "preact";
-
 import { Button, Container, Heading, Image, Link } from "@chakra-ui/react";
 
 interface INotFoundProps {

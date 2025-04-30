@@ -1,6 +1,5 @@
-import { h } from "preact";
-import { useState } from "preact/hooks";
-import { useRouter } from "preact-router";
+import { useState } from "react";
+import { useLocation } from "react-router";
 
 import {
 	Box,
@@ -19,7 +18,7 @@ import { logout } from "../api";
 import { useAuthVerification } from "../utils";
 
 export const Header = () => {
-	const [{ path }] = useRouter();
+	const { pathname } = useLocation();
 	const [open, setOpen] = useState(false);
 	const { profile, isAuthenticated, isVerified } = useAuthVerification();
 
@@ -90,8 +89,8 @@ export const Header = () => {
 								</HStack>
 							</Popover>
 						) : (
-							path !== "/signin" &&
-							path !== "/signup" && (
+							pathname !== "/signin" &&
+							pathname !== "/signup" && (
 								<Link href="/signin" ml="auto">
 									<Button type="button" h="44px">
 										Вход и регистрация

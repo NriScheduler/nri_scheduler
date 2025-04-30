@@ -3,15 +3,13 @@ import "./calendar.css";
 
 import type { UUID } from "node:crypto";
 
-import { h } from "preact";
-import { lazy, Suspense } from "preact/compat";
-import { useEffect, useState } from "preact/hooks";
-import { route as navigate } from "preact-router";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
 import { Container, HStack, Skeleton, Stack, Switch } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
+import { useStore } from "@nanostores/react";
 import { CalendarApp, createViewMonthGrid } from "@schedule-x/calendar";
-import { ScheduleXCalendar, useCalendarApp } from "@schedule-x/preact";
+import { ScheduleXCalendar, useCalendarApp } from "@schedule-x/react";
 import { CalendarAppSingleton } from "@schedule-x/shared";
 import dayjs from "dayjs";
 
@@ -34,6 +32,8 @@ const sceleton = <Skeleton alignSelf="100%" w="30%" />;
 const DEFAULT_EVENT_DURATION = 4;
 
 export const CalendarPage = () => {
+	const navigate = useNavigate();
+
 	const [showSwitch, setShowSwitch] = useState(false);
 	const [openDraw, setOpenDraw] = useState(false);
 	const [companyList, setCompanyList] = useState<ReadonlyArray<IApiCompany>>(
@@ -87,16 +87,20 @@ export const CalendarPage = () => {
 				navigate(`/event/${event.id}`);
 			},
 			onRangeUpdate(range) {
-				addDataEventToCalendar(range.start, range.end, calendar);
+				if (calendar) {
+					addDataEventToCalendar(range.start, range.end, calendar);
+				}
 			},
 		},
 	});
 
 	useEffect(() => {
-		const app = calendar["$app"] as CalendarAppSingleton;
-		const range = app.calendarState.range.value;
-		if (range !== null) {
-			addDataEventToCalendar(range.start, range.end, calendar);
+		if (calendar) {
+			const app = calendar["$app"] as CalendarAppSingleton;
+			const range = app.calendarState.range.value;
+			if (range !== null) {
+				addDataEventToCalendar(range.start, range.end, calendar);
+			}
 		}
 	}, [mastery]);
 
@@ -114,12 +118,14 @@ export const CalendarPage = () => {
 					end = start.endOf("day");
 				}
 
-				calendar.events.add({
-					...data,
-					title: data.company,
-					start: start.format(EVENT_FORMAT),
-					end: end.format(EVENT_FORMAT),
-				});
+				if (calendar) {
+					calendar.events.add({
+						...data,
+						title: data.company,
+						start: start.format(EVENT_FORMAT),
+						end: end.format(EVENT_FORMAT),
+					});
+				}
 			}
 		});
 	};
@@ -195,3 +201,5 @@ export const CalendarPage = () => {
 		</section>
 	);
 };
+
+export default CalendarPage;

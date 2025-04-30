@@ -1,5 +1,3 @@
-import { h } from "preact";
-
 import { NativeSelect } from "@chakra-ui/react";
 
 import { TIMEZONES } from "../../../store/profile";

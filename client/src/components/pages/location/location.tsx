@@ -1,8 +1,7 @@
 import type { UUID } from "node:crypto";
 
-import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
-import { useRouter } from "preact-router";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router";
 
 import {
 	Button,
@@ -97,8 +96,7 @@ const LocationCardSkeleton = () => {
 };
 
 export const LocationPage = () => {
-	const [route] = useRouter();
-	const locationId = route.matches?.id as UUID;
+	const { id: locationId } = useParams<{ id: UUID }>();
 	const [fetching, setFetching] = useState(false);
 	const [location, setLocation] = useState<IApiLocation | null>(null);
 

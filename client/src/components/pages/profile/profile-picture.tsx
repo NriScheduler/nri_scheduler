@@ -1,5 +1,4 @@
-import { h } from "preact";
-import { useState } from "preact/hooks";
+import { useState } from "react";
 
 import { Button, HStack, Input, Stack } from "@chakra-ui/react";
 

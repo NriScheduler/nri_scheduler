@@ -1,5 +1,4 @@
-import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useState } from "react";
 
 import {
 	Button,
@@ -14,7 +13,7 @@ import {
 	Stack,
 	Textarea,
 } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
+import { useStore } from "@nanostores/react";
 
 import { ProfilePicture } from "./profile-picture";
 import { Field } from "../../ui/field";
@@ -277,3 +276,5 @@ export const ProfileEdit = () => {
 		</Container>
 	);
 };
+
+export default ProfileEdit;

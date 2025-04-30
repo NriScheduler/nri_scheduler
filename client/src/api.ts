@@ -1,6 +1,6 @@
 import type { UUID } from "node:crypto";
 
-import { route as navigate } from "preact-router";
+import { useNavigate } from "react-router";
 
 import { toaster } from "./components/ui/toaster";
 import { enter, leave } from "./store/profile";
@@ -136,6 +136,7 @@ const checkResponse = async <T>(
 				leave();
 				if (!isSoft) {
 					toaster.error({ title: apiRes.result });
+					const navigate = useNavigate();
 					navigate("/signin");
 				}
 
