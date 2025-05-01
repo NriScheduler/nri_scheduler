@@ -1,5 +1,5 @@
 import { h, render } from "preact";
-import { lazy } from "preact/compat";
+import { lazy, Suspense } from "preact/compat";
 import { Route, Router } from "preact-router";
 
 import { softCheck } from "./api";
@@ -13,16 +13,54 @@ import {
 	SignInPage,
 } from "./components/pages";
 
-const SingUpPage = lazy(() => import("./components/pages/sign-up/signup"));
-const CalendarPage = lazy(() => import("./components/pages/calendar/calendar"));
-const ProfilePage = lazy(() => import("./components/pages/profile/profile"));
-const ProfileEdit = lazy(
-	() => import("./components/pages/profile/profile-edit"),
-);
-const VerificationPage = lazy(
-	() => import("./components/pages/verification/verification"),
-);
-const RegionsPage = lazy(() => import("./components/pages/regions/regions"));
+const SingUpPage = () => {
+	const P = lazy(() => import("./components/pages/sign-up/signup"));
+	return (
+		<Suspense fallback="">
+			<P />
+		</Suspense>
+	);
+};
+const CalendarPage = () => {
+	const P = lazy(() => import("./components/pages/calendar/calendar"));
+	return (
+		<Suspense fallback="">
+			<P />
+		</Suspense>
+	);
+};
+const ProfilePage = () => {
+	const P = lazy(() => import("./components/pages/profile/profile"));
+	return (
+		<Suspense fallback="">
+			<P />
+		</Suspense>
+	);
+};
+const ProfileEdit = () => {
+	const P = lazy(() => import("./components/pages/profile/profile-edit"));
+	return (
+		<Suspense fallback="">
+			<P />
+		</Suspense>
+	);
+};
+const VerificationPage = () => {
+	const P = lazy(() => import("./components/pages/verification/verification"));
+	return (
+		<Suspense fallback="">
+			<P />
+		</Suspense>
+	);
+};
+const RegionsPage = () => {
+	const P = lazy(() => import("./components/pages/regions/regions"));
+	return (
+		<Suspense fallback="">
+			<P />
+		</Suspense>
+	);
+};
 
 const App = () => (
 	<Layout
