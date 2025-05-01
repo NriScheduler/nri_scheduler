@@ -21,24 +21,22 @@ const VerificationPage = LazyPage(() => import("./components/pages/verification/
 const RegionsPage = LazyPage(() => import("./components/pages/regions/regions")); // eslint-disable-line prettier/prettier
 
 const App = () => (
-	<Layout
-		page={
-			<Router>
-				<Route path="/" component={HomePage} />
-				<Route path="/signup" component={SingUpPage} />
-				<Route path="/signin" component={SignInPage} />
-				<Route path="/calendar" component={CalendarPage} />
-				<Route path="/event/:id" component={EventPage} />
-				<Route path="/company/:id" component={CompanyPage} />
-				<Route path="/location/:id" component={LocationPage} />
-				<Route path="/profile" component={ProfilePage} />
-				<Route path="/profile/edit" component={ProfileEdit} />
-				<Route path="/verification" component={VerificationPage} />
-				<Route path="/regions" component={RegionsPage} />
-				<Route default component={() => <NotFoundPage />} />
-			</Router>
-		}
-	/>
+	<Layout>
+		<Router>
+			<Route path="/" component={HomePage} />
+			<Route path="/signup" component={SingUpPage} />
+			<Route path="/signin" component={SignInPage} />
+			<Route path="/calendar" component={CalendarPage} />
+			<Route path="/event/:id" component={EventPage} />
+			<Route path="/company/:id" component={CompanyPage} />
+			<Route path="/location/:id" component={LocationPage} />
+			<Route path="/profile" component={ProfilePage} />
+			<Route path="/profile/edit" component={ProfileEdit} />
+			<Route path="/verification" component={VerificationPage} />
+			<Route path="/regions" component={RegionsPage} />
+			<Route default component={() => <NotFoundPage />} />
+		</Router>
+	</Layout>
 );
 
 softCheck();
