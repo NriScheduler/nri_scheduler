@@ -1,5 +1,4 @@
 import { h, render } from "preact";
-import { lazy, Suspense } from "preact/compat";
 import { Route, Router } from "preact-router";
 
 import { softCheck } from "./api";
@@ -12,55 +11,14 @@ import {
 	NotFoundPage,
 	SignInPage,
 } from "./components/pages";
+import { LazyPage } from "./lazy-page";
 
-const SingUpPage = () => {
-	const P = lazy(() => import("./components/pages/sign-up/signup"));
-	return (
-		<Suspense fallback="">
-			<P />
-		</Suspense>
-	);
-};
-const CalendarPage = () => {
-	const P = lazy(() => import("./components/pages/calendar/calendar"));
-	return (
-		<Suspense fallback="">
-			<P />
-		</Suspense>
-	);
-};
-const ProfilePage = () => {
-	const P = lazy(() => import("./components/pages/profile/profile"));
-	return (
-		<Suspense fallback="">
-			<P />
-		</Suspense>
-	);
-};
-const ProfileEdit = () => {
-	const P = lazy(() => import("./components/pages/profile/profile-edit"));
-	return (
-		<Suspense fallback="">
-			<P />
-		</Suspense>
-	);
-};
-const VerificationPage = () => {
-	const P = lazy(() => import("./components/pages/verification/verification"));
-	return (
-		<Suspense fallback="">
-			<P />
-		</Suspense>
-	);
-};
-const RegionsPage = () => {
-	const P = lazy(() => import("./components/pages/regions/regions"));
-	return (
-		<Suspense fallback="">
-			<P />
-		</Suspense>
-	);
-};
+const SingUpPage = LazyPage(() => import("./components/pages/sign-up/signup"));
+const CalendarPage = LazyPage(() => import("./components/pages/calendar/calendar")); // eslint-disable-line prettier/prettier
+const ProfilePage = LazyPage(() => import("./components/pages/profile/profile")); // eslint-disable-line prettier/prettier
+const ProfileEdit = LazyPage(() => import("./components/pages/profile/profile-edit")); // eslint-disable-line prettier/prettier
+const VerificationPage = LazyPage(() => import("./components/pages/verification/verification")); // eslint-disable-line prettier/prettier
+const RegionsPage = LazyPage(() => import("./components/pages/regions/regions")); // eslint-disable-line prettier/prettier
 
 const App = () => (
 	<Layout
