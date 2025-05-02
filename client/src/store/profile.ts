@@ -7,6 +7,8 @@ import { computed, map, task } from "nanostores";
 import { procetar } from "procetar";
 
 import { API_HOST, ETzVariant, IApiProfile } from "../api";
+import { toaster } from "../components/ui/toaster";
+import { YYYY_MM_DD } from "../utils";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -126,4 +128,34 @@ export const $tz = computed(_profile, (p: Partial<IApiProfile>) => {
 		p.timezone_offset,
 	);
 	return dayjs.tz.guess();
+});
+
+// --== SSE ==--
+let eventSource: EventSource | null = null;
+const DATE_REGEXP = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/;
+
+$profile.listen((p) => {
+	if (p?.signed) {
+		eventSource = new EventSource(API_HOST + "/api/sse", {
+			withCredentials: true,
+		});
+
+		eventSource.onmessage = (event) => {
+			let msg: string = event.data;
+			const match = msg.match(DATE_REGEXP)?.[0];
+			if (match) {
+				let date = dayjs(match).tz($tz.get()).format(YYYY_MM_DD);
+				msg = msg.replace(match, date);
+			}
+			toaster.success({ title: msg });
+		};
+
+		eventSource.onerror = (event) => {
+			console.info("sse error:");
+			console.error(event);
+		};
+	} else {
+		eventSource?.close();
+		eventSource = null;
+	}
 });

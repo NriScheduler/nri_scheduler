@@ -54,7 +54,12 @@ import {
 	updateEvent,
 } from "../../../api";
 import { $profile, $tz } from "../../../store/profile";
-import { calcMapIconLink, EVENT_FORMAT, navBack } from "../../../utils";
+import {
+	calcMapIconLink,
+	EVENT_FORMAT,
+	navBack,
+	YYYY_MM_DD,
+} from "../../../utils";
 
 dayjs.locale("ru");
 
@@ -489,11 +494,11 @@ export const EventPage = () => {
 													<Input
 														type="date"
 														defaultValue={eventDate.format(
-															"YYYY-MM-DD",
+															YYYY_MM_DD,
 														)}
 														min={dayjs()
 															.tz(tz)
-															.format("YYYY-MM-DD")}
+															.format(YYYY_MM_DD)}
 														{...register("start", {
 															required: "Заполните поле",
 															validate: validateDate,

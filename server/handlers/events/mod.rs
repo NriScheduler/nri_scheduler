@@ -12,15 +12,18 @@ use crate::{
 		event::{NewEventDto, ReadEventsDto, UpdateEventDto},
 	},
 	repository::Repository,
+	state::AppState,
 	system_models::{AppError, AppResponse, AppResult},
 };
 
+const FULL_UTC_TEMPLATE: &str = "%Y-%m-%dT%H:%M:%SZ";
+
 pub(crate) async fn read_events_list(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Option<Uuid>>,
 	Dto(query): Dto<ReadEventsDto>,
 ) -> AppResult {
-	let events = repo.read_events_list(query, user_id).await?;
+	let events = state.repo.read_events_list(query, user_id).await?;
 
 	let json_value = serde_json::to_value(events)?;
 
@@ -31,11 +34,11 @@ pub(crate) async fn read_events_list(
 }
 
 pub(crate) async fn read_event(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Option<Uuid>>,
 	Path(event_id): Path<Uuid>,
 ) -> AppResult {
-	let event = repo.read_event(event_id, user_id).await?;
+	let event = state.repo.read_event(event_id, user_id).await?;
 
 	let res = match event {
 		None => {
@@ -52,16 +55,17 @@ pub(crate) async fn read_event(
 }
 
 pub(crate) async fn add_event(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Dto(body): Dto<NewEventDto>,
 ) -> AppResult {
 	try_join!(
-		check_company(body.company, user_id, repo.clone()),
-		check_location(body.location, repo.clone()),
+		check_company(body.company, user_id, &state.repo),
+		check_location(body.location, &state.repo),
 	)?;
 
-	let new_evt_id = repo
+	let new_evt_id = state
+		.repo
 		.add_event(
 			body.company,
 			&body.location,
@@ -78,11 +82,11 @@ pub(crate) async fn add_event(
 }
 
 pub(crate) async fn apply_event(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(event_id): Path<Uuid>,
 ) -> AppResult {
-	let event = repo.get_event_for_applying(event_id, user_id).await?;
+	let event = state.repo.get_event_for_applying(event_id, user_id).await?;
 
 	let Some(event) = event else {
 		let payload = serde_json::to_value(event_id)?;
@@ -116,9 +120,22 @@ pub(crate) async fn apply_event(
 		));
 	}
 
-	let new_app_id = repo
+	let new_app_id = state
+		.repo
 		.apply_event(event_id, user_id, event.can_auto_approve)
 		.await?;
+
+	state
+		.message_sender
+		.send((
+			Some(event.master_id),
+			format!(
+				r#"На игру по кампании "{}" на {} записался игрок"#,
+				event.company_name,
+				event.event_date.format(FULL_UTC_TEMPLATE)
+			),
+		))
+		.ok();
 
 	Ok(AppResponse::scenario_success(
 		"Заявка на событие успешно создана",
@@ -127,23 +144,23 @@ pub(crate) async fn apply_event(
 }
 
 pub(crate) async fn update_event(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(master_id): Extension<Uuid>,
 	Path(event_id): Path<Uuid>,
 	Dto(body): Dto<UpdateEventDto>,
 ) -> AppResult {
-	match repo.update_event(event_id, master_id, body).await? {
+	match state.repo.update_event(event_id, master_id, body).await? {
 		false => Err(AppError::scenario_error("Игра не найдена", None::<&str>)),
 		true => Ok(AppResponse::scenario_success("Данные игры обновлены", None)),
 	}
 }
 
 pub(crate) async fn cancel_event(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(event_id): Path<Uuid>,
 ) -> AppResult {
-	let event = repo.read_event(event_id, Some(user_id)).await?;
+	let event = state.repo.read_event(event_id, Some(user_id)).await?;
 
 	let Some(event) = event else {
 		let payload = serde_json::to_value(event_id)?;
@@ -161,17 +178,17 @@ pub(crate) async fn cancel_event(
 		));
 	}
 
-	repo.cancel_event(event_id).await?;
+	state.repo.cancel_event(event_id).await?;
 
 	Ok(AppResponse::scenario_success("Событие отменено", None))
 }
 
 pub(crate) async fn reopen_event(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(event_id): Path<Uuid>,
 ) -> AppResult {
-	let event = repo.read_event(event_id, Some(user_id)).await?;
+	let event = state.repo.read_event(event_id, Some(user_id)).await?;
 
 	let Some(event) = event else {
 		let payload = serde_json::to_value(event_id)?;
@@ -189,16 +206,12 @@ pub(crate) async fn reopen_event(
 		));
 	}
 
-	repo.reopen_event(event_id).await?;
+	state.repo.reopen_event(event_id).await?;
 
 	Ok(AppResponse::scenario_success("Событие отменено", None))
 }
 
-async fn check_company(
-	company_id: Uuid,
-	user_id: Uuid,
-	repo: Arc<Repository>,
-) -> Result<(), AppError> {
+async fn check_company(company_id: Uuid, user_id: Uuid, repo: &Repository) -> Result<(), AppError> {
 	let Some(company) = repo.get_company_by_id(company_id, Some(user_id)).await? else {
 		return AppError::scenario_error("Кампания не найдена", Some(company_id.to_string())).into();
 	};
@@ -211,7 +224,7 @@ async fn check_company(
 	Ok(())
 }
 
-async fn check_location(location_id: Option<Uuid>, repo: Arc<Repository>) -> Result<(), AppError> {
+async fn check_location(location_id: Option<Uuid>, repo: &Repository) -> Result<(), AppError> {
 	if let Some(l_id) = location_id {
 		let may_be_location = repo.get_location_by_id(l_id).await?;
 		if may_be_location.is_none() {

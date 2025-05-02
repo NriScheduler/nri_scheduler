@@ -13,6 +13,7 @@ pub(crate) mod openapi;
 pub mod repository;
 pub mod router;
 pub(crate) mod shared;
+pub mod state;
 pub mod system_models;
 pub(crate) mod telegram;
 #[cfg(feature = "vite")]

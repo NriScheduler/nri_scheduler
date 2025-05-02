@@ -1503,6 +1503,7 @@ dependencies = [
  "chrono",
  "derive-masked",
  "futures",
+ "futures-util",
  "hex",
  "hmac",
  "josekit",
@@ -1518,6 +1519,7 @@ dependencies = [
  "sqlx-core",
  "sqlx-postgres",
  "tokio",
+ "tokio-stream",
  "tower-http",
  "utoipa",
  "utoipa-swagger-ui",
@@ -2548,6 +2550,7 @@ dependencies = [
  "futures-core",
  "pin-project-lite",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]

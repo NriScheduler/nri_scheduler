@@ -7,15 +7,15 @@ use crate::{
 		Dto,
 		location::{NewLocationDto, ReadLocationDto},
 	},
-	repository::Repository,
+	state::AppState,
 	system_models::{AppResponse, AppResult},
 };
 
 pub(crate) async fn get_locations_list(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Dto(query): Dto<ReadLocationDto>,
 ) -> AppResult {
-	let locations = repo.get_locations_list(query).await?;
+	let locations = state.repo.get_locations_list(query).await?;
 
 	let json_value = serde_json::to_value(locations)?;
 
@@ -26,10 +26,10 @@ pub(crate) async fn get_locations_list(
 }
 
 pub(crate) async fn get_location_by_id(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Path(location_id): Path<Uuid>,
 ) -> AppResult {
-	let maybe_location = repo.get_location_by_id(location_id).await?;
+	let maybe_location = state.repo.get_location_by_id(location_id).await?;
 
 	Ok(match maybe_location {
 		None => AppResponse::scenario_fail("Локация не найдена", None),
@@ -41,7 +41,7 @@ pub(crate) async fn get_location_by_id(
 }
 
 pub(crate) async fn add_location(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Dto(body): Dto<NewLocationDto>,
 ) -> AppResult {
 	if !validate_map_link(&body.map_link) {
@@ -51,7 +51,8 @@ pub(crate) async fn add_location(
 		));
 	}
 
-	let new_loc_id = repo
+	let new_loc_id = state
+		.repo
 		.add_location(
 			&body.name,
 			&body.address,

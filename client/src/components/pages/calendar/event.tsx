@@ -44,7 +44,7 @@ import {
 	readLocations,
 	readMyCompanies,
 } from "../../../api";
-import { EVENT_FORMAT } from "../../../utils";
+import { EVENT_FORMAT, YYYY_MM_DD } from "../../../utils";
 
 interface IFormCreateEvent {
 	readonly company: UUID;
@@ -295,7 +295,7 @@ const Event = (props: IEventProps) => {
 								>
 									<Input
 										type="date"
-										min={dayjs().tz(props.tz).format("YYYY-MM-DD")}
+										min={dayjs().tz(props.tz).format(YYYY_MM_DD)}
 										{...register("start", {
 											required: "Заполните поле",
 											validate: validateDate,

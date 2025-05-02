@@ -7,15 +7,15 @@ use chrono::Utc;
 use uuid::Uuid;
 
 use crate::{
-	repository::Repository,
+	state::AppState,
 	system_models::{AppResponse, AppResult},
 };
 
 pub(crate) async fn read_player_apps_list(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 ) -> AppResult {
-	let apps = repo.read_player_apps_list(user_id).await?;
+	let apps = state.repo.read_player_apps_list(user_id).await?;
 
 	let json_value = serde_json::to_value(apps)?;
 
@@ -26,11 +26,11 @@ pub(crate) async fn read_player_apps_list(
 }
 
 pub(crate) async fn read_player_app(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(app_id): Path<Uuid>,
 ) -> AppResult {
-	let may_be_app = repo.read_player_app(user_id, app_id).await?;
+	let may_be_app = state.repo.read_player_app(user_id, app_id).await?;
 
 	let Some(app) = may_be_app else {
 		let payload = serde_json::to_value(app_id)?;
@@ -49,11 +49,14 @@ pub(crate) async fn read_player_app(
 }
 
 pub(crate) async fn read_player_app_by_event(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(event_id): Path<Uuid>,
 ) -> AppResult {
-	let may_be_app = repo.read_player_app_by_event(user_id, event_id).await?;
+	let may_be_app = state
+		.repo
+		.read_player_app_by_event(user_id, event_id)
+		.await?;
 
 	let Some(app) = may_be_app else {
 		let payload = serde_json::to_value(event_id)?;
@@ -72,11 +75,12 @@ pub(crate) async fn read_player_app_by_event(
 }
 
 pub(crate) async fn read_player_app_company_closest(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(company_id): Path<Uuid>,
 ) -> AppResult {
-	let may_be_app = repo
+	let may_be_app = state
+		.repo
 		.read_player_app_company_closest(user_id, company_id)
 		.await?;
 
@@ -97,10 +101,10 @@ pub(crate) async fn read_player_app_company_closest(
 }
 
 pub(crate) async fn read_master_apps_list(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 ) -> AppResult {
-	let apps = repo.read_master_apps_list(user_id).await?;
+	let apps = state.repo.read_master_apps_list(user_id).await?;
 
 	let json_value = serde_json::to_value(apps)?;
 
@@ -111,11 +115,12 @@ pub(crate) async fn read_master_apps_list(
 }
 
 pub(crate) async fn read_master_apps_list_by_event(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(event_id): Path<Uuid>,
 ) -> AppResult {
-	let apps = repo
+	let apps = state
+		.repo
 		.read_master_apps_list_by_event(user_id, event_id)
 		.await?;
 
@@ -128,11 +133,12 @@ pub(crate) async fn read_master_apps_list_by_event(
 }
 
 pub(crate) async fn read_master_apps_list_company_closest(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(company_id): Path<Uuid>,
 ) -> AppResult {
-	let apps = repo
+	let apps = state
+		.repo
 		.read_master_apps_list_company_closest(user_id, company_id)
 		.await?;
 
@@ -145,11 +151,11 @@ pub(crate) async fn read_master_apps_list_company_closest(
 }
 
 pub(crate) async fn read_master_app(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(app_id): Path<Uuid>,
 ) -> AppResult {
-	let may_be_app = repo.read_master_app(user_id, app_id).await?;
+	let may_be_app = state.repo.read_master_app(user_id, app_id).await?;
 
 	let Some(app) = may_be_app else {
 		let payload = serde_json::to_value(app_id)?;
@@ -168,11 +174,11 @@ pub(crate) async fn read_master_app(
 }
 
 pub(crate) async fn approve_app(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(app_id): Path<Uuid>,
 ) -> AppResult {
-	let may_be_app = repo.read_app_for_approval(user_id, app_id).await?;
+	let may_be_app = state.repo.read_app_for_approval(user_id, app_id).await?;
 
 	let Some(app) = may_be_app else {
 		let payload = serde_json::to_value(app_id)?;
@@ -206,7 +212,7 @@ pub(crate) async fn approve_app(
 		));
 	}
 
-	repo.approve_app(app_id).await?;
+	state.repo.approve_app(app_id).await?;
 
 	Ok(AppResponse::scenario_success(
 		"Заявка на событие успешно одобрена",
@@ -215,11 +221,11 @@ pub(crate) async fn approve_app(
 }
 
 pub(crate) async fn reject_app(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Path(app_id): Path<Uuid>,
 ) -> AppResult {
-	let may_be_app = repo.read_app_for_approval(user_id, app_id).await?;
+	let may_be_app = state.repo.read_app_for_approval(user_id, app_id).await?;
 
 	let Some(app) = may_be_app else {
 		let payload = serde_json::to_value(app_id)?;
@@ -253,7 +259,7 @@ pub(crate) async fn reject_app(
 		));
 	}
 
-	repo.reject_app(app_id).await?;
+	state.repo.reject_app(app_id).await?;
 
 	Ok(AppResponse::scenario_success(
 		"Заявка на событие успешно отклонена",

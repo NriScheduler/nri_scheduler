@@ -99,6 +99,9 @@ pub(crate) struct Event {
 #[derive(Debug, Deserialize, Serialize, FromRow)]
 pub(crate) struct EventForApplying {
 	pub id: Uuid,
+	pub master_id: Uuid,
+	pub event_date: DateTime<Utc>,
+	pub company_name: String,
 	pub you_are_master: bool,
 	pub already_applied: bool,
 	pub can_auto_approve: bool,

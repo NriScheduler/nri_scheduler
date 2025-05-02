@@ -16,9 +16,9 @@ use crate::cors;
 use crate::openapi;
 #[cfg(feature = "vite")]
 use crate::vite::proxy_to_vite;
-use crate::{auth, handlers as H, repository::Repository};
+use crate::{auth, handlers as H, state::AppState};
 
-pub fn create_router(repo: Arc<Repository>) -> Router {
+pub fn create_router(state: Arc<AppState>) -> Router {
 	let router = Router::new()
 		.route("/avatar/{id}", get(H::read_avatar))
 		.route("/cover/{id}", get(H::companies::read_company_cover))
@@ -36,6 +36,7 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 				.route("/cities", get(H::regions::read_cities_list))
 				.merge(
 					Router::new()
+						.route("/sse", get(H::sse::sse_handler))
 						.route("/profile/{id}", get(H::read_another_profile))
 						.route("/companies/{id}", get(H::companies::get_company_by_id))
 						.route("/events", get(H::events::read_events_list))
@@ -94,7 +95,7 @@ pub fn create_router(repo: Arc<Repository>) -> Router {
 						.layer(middleware::from_fn(auth::auth_and_verified_middleware)),
 				),
 		)
-		.with_state(repo);
+		.with_state(state);
 
 	#[cfg(feature = "vite")]
 	let router = router.fallback(proxy_to_vite);

@@ -23,7 +23,7 @@ interface ICompList {
 }
 
 interface ICompItem {
-	item: IApiCompany;
+	readonly item: IApiCompany;
 }
 
 const CompItem = ({ item }: ICompItem) => {

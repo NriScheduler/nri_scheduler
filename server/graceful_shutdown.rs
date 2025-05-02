@@ -2,12 +2,13 @@ use ::std::sync::Arc;
 #[cfg(feature = "https")]
 use axum_server::Handle;
 
-use crate::repository::Repository;
+use crate::state::AppState;
 
 #[cfg(not(feature = "https"))]
-pub async fn shutdown_signal(repo: Arc<Repository>) {
+pub async fn shutdown_signal(state: Arc<AppState>) {
 	let shutdown_fn = || async {
-		repo.close().await;
+		state.shutdown_sender.send(()).ok();
+		state.repo.close().await;
 	};
 
 	let ctrl_c = || async {
@@ -52,9 +53,10 @@ pub async fn shutdown_signal(repo: Arc<Repository>) {
 }
 
 #[cfg(feature = "https")]
-pub async fn shutdown_signal(repo: Arc<Repository>, handle: Handle) {
+pub async fn shutdown_signal(state: Arc<AppState>, handle: Handle) {
 	let shutdown_fn = || async {
-		repo.close().await;
+		state.shutdown_sender.send(()).ok();
+		state.repo.close().await;
 	};
 
 	let ctrl_c = || async {
