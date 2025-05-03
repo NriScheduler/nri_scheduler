@@ -7,7 +7,6 @@ import {
 	Heading,
 	HStack,
 	Input,
-	RadioGroup,
 	Separator,
 	Stack,
 	Textarea,
@@ -17,6 +16,7 @@ import { useStore } from "@nanostores/preact";
 import { ProfileComplete } from "./profile-autocomplete";
 import { ProfilePicture } from "./profile-picture";
 import { TimesonesList } from "../regions/timezones";
+import { TimezoneRadioGroup } from "../../radio-group";
 import { Field } from "../../ui/field";
 import { toaster } from "../../ui/toaster";
 import {
@@ -73,6 +73,20 @@ export const ProfileEdit = () => {
 		value: string | number | null,
 	) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
+	};
+
+	const handleSelectRadio = (value: string) => {
+		const newVariant = value as ETzVariant;
+
+		if (newVariant === ETzVariant.OWN) {
+			handleInputChange("timezoneOffset", null);
+		} else if (newVariant === ETzVariant.DEVICE) {
+			const timezoneOffset = -new Date().getTimezoneOffset() / 60;
+			handleInputChange("timezoneOffset", timezoneOffset);
+		} else if (newVariant === ETzVariant.CITY && formData.city) {
+			handleInputChange("timezoneOffset", profile.timezone_offset ?? null);
+		}
+		handleInputChange("tzVariant", value as ETzVariant);
 	};
 
 	const handleSubmit = async () => {
@@ -204,12 +218,7 @@ export const ProfileEdit = () => {
 					</Field>
 					<TimezoneRadioGroup
 						value={formData.tzVariant}
-						onChange={(value) => {
-							if (value !== ETzVariant.OWN) {
-								handleInputChange("timezoneOffset", null);
-							}
-							handleInputChange("tzVariant", value);
-						}}
+						onChange={(value) => handleSelectRadio(value)}
 					/>
 				</Stack>
 
@@ -224,50 +233,4 @@ export const ProfileEdit = () => {
 			</form>
 		</Container>
 	);
-};
-
-const TimezoneRadioGroup = ({
-	value,
-	onChange,
-}: {
-	value: ETzVariant;
-	onChange: (value: ETzVariant) => void;
-}) => {
-	const timezoneVariants = [
-		ETzVariant.CITY,
-		ETzVariant.DEVICE,
-		ETzVariant.OWN,
-	] as const;
-
-	return (
-		<RadioGroup.Root
-			value={value}
-			onValueChange={(e) => onChange(e.value as ETzVariant)}
-		>
-			<HStack gap="6">
-				{timezoneVariants.map((variant) => (
-					<RadioGroup.Item key={variant} value={variant}>
-						<RadioGroup.ItemHiddenInput />
-						<RadioGroup.ItemIndicator />
-						<RadioGroup.ItemText>
-							{getTimezoneVariantLabel(variant)}
-						</RadioGroup.ItemText>
-					</RadioGroup.Item>
-				))}
-			</HStack>
-		</RadioGroup.Root>
-	);
-};
-
-const getTimezoneVariantLabel = (variant: ETzVariant) => {
-	switch (variant) {
-		case ETzVariant.CITY:
-			return "Брать из города";
-		case ETzVariant.DEVICE:
-			return "Брать с устройства";
-		case ETzVariant.OWN:
-			return "Указать вручную";
-		default:
-			return variant;
-	}
 };
