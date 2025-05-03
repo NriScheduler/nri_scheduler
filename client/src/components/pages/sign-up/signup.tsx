@@ -55,6 +55,8 @@ export const SingUpPage = () => {
 	});
 
 	const submitTg = (user: ITelegramUser | boolean): void => {
+		console.log("user:");
+		console.log(user);
 		if (!user || typeof user !== "object") {
 			toaster.error({
 				title: "Не удалось установить связь с Telegram",
