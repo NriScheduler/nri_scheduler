@@ -96,12 +96,28 @@ export const $avatarLink = computed([_profile, _tgAvatarLink], (p, tg) =>
 		}
 
 		if (tg) {
-			let tgPhotoRes = await fetch(tg, { redirect: "follow", mode: "no-cors" }).catch(() => null); // eslint-disable-line prettier/prettier
+			let tgPhotoRes = await fetch(tg, {
+				redirect: "follow",
+				mode: "no-cors",
+			}).catch((e) => {
+				console.log(1, e);
+				return null;
+			});
+			console.log("tgPhotoRes:");
+			console.log(tgPhotoRes);
 			if (tgPhotoRes && tgPhotoRes.ok) {
-				let tgPhotoBuf = await tgPhotoRes.blob().catch(() => null);
+				let tgPhotoBuf = await tgPhotoRes.blob().catch((e) => {
+					console.log(2, e);
+					return null;
+				});
+				console.log("tgPhotoBuf:");
+				console.log(tgPhotoBuf);
 				if (tgPhotoBuf) {
+					const y = URL.createObjectURL(tgPhotoBuf);
+					console.log("createObjectURL:");
+					console.log(y);
 					return {
-						link: URL.createObjectURL(tgPhotoBuf),
+						link: URL.createObjectURL(y),
 						source: "Аватар из Telegram",
 					};
 				}
