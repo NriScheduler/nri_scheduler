@@ -1,6 +1,9 @@
 # local development db
 postgres
 
+# logs
+*.log
+
 # preact
 node_modules
 static

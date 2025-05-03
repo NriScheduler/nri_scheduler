@@ -1,15 +1,22 @@
 import { h } from "preact";
 
+import { ChakraProvider, createSystem, defaultConfig } from "@chakra-ui/react";
+
 import { Header } from "./header";
-import { Provider } from "./ui/provider";
 import { Toaster } from "./ui/toaster";
 
-export const Layout = ({ page }: { page: h.JSX.Element }) => (
-	<Provider>
+const system = createSystem(defaultConfig, {
+	theme: {
+		tokens: {},
+	},
+});
+
+export const Layout = ({ children }: { readonly children: h.JSX.Element }) => (
+	<ChakraProvider value={system}>
 		<Header />
 		<main>
-			{page}
+			{children}
 			<Toaster />
 		</main>
-	</Provider>
+	</ChakraProvider>
 );

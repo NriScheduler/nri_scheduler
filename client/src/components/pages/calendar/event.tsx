@@ -44,6 +44,7 @@ import {
 	readLocations,
 	readMyCompanies,
 } from "../../../api";
+import { EVENT_FORMAT, YYYY_MM_DD } from "../../../utils";
 
 interface IFormCreateEvent {
 	readonly company: UUID;
@@ -63,7 +64,6 @@ export interface IEventProps {
 	readonly setOpenDraw: (val: boolean) => void;
 	readonly companyList: ReadonlyArray<IApiCompany>;
 	readonly setCompanyList: (List: ReadonlyArray<IApiCompany>) => void;
-	readonly keepLocalTome: boolean;
 	readonly tz: string;
 	readonly getNewEvent: (id: UUID) => void;
 	readonly profileRegion: string | null;
@@ -103,8 +103,8 @@ const Event = (props: IEventProps) => {
 
 	const validateDate = (value: string) => {
 		clearErrors("startTime");
-		const fieldDate = dayjs(value).tz(props.tz, props.keepLocalTome);
-		const nowDate = dayjs().tz(props.tz, props.keepLocalTome);
+		const fieldDate = dayjs.tz(`${value} 12:00`, EVENT_FORMAT, props.tz);
+		const nowDate = dayjs().tz(props.tz);
 		if (
 			nowDate.isSame(fieldDate, "day") ||
 			fieldDate.isAfter(nowDate, "day")
@@ -119,11 +119,8 @@ const Event = (props: IEventProps) => {
 		if (!isStart) {
 			return "Укажите дату";
 		}
-		const fultime = dayjs(`${isStart} ${value}`).tz(
-			props.tz,
-			props.keepLocalTome,
-		);
-		const nowDate = dayjs().tz(props.tz, props.keepLocalTome);
+		const fultime = dayjs.tz(`${isStart} ${value}`, EVENT_FORMAT, props.tz);
+		const nowDate = dayjs().tz(props.tz);
 		if (
 			nowDate.isSame(fultime, "minute") ||
 			fultime.isAfter(nowDate, "minute")
@@ -172,31 +169,27 @@ const Event = (props: IEventProps) => {
 		const { company, location, start, startTime, max_slots, plan_duration } =
 			data;
 
-		if (data) {
-			const date = dayjs(`${start}T${startTime}`).tz(
-				props.tz,
-				props.keepLocalTome,
-			);
-			setIsDisableCreateEventSubmitButton(true);
-			createEvent(
-				company,
-				date.toISOString(),
-				location,
-				Number(max_slots) || null,
-				Number(plan_duration) || null,
-			)
-				.then((res) => {
-					if (res) {
-						toaster.success({ title: "Событие успешно создано" });
-						props.setOpenDraw(false);
-						props.getNewEvent(res.payload);
-						reset();
-					}
-				})
-				.finally(() => {
-					setIsDisableCreateEventSubmitButton(false);
-				});
-		}
+		const date = dayjs.tz(`${start} ${startTime}`, EVENT_FORMAT, props.tz);
+
+		setIsDisableCreateEventSubmitButton(true);
+		createEvent(
+			company,
+			date.toISOString(),
+			location,
+			Number(max_slots) || null,
+			Number(plan_duration) || null,
+		)
+			.then((res) => {
+				if (res) {
+					toaster.success({ title: "Событие успешно создано" });
+					props.setOpenDraw(false);
+					props.getNewEvent(res.payload);
+					reset();
+				}
+			})
+			.finally(() => {
+				setIsDisableCreateEventSubmitButton(false);
+			});
 	});
 
 	useEffect(() => {
@@ -302,9 +295,7 @@ const Event = (props: IEventProps) => {
 								>
 									<Input
 										type="date"
-										min={dayjs()
-											.tz(props.tz, props.keepLocalTome)
-											.format("YYYY-MM-DD")}
+										min={dayjs().tz(props.tz).format(YYYY_MM_DD)}
 										{...register("start", {
 											required: "Заполните поле",
 											validate: validateDate,

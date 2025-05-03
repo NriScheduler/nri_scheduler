@@ -9,6 +9,8 @@ import {
 	Link,
 	Stack,
 	Switch,
+	Text,
+	useBreakpointValue,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 
@@ -23,7 +25,7 @@ interface ICompList {
 }
 
 interface ICompItem {
-	item: IApiCompany;
+	readonly item: IApiCompany;
 }
 
 const CompItem = ({ item }: ICompItem) => {
@@ -31,6 +33,7 @@ const CompItem = ({ item }: ICompItem) => {
 		<Link
 			href={`/company/${item.id}`}
 			display="block"
+			h="full"
 			transition="all 0.2s"
 			borderRadius="md"
 			_hover={{
@@ -39,12 +42,14 @@ const CompItem = ({ item }: ICompItem) => {
 				shadow: "md",
 			}}
 		>
-			<Card.Root>
+			<Card.Root h="full">
 				<Card.Header>
 					<Heading>{item.name}</Heading>
 				</Card.Header>
 				<Card.Body gap="2">
-					<Card.Description>{item.description}</Card.Description>
+					<Card.Description>
+						<Text lineClamp="4">{item.description}</Text>
+					</Card.Description>
 				</Card.Body>
 			</Card.Root>
 		</Link>
@@ -53,6 +58,15 @@ const CompItem = ({ item }: ICompItem) => {
 
 export const CompList = ({ list }: ICompList) => {
 	const isChecked = useStore($checkboxState);
+
+	// Адаптивные значения
+	const gridColumns = useBreakpointValue({
+		base: isChecked ? 2 : 1,
+		sm: isChecked ? 2 : 1,
+		md: isChecked ? 3 : 1,
+		lg: isChecked ? 4 : 1,
+		xl: isChecked ? 4 : 1,
+	});
 
 	return (
 		<Stack>
@@ -74,15 +88,11 @@ export const CompList = ({ list }: ICompList) => {
 				</Switch.Control>
 			</Switch.Root>
 
-			{list.map((item) => (
-				<Grid
-					templateColumns={`repeat(${isChecked ? 4 : 1}, 1fr)`}
-					gap="4"
-					key={item.id}
-				>
-					<CompItem item={item} />
-				</Grid>
-			))}
+			<Grid templateColumns={`repeat(${gridColumns}, 1fr)`} gap="4">
+				{list.map((item) => (
+					<CompItem key={item.id} item={item} />
+				))}
+			</Grid>
 		</Stack>
 	);
 };

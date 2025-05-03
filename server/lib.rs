@@ -8,11 +8,13 @@ pub(crate) mod email;
 pub mod graceful_shutdown;
 pub(crate) mod handlers;
 pub(crate) mod image;
+// pub(crate) mod log;
 #[cfg(feature = "swagger")]
 pub(crate) mod openapi;
 pub mod repository;
 pub mod router;
 pub(crate) mod shared;
+pub mod state;
 pub mod system_models;
 pub(crate) mod telegram;
 #[cfg(feature = "vite")]

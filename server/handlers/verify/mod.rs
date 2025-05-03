@@ -5,25 +5,25 @@ use uuid::Uuid;
 
 use crate::{
 	dto::{Dto, auth::VerificationDto},
-	repository::Repository,
+	state::AppState,
 	system_models::{AppError, AppResponse, AppResult},
 };
 
 pub(crate) async fn verify(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Dto(body): Dto<VerificationDto>,
 ) -> AppResult {
 	match body.channel.as_ref() {
-		"email" => verify_email(repo, body.code).await,
+		"email" => verify_email(state, body.code).await,
 		_ => AppError::scenario_error("Неподдерживаемый тип канала верификации", None::<&str>).into(),
 	}
 }
 
 pub(crate) async fn send_email_verification(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 ) -> AppResult {
-	let (verification_id, email) = repo.send_email_verification(user_id).await?;
+	let (verification_id, email) = state.repo.send_email_verification(user_id).await?;
 
 	let to = Mailbox::from_str(&email)
 		.map_err(|_| AppError::system_error("Некорректный email пользователя"))?;
@@ -43,8 +43,8 @@ pub(crate) async fn send_email_verification(
 	))
 }
 
-async fn verify_email(repo: Arc<Repository>, code: Uuid) -> AppResult {
-	let Some((expired, was_updated)) = repo.verify_email(code).await? else {
+async fn verify_email(state: Arc<AppState>, code: Uuid) -> AppResult {
+	let Some((expired, was_updated)) = state.repo.verify_email(code).await? else {
 		return AppError::scenario_error("Неверная ссылка для верификации", None::<&str>).into();
 	};
 

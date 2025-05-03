@@ -1,9 +1,12 @@
-use ::std::sync::LazyLock;
+use ::std::{collections::BTreeMap, sync::LazyLock};
 use chrono::Utc;
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
 
-use crate::{dto::auth::TelegramAuthDto, shared::prevent_timing_attack};
+use crate::{
+	dto::auth::TelegramAuthDto,
+	shared::{Missable as M, prevent_timing_attack},
+};
 
 static TG_BOT_SECRET_KEY: LazyLock<[u8; 32]> = LazyLock::new(|| {
 	let bot_token =
@@ -34,16 +37,36 @@ pub(crate) async fn verify_telegram_hash(data: &TelegramAuthDto) -> bool {
 		return false;
 	}
 
+	let mut fields = BTreeMap::new();
+
+	let auth_date = data.auth_date.to_string();
+	fields.insert("auth_date", auth_date.as_ref());
+
+	if let M::Present(ref first_name) = data.first_name {
+		fields.insert("first_name", first_name.as_deref().unwrap_or_default());
+	};
+
+	let id = data.id.to_string();
+	fields.insert("id", id.as_ref());
+
+	if let M::Present(ref last_name) = data.last_name {
+		fields.insert("last_name", last_name.as_deref().unwrap_or_default());
+	};
+
+	if let M::Present(ref photo_url) = data.photo_url {
+		fields.insert("photo_url", photo_url.as_deref().unwrap_or_default());
+	};
+
+	if let M::Present(ref username) = data.username {
+		fields.insert("username", username.as_deref().unwrap_or_default());
+	};
+
 	// 2. Собираем данные для проверки
-	let data_check_string = format!(
-		"auth_date={}\nfirst_name={}\nid={}\nlast_name={}\nphoto_url={}\nusername={}",
-		data.auth_date,
-		data.first_name.as_deref().unwrap_or_default(),
-		data.id,
-		data.last_name.as_deref().unwrap_or_default(),
-		data.photo_url.as_deref().unwrap_or_default(),
-		data.username.as_deref().unwrap_or_default(),
-	);
+	let data_check_string = fields
+		.iter()
+		.map(|(key, value)| format!("{}={}", key, value))
+		.collect::<Vec<_>>()
+		.join("\n");
 
 	// 3. Вычисляем хэш
 	let Ok(mut mac) = Hmac::<Sha256>::new_from_slice(&*TG_BOT_SECRET_KEY) else {

@@ -3,7 +3,7 @@ import type { UUID } from "node:crypto";
 import { route as navigate } from "preact-router";
 
 import { toaster } from "./components/ui/toaster";
-import { enter, leave } from "./store/profile";
+import { enter, leave, setFromTgAuthorization } from "./store/profile";
 import { ITelegramUser } from "./typings/telegram";
 
 export const API_HOST = import.meta.env.PROD
@@ -207,7 +207,12 @@ export const signIn = (email: string, password: string) => {
 };
 
 export const signInTg = (data: ITelegramUser) => {
-	return ajax<null>("/api/signin/tg", prepareAjax(data, POST));
+	return ajax<null>("/api/signin/tg", prepareAjax(data, POST)).then((res) => {
+		if (res && data.photo_url) {
+			setFromTgAuthorization(data.photo_url);
+		}
+		return res;
+	});
 };
 
 export const logout = () =>

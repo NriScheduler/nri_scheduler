@@ -11,6 +11,7 @@ import {
 	Container,
 	createListCollection,
 	DataList,
+	Dialog,
 	Group,
 	Heading,
 	HStack,
@@ -19,6 +20,7 @@ import {
 	InputAddon,
 	Link,
 	NativeSelect,
+	Portal,
 	Skeleton,
 	Stack,
 	Text,
@@ -28,6 +30,7 @@ import "dayjs/locale/ru";
 import dayjs from "dayjs";
 
 import { NotFoundPage } from "../not-found/not-found";
+import { CloseButton } from "../../ui/close-button";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -54,7 +57,12 @@ import {
 	updateEvent,
 } from "../../../api";
 import { $profile, $tz } from "../../../store/profile";
-import { calcMapIconLink, navBack } from "../../../utils";
+import {
+	calcMapIconLink,
+	EVENT_FORMAT,
+	navBack,
+	YYYY_MM_DD,
+} from "../../../utils";
 
 dayjs.locale("ru");
 
@@ -116,7 +124,7 @@ const EventCard = ({
 				setIsLoading(false);
 			});
 	};
-	const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+	const nowDate = dayjs().tz(tz);
 
 	const onCancelEvent = () => {
 		cancelEvent(event.id).then(() => {
@@ -233,14 +241,42 @@ const EventCard = ({
 					</>
 				)}
 				{event.you_are_master && !event.cancelled && (
-					<Button
-						onClick={onCancelEvent}
-						variant="subtle"
-						colorPalette="blue"
-						minW="115px"
-					>
-						Отменить событие
-					</Button>
+					<Dialog.Root role="alertdialog" placement="center">
+						<Dialog.Trigger asChild>
+							<Button
+								type="button"
+								variant="subtle"
+								colorPalette="blue"
+								minW="115px"
+							>
+								Отменить событие
+							</Button>
+						</Dialog.Trigger>
+						<Portal>
+							<Dialog.Backdrop />
+							<Dialog.Positioner>
+								<Dialog.Content>
+									<Dialog.Header>
+										<Dialog.Title>А вы уверены?</Dialog.Title>
+									</Dialog.Header>
+									<Dialog.Footer>
+										<Dialog.ActionTrigger asChild>
+											<Button variant="outline">Нет</Button>
+										</Dialog.ActionTrigger>
+										<Button
+											colorPalette="red"
+											onClick={onCancelEvent}
+										>
+											Да
+										</Button>
+									</Dialog.Footer>
+									<Dialog.CloseTrigger asChild>
+										<CloseButton size="sm" />
+									</Dialog.CloseTrigger>
+								</Dialog.Content>
+							</Dialog.Positioner>
+						</Portal>
+					</Dialog.Root>
 				)}
 				{event.you_are_master && event.cancelled && (
 					<Button
@@ -300,8 +336,6 @@ interface IFormEditEvent {
 	readonly plan_duration: string;
 }
 
-const KEEP_LOCAL_TIME = true;
-
 export const EventPage = () => {
 	const [route] = useRouter();
 	const eventId = route.matches?.id as UUID | undefined;
@@ -342,7 +376,7 @@ export const EventPage = () => {
 		const { location, start, startTime, max_slots, plan_duration } = data;
 
 		if (data) {
-			const date = dayjs(`${start}T${startTime}`).tz(tz, KEEP_LOCAL_TIME);
+			const date = dayjs.tz(`${start} ${startTime}`, EVENT_FORMAT, tz);
 			setIsDisableEditEventSubmitButton(true);
 			if (!eventId) {
 				return;
@@ -375,8 +409,8 @@ export const EventPage = () => {
 	const [start] = watch(["start"]);
 	const validateDate = (value: string) => {
 		clearErrors("startTime");
-		const fieldDate = dayjs(value).tz(tz, KEEP_LOCAL_TIME);
-		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+		const fieldDate = dayjs.tz(`${value} 12:00`, EVENT_FORMAT, tz);
+		const nowDate = dayjs().tz(tz);
 		if (
 			nowDate.isSame(fieldDate, "day") ||
 			fieldDate.isAfter(nowDate, "day")
@@ -391,8 +425,8 @@ export const EventPage = () => {
 		if (!start) {
 			return "Укажите дату";
 		}
-		const fultime = dayjs(`${start} ${value}`).tz(tz, KEEP_LOCAL_TIME);
-		const nowDate = dayjs().tz(tz, KEEP_LOCAL_TIME);
+		const fultime = dayjs.tz(`${start} ${value}`, EVENT_FORMAT, tz);
+		const nowDate = dayjs().tz(tz);
 		if (
 			nowDate.isSame(fultime, "minute") ||
 			fultime.isAfter(nowDate, "minute")
@@ -491,11 +525,11 @@ export const EventPage = () => {
 													<Input
 														type="date"
 														defaultValue={eventDate.format(
-															"YYYY-MM-DD",
+															YYYY_MM_DD,
 														)}
 														min={dayjs()
-															.tz(tz, KEEP_LOCAL_TIME)
-															.format("YYYY-MM-DD")}
+															.tz(tz)
+															.format(YYYY_MM_DD)}
 														{...register("start", {
 															required: "Заполните поле",
 															validate: validateDate,

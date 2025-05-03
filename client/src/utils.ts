@@ -7,6 +7,9 @@ import { $profile, IStorePrifile, TStorePrifile } from "./store/profile";
 
 export const navBack = () => history.back();
 
+export const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
+export const YYYY_MM_DD = "YYYY-MM-DD";
+
 /**
  * Универсальный хук для проверки состояния и редиректа
  */

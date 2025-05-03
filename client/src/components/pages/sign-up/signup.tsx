@@ -165,3 +165,5 @@ export const SingUpPage = () => {
 		</Container>
 	);
 };
+
+export default SingUpPage;

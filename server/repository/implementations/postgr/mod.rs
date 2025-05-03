@@ -673,6 +673,9 @@ WHERE id = $1;",
 			select
 				e.id
 				, (c.master = $2) as you_are_master
+				, c.master as master_id
+				, c.name as company_name
+				, e.date as event_date
 				, bool_or(a.id is not null) AS already_applied
 				, (e.max_slots is null or approved_slots.count < e.max_slots) as can_auto_approve
 				, e.cancelled
@@ -684,7 +687,7 @@ WHERE id = $1;",
 				and a.player = $2
 			inner join approved_slots on true
 			where e.id = $1
-			group by e.id, c.master, approved_slots.count;",
+			group by e.id, c.master, c.name, e.date, approved_slots.count;",
 		)
 		.bind(event_id)
 		.bind(player_id)

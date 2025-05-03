@@ -3,10 +3,12 @@ import type { UUID } from "node:crypto";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { computed, map, task } from "nanostores";
+import { atom, computed, map, task } from "nanostores";
 import { procetar } from "procetar";
 
 import { API_HOST, ETzVariant, IApiProfile } from "../api";
+import { toaster } from "../components/ui/toaster";
+import { YYYY_MM_DD } from "../utils";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -19,7 +21,6 @@ export interface IStorePrifile {
 	readonly email_verified: boolean;
 	readonly nickname: string;
 	readonly about_me: string | null;
-	readonly avatar_link: string;
 	readonly city: string | null;
 	readonly region: string | null;
 	readonly timezone_offset: number | null;
@@ -34,7 +35,6 @@ export interface IEmptyStorePrifile {
 	readonly email_verified: undefined;
 	readonly nickname: undefined;
 	readonly about_me: undefined;
-	readonly avatar_link: undefined;
 	readonly city: undefined;
 	readonly region: undefined;
 	readonly timezone_offset: undefined;
@@ -57,17 +57,12 @@ export const $profile = computed(_profile, (p) =>
 			return { signed: false } as TStorePrifile;
 		}
 
-		const avatar_link = p.avatar_link
-			? API_HOST + p.avatar_link
-			: await procetar(p.id);
-
 		const prof: IStorePrifile = {
 			id: p.id,
 			email: p.email,
 			email_verified: p.email_verified,
 			nickname: p.nickname,
 			about_me: p.about_me,
-			avatar_link,
 			city: p.city,
 			region: p.region,
 			timezone_offset: p.timezone_offset,
@@ -80,7 +75,50 @@ export const $profile = computed(_profile, (p) =>
 	}),
 );
 export const enter = (profile: IApiProfile) => _profile.set(profile);
-export const leave = () => _profile.set(EMPTY_USER);
+export const leave = () => {
+	_profile.set(EMPTY_USER);
+	URL.revokeObjectURL(_tgAvatarLink.get());
+	_tgAvatarLink.set("");
+};
+
+// --== AVATAR ==--
+const _tgAvatarLink = atom("");
+export const setFromTgAuthorization = (tgAvatarLink: string) =>
+	_tgAvatarLink.set(tgAvatarLink);
+
+export const $avatarLink = computed([_profile, _tgAvatarLink], (p, tg) =>
+	task(async () => {
+		if ("avatar_link" in p && p.avatar_link) {
+			return {
+				link: API_HOST + p.avatar_link,
+				source: "Аватар установлен пользователем",
+			};
+		}
+
+		if (tg) {
+			let tgPhotoRes = await fetch(tg, { redirect: "follow" }).catch(() => null); // eslint-disable-line prettier/prettier
+			if (tgPhotoRes && tgPhotoRes.ok) {
+				let tgPhotoBuf = await tgPhotoRes.blob().catch(() => null);
+				if (tgPhotoBuf) {
+					return {
+						link: URL.createObjectURL(tgPhotoBuf),
+						source: "Аватар из Telegram",
+					};
+				}
+			}
+		}
+
+		if ("id" in p) {
+			let gen = await procetar(p.id);
+			return {
+				link: gen,
+				source: "Сгенерированный аватар",
+			};
+		}
+
+		return undefined;
+	}),
+);
 
 // --== TZ ==--
 export const TIMEZONES: ReadonlyMap<number, string> = new Map([
@@ -126,4 +164,34 @@ export const $tz = computed(_profile, (p: Partial<IApiProfile>) => {
 		p.timezone_offset,
 	);
 	return dayjs.tz.guess();
+});
+
+// --== SSE ==--
+let eventSource: EventSource | null = null;
+const DATE_REGEXP = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/;
+
+$profile.listen((p) => {
+	if (p?.signed) {
+		eventSource = new EventSource(API_HOST + "/api/sse", {
+			withCredentials: true,
+		});
+
+		eventSource.onmessage = (event) => {
+			let msg: string = event.data;
+			const match = msg.match(DATE_REGEXP)?.[0];
+			if (match) {
+				let date = dayjs(match).tz($tz.get()).format(YYYY_MM_DD);
+				msg = msg.replace(match, date);
+			}
+			toaster.success({ title: msg });
+		};
+
+		eventSource.onerror = (event) => {
+			console.info("sse error:");
+			console.error(event);
+		};
+	} else {
+		eventSource?.close();
+		eventSource = null;
+	}
 });

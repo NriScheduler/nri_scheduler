@@ -3,7 +3,6 @@ import { EventPage } from "./event/event";
 import { HomePage } from "./home/home";
 import { LocationPage } from "./location/location";
 import { NotFoundPage } from "./not-found/not-found";
-import { ProfilePage } from "./profile/profile";
 import { SignInPage } from "./sign-in/singin";
 
 export {
@@ -12,6 +11,5 @@ export {
 	HomePage,
 	LocationPage,
 	NotFoundPage,
-	ProfilePage,
 	SignInPage,
 };

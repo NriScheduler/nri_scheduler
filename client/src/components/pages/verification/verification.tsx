@@ -68,3 +68,5 @@ export const VerificationPage = () => {
 		</Container>
 	);
 };
+
+export default VerificationPage;

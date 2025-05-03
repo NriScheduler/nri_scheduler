@@ -124,7 +124,7 @@ export const ProfileEdit = () => {
 					<Separator flex="1" />
 				</HStack>
 				<Stack w="1/2" gap={4}>
-					<ProfilePicture link={profile.avatar_link} />
+					<ProfilePicture nickname={profile.nickname} />
 					<Field label="Имя пользователя" invalid={!!errors.nickname}>
 						<Controller
 							name="nickname"
@@ -241,3 +241,5 @@ export const ProfileEdit = () => {
 		</Container>
 	);
 };
+
+export default ProfileEdit;

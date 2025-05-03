@@ -3,15 +3,13 @@ use axum::extract::State;
 
 use crate::{
 	dto::{Dto, region::ReadCityDto},
-	repository::{
-		Repository,
-		models::{City, Region},
-	},
+	repository::models::{City, Region},
+	state::AppState,
 	system_models::{AppResponse, AppResult},
 };
 
-pub(crate) async fn read_regions_list(State(repo): State<Arc<Repository>>) -> AppResult {
-	let regions = repo.read_regions_list().await?;
+pub(crate) async fn read_regions_list(State(state): State<Arc<AppState>>) -> AppResult {
+	let regions = state.repo.read_regions_list().await?;
 
 	let json_value = serde_json::to_value(regions)?;
 
@@ -22,19 +20,19 @@ pub(crate) async fn read_regions_list(State(repo): State<Arc<Repository>>) -> Ap
 }
 
 pub(crate) async fn add_region(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Dto(body): Dto<Region>,
 ) -> AppResult {
-	repo.add_region(body).await?;
+	state.repo.add_region(body).await?;
 
 	return Ok(AppResponse::scenario_success("Регион добавлен", None));
 }
 
 pub(crate) async fn read_cities_list(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Dto(ReadCityDto { region }): Dto<ReadCityDto>,
 ) -> AppResult {
-	let cities = repo.read_cities_list(region).await?;
+	let cities = state.repo.read_cities_list(region).await?;
 
 	let json_value = serde_json::to_value(cities)?;
 
@@ -45,10 +43,10 @@ pub(crate) async fn read_cities_list(
 }
 
 pub(crate) async fn add_city(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Dto(body): Dto<City>,
 ) -> AppResult {
-	repo.add_city(body).await?;
+	state.repo.add_city(body).await?;
 
 	return Ok(AppResponse::scenario_success("Город добавлен", None));
 }

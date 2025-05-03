@@ -1,7 +1,9 @@
 use ::std::{error::Error, sync::Arc};
 #[cfg(feature = "https")]
 use axum_server::{Handle, tls_rustls::RustlsConfig};
-use nri_scheduler::{config, graceful_shutdown::shutdown_signal, repository::Repository, router};
+use nri_scheduler::{
+	config, graceful_shutdown::shutdown_signal, repository::Repository, router, state::AppState,
+};
 #[cfg(not(feature = "https"))]
 use tokio::net::TcpListener as AsyncTcpListener;
 
@@ -10,8 +12,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 	config::init_static();
 
 	let repo = Repository::new().await?;
-	let repo = Arc::new(repo);
-	let app = router::create_router(repo.clone());
+	let state = Arc::new(AppState::new(repo));
+	let app = router::create_router(state.clone());
 
 	let addr = config::get_http_host_to_serve();
 
@@ -23,7 +25,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 		let handle = Handle::new();
 
-		tokio::spawn(shutdown_signal(repo, handle.clone()));
+		tokio::spawn(shutdown_signal(state, handle.clone()));
 
 		axum_server::bind_rustls(addr, config)
 			.handle(handle)
@@ -38,7 +40,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 		println!(":) Server started successfully");
 
 		axum::serve(listener, app)
-			.with_graceful_shutdown(shutdown_signal(repo))
+			.with_graceful_shutdown(shutdown_signal(state))
 			.await?;
 	}
 

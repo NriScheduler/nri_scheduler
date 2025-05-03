@@ -131,3 +131,5 @@ export const ProfilePage = () => {
 		</Container>
 	);
 };
+
+export default ProfilePage;

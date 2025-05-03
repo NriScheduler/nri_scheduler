@@ -3,6 +3,7 @@ pub(super) mod companies;
 pub(super) mod events;
 pub(super) mod locations;
 pub(super) mod regions;
+pub(super) mod sse;
 pub(super) mod verify;
 
 use ::std::{str::FromStr as _, sync::Arc};
@@ -24,18 +25,20 @@ use crate::{
 	},
 	image,
 	repository::Repository,
+	state::AppState,
 	system_models::{AppError, AppResponse, AppResult},
 	telegram::verify_telegram_hash,
 };
 
 pub(super) async fn registration_email(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Dto(body): Dto<RegistrationEmailDto>,
 ) -> AppResult {
 	let to = Mailbox::from_str(&body.email)
 		.map_err(|err| AppError::scenario_error("Введен некорректный email", Some(err)))?;
 
-	let verification_id = repo
+	let verification_id = state
+		.repo
 		.registration(
 			&body.nickname,
 			&body.email,
@@ -50,10 +53,10 @@ pub(super) async fn registration_email(
 }
 
 pub(super) async fn sign_in_email(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Dto(body): Dto<SignInDto>,
 ) -> Response {
-	let user = match repo.get_user_for_signing_in_email(&body.email).await {
+	let user = match state.repo.get_user_for_signing_in_email(&body.email).await {
 		Ok(Some(user)) => user,
 		Ok(None) => return AppError::unauthorized("Неверный пароль").into_response(),
 		Err(err) => return err.into_response(),
@@ -84,7 +87,7 @@ pub(super) async fn sign_in_email(
 }
 
 pub(super) async fn sign_in_tg(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Dto(body): Dto<TelegramAuthDto>,
 ) -> Response {
 	if !verify_telegram_hash(&body).await {
@@ -92,10 +95,10 @@ pub(super) async fn sign_in_tg(
 			.into_response();
 	}
 
-	let user_id = match repo.get_user_for_signing_in_tg(body.id).await {
+	let user_id = match state.repo.get_user_for_signing_in_tg(body.id).await {
 		Err(err) => return err.into_response(),
 		Ok(Some(u)) => u,
-		Ok(None) => match registration_tg(repo, body).await {
+		Ok(None) => match registration_tg(&state.repo, body).await {
 			Err(err) => return err.into_response(),
 			Ok(u) => u,
 		},
@@ -114,11 +117,11 @@ pub(super) async fn sign_in_tg(
 	}
 }
 
-async fn registration_tg(repo: Arc<Repository>, body: TelegramAuthDto) -> Result<Uuid, AppError> {
-	let nickname = body.username.unwrap_or_else(|| {
+async fn registration_tg(repo: &Repository, body: TelegramAuthDto) -> Result<Uuid, AppError> {
+	let nickname = body.username.deep_unwrap_or_else(|| {
 		body
 			.first_name
-			.unwrap_or_else(|| format!("user_{}", body.id))
+			.deep_unwrap_or_else(|| format!("user_{}", body.id))
 	});
 
 	repo.registration_tg(&nickname, body.id).await
@@ -134,10 +137,10 @@ pub(super) async fn logout() -> Response {
 }
 
 pub(super) async fn read_my_profile(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 ) -> AppResult {
-	let profile = repo.read_profile(user_id).await?;
+	let profile = state.repo.read_profile(user_id).await?;
 
 	Ok(match profile {
 		None => AppResponse::scenario_fail("Пользователь не найден", None),
@@ -149,11 +152,11 @@ pub(super) async fn read_my_profile(
 }
 
 pub(super) async fn update_my_profile(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Dto(body): Dto<UpdateProfileDto>,
 ) -> AppResult {
-	repo.update_profile(user_id, body).await?;
+	state.repo.update_profile(user_id, body).await?;
 
 	Ok(AppResponse::scenario_success(
 		"Данные пользователя обновлены",
@@ -162,11 +165,11 @@ pub(super) async fn update_my_profile(
 }
 
 pub(super) async fn read_another_profile(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(_user_id): Extension<Option<Uuid>>, // когда-нибудь пригодится для определения показывать ли контакты
 	Path(profile_id): Path<Uuid>,
 ) -> AppResult {
-	let profile = repo.read_profile(profile_id).await?;
+	let profile = state.repo.read_profile(profile_id).await?;
 
 	Ok(match profile {
 		None => AppResponse::scenario_fail("Пользователь не найден", None),
@@ -178,19 +181,19 @@ pub(super) async fn read_another_profile(
 }
 
 pub(super) async fn read_avatar(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Path(profile_id): Path<Uuid>,
 ) -> Response {
-	image::serve(repo.get_avatar_link(profile_id)).await
+	image::serve(state.repo.get_avatar_link(profile_id)).await
 }
 
 pub(super) async fn set_avatar(
-	State(repo): State<Arc<Repository>>,
+	State(state): State<Arc<AppState>>,
 	Extension(user_id): Extension<Uuid>,
 	Dto(body): Dto<FileLinkDto>,
 ) -> AppResult {
 	image::check_remote_file(&body.url).await?;
-	repo.set_avatar(user_id, &body.url).await?;
+	state.repo.set_avatar(user_id, &body.url).await?;
 
 	Ok(AppResponse::scenario_success("Установлен аватар", None))
 }
