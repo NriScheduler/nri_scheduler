@@ -21,10 +21,9 @@ use crate::{
 	cookie::{remove_auth_cookie, set_auth_cookie},
 	dto::{
 		Dto, FileLinkDto,
-		auth::{LogTg, RegistrationEmailDto, SignInDto, TelegramAuthDto, UpdateProfileDto},
+		auth::{RegistrationEmailDto, SignInDto, TelegramAuthDto, UpdateProfileDto},
 	},
 	image,
-	log::log,
 	repository::Repository,
 	state::AppState,
 	system_models::{AppError, AppResponse, AppResult},
@@ -87,11 +86,6 @@ pub(super) async fn sign_in_email(
 	}
 }
 
-pub(super) async fn log_tg(Dto(body): Dto<LogTg>) -> Response {
-	log(body.data);
-	AppResponse::scenario_success("Всё пучком", None).into_response()
-}
-
 pub(super) async fn sign_in_tg(
 	State(state): State<Arc<AppState>>,
 	Dto(body): Dto<TelegramAuthDto>,
@@ -124,10 +118,10 @@ pub(super) async fn sign_in_tg(
 }
 
 async fn registration_tg(repo: &Repository, body: TelegramAuthDto) -> Result<Uuid, AppError> {
-	let nickname = body.username.unwrap_or_else(|| {
+	let nickname = body.username.deep_unwrap_or_else(|| {
 		body
 			.first_name
-			.unwrap_or_else(|| format!("user_{}", body.id))
+			.deep_unwrap_or_else(|| format!("user_{}", body.id))
 	});
 
 	repo.registration_tg(&nickname, body.id).await

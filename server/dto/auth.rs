@@ -4,6 +4,8 @@ use regex::Regex;
 use serde::{Deserialize, Deserializer, de::Error as _};
 use uuid::Uuid;
 
+use crate::shared::Missable;
+
 static EMAIL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 	Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").expect("Email regex should build without errors")
 });
@@ -173,15 +175,14 @@ pub(crate) struct VerificationDto {
 #[derive(Debug, Deserialize)]
 pub(crate) struct TelegramAuthDto {
 	pub auth_date: i64,
-	pub first_name: Option<String>,
+	#[serde(default)]
+	pub first_name: Missable<String>,
 	pub id: i64,
-	pub last_name: Option<String>,
-	pub photo_url: Option<String>,
-	pub username: Option<String>,
+	#[serde(default)]
+	pub last_name: Missable<String>,
+	#[serde(default)]
+	pub photo_url: Missable<String>,
+	#[serde(default)]
+	pub username: Missable<String>,
 	pub hash: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub(crate) struct LogTg {
-	pub data: String,
 }
