@@ -77,16 +77,17 @@ export const ProfileEdit = () => {
 
 	const handleSelectRadio = (value: string) => {
 		const newVariant = value as ETzVariant;
+		const updates: Partial<ProfileFormData> = { tzVariant: newVariant };
 
 		if (newVariant === ETzVariant.OWN) {
-			handleInputChange("timezoneOffset", null);
+			updates.timezoneOffset = null;
 		} else if (newVariant === ETzVariant.DEVICE) {
-			const timezoneOffset = -new Date().getTimezoneOffset() / 60;
-			handleInputChange("timezoneOffset", timezoneOffset);
+			updates.timezoneOffset = -new Date().getTimezoneOffset() / 60;
 		} else if (newVariant === ETzVariant.CITY && formData.city) {
-			handleInputChange("timezoneOffset", profile.timezone_offset ?? null);
+			updates.timezoneOffset = profile.timezone_offset ?? null;
 		}
-		handleInputChange("tzVariant", value as ETzVariant);
+
+		setFormData((prev) => ({ ...prev, ...updates }));
 	};
 
 	const handleSubmit = async () => {
