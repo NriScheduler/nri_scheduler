@@ -11,6 +11,7 @@ import {
 	Container,
 	createListCollection,
 	DataList,
+	Dialog,
 	Group,
 	Heading,
 	HStack,
@@ -19,6 +20,7 @@ import {
 	InputAddon,
 	Link,
 	NativeSelect,
+	Portal,
 	Skeleton,
 	Stack,
 	Text,
@@ -28,6 +30,7 @@ import "dayjs/locale/ru";
 import dayjs from "dayjs";
 
 import { NotFoundPage } from "../not-found/not-found";
+import { CloseButton } from "../../ui/close-button";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -238,14 +241,42 @@ const EventCard = ({
 					</>
 				)}
 				{event.you_are_master && !event.cancelled && (
-					<Button
-						onClick={onCancelEvent}
-						variant="subtle"
-						colorPalette="blue"
-						minW="115px"
-					>
-						Отменить событие
-					</Button>
+					<Dialog.Root role="alertdialog" placement="center">
+						<Dialog.Trigger asChild>
+							<Button
+								type="button"
+								variant="subtle"
+								colorPalette="blue"
+								minW="115px"
+							>
+								Отменить событие
+							</Button>
+						</Dialog.Trigger>
+						<Portal>
+							<Dialog.Backdrop />
+							<Dialog.Positioner>
+								<Dialog.Content>
+									<Dialog.Header>
+										<Dialog.Title>А вы уверены?</Dialog.Title>
+									</Dialog.Header>
+									<Dialog.Footer>
+										<Dialog.ActionTrigger asChild>
+											<Button variant="outline">Нет</Button>
+										</Dialog.ActionTrigger>
+										<Button
+											colorPalette="red"
+											onClick={onCancelEvent}
+										>
+											Да
+										</Button>
+									</Dialog.Footer>
+									<Dialog.CloseTrigger asChild>
+										<CloseButton size="sm" />
+									</Dialog.CloseTrigger>
+								</Dialog.Content>
+							</Dialog.Positioner>
+						</Portal>
+					</Dialog.Root>
 				)}
 				{event.you_are_master && event.cancelled && (
 					<Button
