@@ -5,11 +5,24 @@ import { NativeSelect } from "@chakra-ui/react";
 import { TIMEZONES } from "../../../store/profile";
 
 interface TimesonesListProps {
-	value: string;
-	onChange: (value: string) => void;
+	value: number | string | null;
+	onChange: (value: number | null) => void;
 }
 
 export const TimesonesList = ({ value, onChange }: TimesonesListProps) => {
+	// Преобразуем входное значение в строку для выбора
+	const selectValue =
+		typeof value === "number"
+			? Array.from(TIMEZONES).find(([offset]) => offset === value)?.[1] || ""
+			: value || "";
+
+	// Обработчик изменения
+	const handleChange = (tzName: string) => {
+		const offset =
+			Array.from(TIMEZONES).find(([, name]) => name === tzName)?.[0] ?? null;
+		onChange(offset);
+	};
+
 	const tzOptions = Array.from(TIMEZONES).map(([offset, tzName]) => (
 		<option value={tzName} key={tzName}>
 			{`${offset < 0 ? offset : "+" + offset} (${tzName})`}
@@ -20,10 +33,8 @@ export const TimesonesList = ({ value, onChange }: TimesonesListProps) => {
 		<NativeSelect.Root>
 			<NativeSelect.Field
 				placeholder="Выберите часовой пояс"
-				value={value}
-				onChange={(e: { currentTarget: { value: string } }) =>
-					onChange(e.currentTarget.value)
-				}
+				value={selectValue}
+				onChange={(e) => handleChange(e.currentTarget.value)}
 			>
 				{tzOptions}
 			</NativeSelect.Field>
