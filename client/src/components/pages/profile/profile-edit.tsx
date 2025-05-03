@@ -1,5 +1,6 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { Controller, useForm } from "react-hook-form";
 
 import {
 	Button,
@@ -40,73 +41,59 @@ type ProfileFormData = {
 export const ProfileEdit = () => {
 	const { profile, isAuthenticated } = useAuthVerification();
 	const allRegions = useStore($regions);
+	const [citiesOptions, setCitiesOptions] = useState<string[]>([]);
 
-	if (!isAuthenticated || !profile) {
-		return null;
-	}
-
-	const [formData, setFormData] = useState<ProfileFormData>({
-		nickname: profile.nickname ?? "",
-		about: profile.about_me ?? null,
-		region: profile.region ?? null,
-		city: profile.city ?? null,
-		timezoneOffset: profile.timezone_offset ?? null,
-		tzVariant: profile.tz_variant ?? ETzVariant.DEVICE,
+	const {
+		handleSubmit,
+		setValue,
+		watch,
+		control,
+		formState: { errors, isSubmitting, isValid },
+	} = useForm<ProfileFormData>({
+		mode: "onChange",
+		defaultValues: {
+			nickname: profile?.nickname ?? "",
+			about: profile?.about_me ?? null,
+			region: profile?.region ?? null,
+			city: profile?.city ?? null,
+			timezoneOffset: profile?.timezone_offset ?? null,
+			tzVariant: profile?.tz_variant ?? ETzVariant.DEVICE,
+		},
 	});
 
-	const [citiesOptions, setCitiesOptions] = useState<string[]>([]);
+	const currentTzVariant = watch("tzVariant");
+	const currentRegion = watch("region");
+	const currentCity = watch("city");
 
 	useEffect(() => {
 		const loadCities = async () => {
-			if (formData.region) {
-				const res = await readCitiesList(formData.region);
+			if (currentRegion) {
+				const res = await readCitiesList(currentRegion);
 				if (res) {
 					setCitiesOptions(res.payload.map(({ name }) => name));
 				}
 			}
 		};
 		loadCities();
-	}, [formData.region]);
+	}, [currentRegion]);
 
-	const handleInputChange = (
-		field: keyof ProfileFormData,
-		value: string | number | null,
-	) => {
-		setFormData((prev) => ({ ...prev, [field]: value }));
-	};
-
-	const handleSelectRadio = (value: string) => {
-		const newVariant = value as ETzVariant;
-		const updates: Partial<ProfileFormData> = { tzVariant: newVariant };
-
-		if (newVariant === ETzVariant.OWN) {
-			updates.timezoneOffset = null;
-		} else if (newVariant === ETzVariant.DEVICE) {
-			updates.timezoneOffset = -new Date().getTimezoneOffset() / 60;
-		} else if (newVariant === ETzVariant.CITY && formData.city) {
-			updates.timezoneOffset = profile.timezone_offset ?? null;
+	useEffect(() => {
+		if (currentTzVariant === ETzVariant.DEVICE) {
+			setValue("timezoneOffset", -new Date().getTimezoneOffset() / 60);
+		} else if (currentTzVariant === ETzVariant.CITY && currentCity) {
+			setValue("timezoneOffset", profile?.timezone_offset ?? null);
+		} else if (currentTzVariant === ETzVariant.OWN) {
+			setValue("timezoneOffset", null);
 		}
+	}, [currentTzVariant, currentCity]);
 
-		setFormData((prev) => ({ ...prev, ...updates }));
-	};
-
-	const handleSubmit = async () => {
-		const { nickname, about, city, timezoneOffset, tzVariant } = formData;
-
-		if (
-			!nickname ||
-			(tzVariant === ETzVariant.CITY && !city) ||
-			(tzVariant === ETzVariant.OWN && !timezoneOffset)
-		) {
-			return;
-		}
-
+	const onSubmit = async (data: ProfileFormData) => {
 		const res = await updateMyProfile(
-			nickname,
-			about,
-			city,
-			timezoneOffset,
-			tzVariant,
+			data.nickname,
+			data.about,
+			data.city,
+			data.timezoneOffset,
+			data.tzVariant,
 		);
 
 		if (res) {
@@ -118,10 +105,9 @@ export const ProfileEdit = () => {
 		}
 	};
 
-	const isSubmitDisabled =
-		!formData.nickname ||
-		(formData.tzVariant === ETzVariant.CITY && !formData.city) ||
-		(formData.tzVariant === ETzVariant.OWN && !formData.timezoneOffset);
+	if (!isAuthenticated || !profile) {
+		return null;
+	}
 
 	return (
 		<Container mb={6}>
@@ -129,7 +115,7 @@ export const ProfileEdit = () => {
 				Вернуться назад
 			</Button>
 
-			<form>
+			<form onSubmit={handleSubmit(onSubmit)}>
 				{/* Персональная информация */}
 				<HStack py={6}>
 					<Heading size="xl" flexShrink="0">
@@ -139,27 +125,28 @@ export const ProfileEdit = () => {
 				</HStack>
 				<Stack w="1/2" gap={4}>
 					<ProfilePicture link={profile.avatar_link} />
-					<Field label="Имя пользователя" invalid={!formData.nickname}>
-						<Input
+					<Field label="Имя пользователя" invalid={!!errors.nickname}>
+						<Controller
 							name="nickname"
-							placeholder="Заполните поле"
-							required
-							value={formData.nickname}
-							onChange={(e) =>
-								handleInputChange("nickname", e.currentTarget.value)
-							}
+							control={control}
+							rules={{ required: "Обязательное поле" }}
+							render={({ field }) => (
+								<Input {...field} placeholder="Заполните поле" />
+							)}
 						/>
 					</Field>
 					<Field label="О себе">
-						<Textarea
-							name="about_me"
-							placeholder="Расскажите о себе"
-							variant="outline"
-							autoresize
-							value={formData.about || ""}
-							onChange={(e) =>
-								handleInputChange("about", e.currentTarget.value)
-							}
+						<Controller
+							name="about"
+							control={control}
+							render={({ field }) => (
+								<Textarea
+									{...field}
+									placeholder="Расскажите о себе"
+									variant="outline"
+									value={field.value || ""}
+								/>
+							)}
 						/>
 					</Field>
 				</Stack>
@@ -172,62 +159,81 @@ export const ProfileEdit = () => {
 					<Separator flex="1" />
 				</HStack>
 				<Stack w="1/2" gap={4}>
-					<Field
-						label="Город"
-						invalid={
-							formData.tzVariant === ETzVariant.CITY && !formData.city
-						}
-					>
-						<ProfileComplete
-							value={formData.city || ""}
-							placeholder="Выберите город"
-							options={citiesOptions}
-							handleChange={(e) => handleInputChange("city", e)}
-						/>
-					</Field>
-					<Field label="Регион">
-						<ProfileComplete
-							value={formData.region || ""}
-							placeholder="Выберите регион"
-							options={allRegions.map((region) => region.name)}
-							handleChange={(value) => {
-								if (
-									value &&
-									formData.region &&
-									value !== formData.region
-								) {
-									handleInputChange("city", null);
-								}
-								handleInputChange("region", value);
+					<Field label="Город" invalid={!!errors.city}>
+						<Controller
+							name="city"
+							control={control}
+							rules={{
+								required: "Выберите город",
 							}}
+							render={({ field }) => (
+								<ProfileComplete
+									options={citiesOptions}
+									value={field.value}
+									onChange={field.onChange}
+									onBlur={field.onBlur}
+									placeholder="Выберите город"
+								/>
+							)}
 						/>
 					</Field>
+
+					<Field label="Регион" invalid={!!errors.region}>
+						<Controller
+							name="region"
+							control={control}
+							rules={{
+								required: "Выберите регион",
+							}}
+							render={({ field }) => (
+								<ProfileComplete
+									options={allRegions.map((region) => region.name)}
+									value={field.value}
+									onChange={field.onChange}
+									onBlur={field.onBlur}
+									placeholder="Выберите регион"
+								/>
+							)}
+						/>
+					</Field>
+
 					<Field
 						label="Часовой пояс"
-						disabled={formData.tzVariant !== ETzVariant.OWN}
+						disabled={currentTzVariant !== ETzVariant.OWN}
 						invalid={
-							formData.tzVariant === ETzVariant.OWN &&
-							!formData.timezoneOffset
+							currentTzVariant === ETzVariant.OWN &&
+							!watch("timezoneOffset")
 						}
 					>
-						<TimesonesList
-							value={formData.timezoneOffset}
-							onChange={(value) =>
-								handleInputChange("timezoneOffset", value)
-							}
+						<Controller
+							name="timezoneOffset"
+							control={control}
+							render={({ field }) => (
+								<TimesonesList
+									value={field.value}
+									onChange={field.onChange}
+								/>
+							)}
 						/>
 					</Field>
-					<TimezoneRadioGroup
-						value={formData.tzVariant}
-						onChange={(value) => handleSelectRadio(value)}
+
+					<Controller
+						name="tzVariant"
+						control={control}
+						render={({ field }) => (
+							<TimezoneRadioGroup
+								value={field.value}
+								onChange={field.onChange}
+							/>
+						)}
 					/>
 				</Stack>
 
 				<Button
 					mt={6}
-					type="button"
-					disabled={isSubmitDisabled}
-					onClick={handleSubmit}
+					type="submit"
+					loading={isSubmitting}
+					disabled={!isValid || Object.keys(errors).length > 0}
 				>
 					Сохранить изменения
 				</Button>

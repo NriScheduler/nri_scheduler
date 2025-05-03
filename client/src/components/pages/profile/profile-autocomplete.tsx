@@ -1,4 +1,4 @@
-import { h } from "preact";
+import { h, JSX } from "preact";
 
 import {
 	AutoComplete,
@@ -9,27 +9,38 @@ import {
 } from "@choc-ui/chakra-autocomplete";
 
 interface IProfileComplete {
-	handleChange: (value: string) => void;
 	options: readonly string[];
-	value: string | number;
+	value: string | null;
+	onChange: (value: string | null) => void;
+	onBlur?: () => void;
 	placeholder?: string;
 }
 
 export const ProfileComplete = ({
-	handleChange,
 	options,
 	value,
-	...props
+	onChange,
+	onBlur,
+	placeholder,
 }: IProfileComplete) => {
 	return (
 		<AutoComplete
-			onChange={handleChange}
+			onChange={(val: string) => {
+				onChange(val);
+			}}
 			openOnFocus
 			freeSolo
 			value={value}
 			emptyState="Ничего не найдено"
 		>
-			<AutoCompleteInput variant="outline" {...props} />
+			<AutoCompleteInput
+				variant="outline"
+				onBlur={onBlur}
+				placeholder={placeholder}
+				onChange={(e: JSX.TargetedEvent<HTMLInputElement>) => {
+					onChange(e.currentTarget.value || null);
+				}}
+			/>
 			<AutoCompleteList bg="inherit">
 				<AutoCompleteGroup>
 					{options.map((option) => (
@@ -37,8 +48,9 @@ export const ProfileComplete = ({
 							key={option}
 							value={option}
 							textTransform="capitalize"
-							_hover={{
-								bg: "gray.200",
+							_hover={{ bg: "gray.200" }}
+							onClick={() => {
+								onChange(option);
 							}}
 						/>
 					))}
