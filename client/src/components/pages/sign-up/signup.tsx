@@ -18,13 +18,7 @@ import {
 import { Field } from "../../ui/field";
 import { PasswordInput } from "../../ui/password-input";
 import { toaster } from "../../ui/toaster";
-import {
-	getMyProfile,
-	logTg,
-	registration,
-	signInTg,
-	TG_BOT_ID,
-} from "../../../api";
+import { getMyProfile, registration, signInTg, TG_BOT_ID } from "../../../api";
 import { ITelegramUser } from "../../../typings/telegram";
 
 interface IFormValues {
@@ -61,10 +55,6 @@ export const SingUpPage = () => {
 	});
 
 	const submitTg = (user: ITelegramUser | boolean): void => {
-		console.log("user:");
-		console.log(user);
-		logTg(user);
-
 		if (!user || typeof user !== "object") {
 			toaster.error({
 				title: "Не удалось установить связь с Telegram",
