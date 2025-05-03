@@ -10,24 +10,27 @@ import {
 	Separator,
 	Stack,
 } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
 
 import { Avatar } from "../../ui/avatar";
 import { HoverCard } from "../../ui/hover-card";
 import { Check, Warning } from "../../ui/icons";
 import { toaster } from "../../ui/toaster";
 import { sendVerificationLink } from "../../../api";
-import { IStorePrifile, TIMEZONES } from "../../../store/profile";
+import { $avatarLink, IStorePrifile, TIMEZONES } from "../../../store/profile";
 
 const NOT_SET = "Не установлен";
 
 interface IProfileInfoProps {
-	user: IStorePrifile | null;
+	readonly user: IStorePrifile | null;
 }
 
 export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 	const [timeZone, setTimeZone] = useState(NOT_SET);
 	const [fetching, setFetching] = useState(false);
 	const [verificationSent, setVerificationSent] = useState(false);
+
+	const avatarLink = useStore($avatarLink);
 
 	useEffect(() => {
 		setTimeZone(
@@ -62,7 +65,12 @@ export const ProfileInfo = ({ user }: IProfileInfoProps) => {
 				<Separator flex="1" />
 			</HStack>
 			<Stack>
-				<Avatar src={user?.avatar_link} w="100px" h="100px" />
+				<Avatar
+					src={avatarLink?.link}
+					fallback={user?.nickname}
+					w="100px"
+					h="100px"
+				/>
 				<DataList.Root orientation="horizontal">
 					<DataList.Item key="nickname">
 						<DataList.ItemLabel minW="150px">

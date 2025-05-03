@@ -95,7 +95,7 @@ export const ProfileEdit = () => {
 					<Separator flex="1" />
 				</HStack>
 				<Stack>
-					<ProfilePicture link={user.avatar_link ?? ""} />
+					<ProfilePicture nickname={user.nickname} />
 					<Field label="Имя пользователя" invalid={!nickname}>
 						<Input
 							name="nickname"
