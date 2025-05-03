@@ -8,6 +8,7 @@ pub(crate) mod email;
 pub mod graceful_shutdown;
 pub(crate) mod handlers;
 pub(crate) mod image;
+pub(crate) mod log;
 #[cfg(feature = "swagger")]
 pub(crate) mod openapi;
 pub mod repository;

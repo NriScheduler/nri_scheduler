@@ -3,7 +3,7 @@ use chrono::Utc;
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
 
-use crate::{dto::auth::TelegramAuthDto, shared::prevent_timing_attack};
+use crate::{dto::auth::TelegramAuthDto, log::log, shared::prevent_timing_attack};
 
 static TG_BOT_SECRET_KEY: LazyLock<[u8; 32]> = LazyLock::new(|| {
 	let bot_token =
@@ -26,11 +26,13 @@ pub(super) fn init_static() {
 }
 
 pub(crate) async fn verify_telegram_hash(data: &TelegramAuthDto) -> bool {
+	log(format!("data: {data:?}"));
 	prevent_timing_attack().await;
 
 	let now = Utc::now().timestamp();
 	// 1. Проверяем что авторизационные данные получены не позднее 5 минут
 	if (now - data.auth_date) > 300 {
+		log("too late");
 		return false;
 	}
 
@@ -47,11 +49,14 @@ pub(crate) async fn verify_telegram_hash(data: &TelegramAuthDto) -> bool {
 
 	// 3. Вычисляем хэш
 	let Ok(mut mac) = Hmac::<Sha256>::new_from_slice(&*TG_BOT_SECRET_KEY) else {
+		log("oh sh...");
 		// недостижимая ветка т.к. проверили при инициализации TG_BOT_SECRET_KEY
 		return false;
 	};
 	mac.update(data_check_string.as_bytes());
 	let computed_hash = hex::encode(mac.finalize().into_bytes());
+	log(format!("computed_hash: {computed_hash}"));
+	log(format!("result: {}", computed_hash == data.hash));
 
 	// 4. Сравниваем хэши
 	computed_hash == data.hash
