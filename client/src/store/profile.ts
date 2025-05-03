@@ -117,7 +117,7 @@ export const $avatarLink = computed([_profile, _tgAvatarLink], (p, tg) =>
 					console.log("createObjectURL:");
 					console.log(y);
 					return {
-						link: URL.createObjectURL(y),
+						link: y,
 						source: "Аватар из Telegram",
 					};
 				}
