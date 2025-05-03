@@ -21,9 +21,10 @@ use crate::{
 	cookie::{remove_auth_cookie, set_auth_cookie},
 	dto::{
 		Dto, FileLinkDto,
-		auth::{RegistrationEmailDto, SignInDto, TelegramAuthDto, UpdateProfileDto},
+		auth::{LogTg, RegistrationEmailDto, SignInDto, TelegramAuthDto, UpdateProfileDto},
 	},
 	image,
+	log::log,
 	repository::Repository,
 	state::AppState,
 	system_models::{AppError, AppResponse, AppResult},
@@ -84,6 +85,11 @@ pub(super) async fn sign_in_email(
 		Ok(()) => res,
 		Err(err) => err.into_response(),
 	}
+}
+
+pub(super) async fn log_tg(Dto(body): Dto<LogTg>) -> Response {
+	log(body.data);
+	AppResponse::scenario_success("Всё пучком", None).into_response()
 }
 
 pub(super) async fn sign_in_tg(

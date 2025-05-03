@@ -210,6 +210,13 @@ export const signInTg = (data: ITelegramUser) => {
 	return ajax<null>("/api/signin/tg", prepareAjax(data, POST));
 };
 
+export const logTg = (data: ITelegramUser | boolean) => {
+	return ajax<null>(
+		"/api/log_tg",
+		prepareAjax({ data: JSON.stringify(data) }, POST),
+	);
+};
+
 export const logout = () =>
 	ajax<null>("/api/logout", prepareAjax(undefined, POST)).then((res) => {
 		if (res) {

@@ -28,6 +28,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
 				.route("/registration", post(H::registration_email))
 				.route("/signin", post(H::sign_in_email))
 				.route("/signin/tg", post(H::sign_in_tg))
+				.route("/log_tg", post(H::log_tg))
 				.route("/logout", post(H::logout))
 				.route("/verify", post(H::verify::verify))
 				.route("/locations", get(H::locations::get_locations_list))

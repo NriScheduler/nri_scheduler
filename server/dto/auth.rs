@@ -180,3 +180,8 @@ pub(crate) struct TelegramAuthDto {
 	pub username: Option<String>,
 	pub hash: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct LogTg {
+	pub data: String,
+}
