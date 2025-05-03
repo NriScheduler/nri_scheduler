@@ -96,7 +96,7 @@ export const $avatarLink = computed([_profile, _tgAvatarLink], (p, tg) =>
 		}
 
 		if (tg) {
-			let tgPhotoRes = await fetch(tg, { redirect: "follow", credentials: "include" }).catch(() => null); // eslint-disable-line prettier/prettier
+			let tgPhotoRes = await fetch(tg, { redirect: "follow", mode: "no-cors" }).catch(() => null); // eslint-disable-line prettier/prettier
 			if (tgPhotoRes && tgPhotoRes.ok) {
 				let tgPhotoBuf = await tgPhotoRes.blob().catch(() => null);
 				if (tgPhotoBuf) {
