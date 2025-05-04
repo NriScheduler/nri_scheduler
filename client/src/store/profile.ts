@@ -6,7 +6,7 @@ import utc from "dayjs/plugin/utc";
 import { atom, computed, map, task } from "nanostores";
 import { procetar } from "procetar";
 
-import { API_HOST, ETzVariant, IApiProfile } from "../api";
+import { API_HOST, ETzVariant, getTgAvatar, IApiProfile } from "../api";
 import { toaster } from "../components/ui/toaster";
 import { YYYY_MM_DD } from "../utils";
 
@@ -96,7 +96,7 @@ export const $avatarLink = computed([_profile, _tgAvatarLink], (p, tg) =>
 		}
 
 		if (tg) {
-			let tgPhotoRes = await fetch(tg, { redirect: "follow" }).catch(() => null); // eslint-disable-line prettier/prettier
+			let tgPhotoRes = await getTgAvatar(tg).catch(() => null);
 			if (tgPhotoRes && tgPhotoRes.ok) {
 				let tgPhotoBuf = await tgPhotoRes.blob().catch(() => null);
 				if (tgPhotoBuf) {

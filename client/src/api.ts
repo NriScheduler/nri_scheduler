@@ -569,6 +569,11 @@ export const updateMyProfile = (
 export const setAvatar = (url: string) =>
 	ajax<null>(`/api/profile/avatar`, prepareAjax({ url }, PUT));
 
+export const getTgAvatar = (link: string) => {
+	const query = new URLSearchParams({ link });
+	return fetch(`${API_HOST}/api/tg-avatar?${query}`);
+};
+
 export interface IApiRegion {
 	readonly name: string;
 	readonly timezone: string;

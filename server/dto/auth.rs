@@ -185,6 +185,11 @@ pub(crate) struct TelegramAuthDto {
 	pub hash: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub(crate) struct TgAvatar {
+	pub link: String,
+}
+
 fn check_missed<'de, D: Deserializer<'de>>(deser: D) -> Result<Option<Option<String>>, D::Error> {
 	// Если поле отсутствует, serde не вызовет эту функцию, поэтому нужен #[serde(default)]
 	Ok(Some(Option::deserialize(deser)?))

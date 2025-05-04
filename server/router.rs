@@ -57,6 +57,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
 				)
 				.merge(
 					Router::new()
+						.route("/tg-avatar", get(H::tg_avatar))
 						.route("/profile/avatar", put(H::set_avatar))
 						.route("/locations", post(H::locations::add_location))
 						.route("/companies", post(H::companies::add_company))

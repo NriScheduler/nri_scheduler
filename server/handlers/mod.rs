@@ -10,6 +10,7 @@ use ::std::{str::FromStr as _, sync::Arc};
 use axum::{
 	Extension,
 	extract::{Path, State},
+	http::StatusCode,
 	response::{IntoResponse, Response},
 };
 use lettre::message::Mailbox;
@@ -21,7 +22,7 @@ use crate::{
 	cookie::{remove_auth_cookie, set_auth_cookie},
 	dto::{
 		Dto, FileLinkDto,
-		auth::{RegistrationEmailDto, SignInDto, TelegramAuthDto, UpdateProfileDto},
+		auth::{RegistrationEmailDto, SignInDto, TelegramAuthDto, TgAvatar, UpdateProfileDto},
 	},
 	image,
 	repository::Repository,
@@ -197,4 +198,11 @@ pub(super) async fn set_avatar(
 	state.repo.set_avatar(user_id, &body.url).await?;
 
 	Ok(AppResponse::scenario_success("Установлен аватар", None))
+}
+
+pub(super) async fn tg_avatar(Dto(query): Dto<TgAvatar>) -> Response {
+	if let Err(err) = image::check_remote_file(&query.link).await {
+		return (StatusCode::BAD_REQUEST, err.to_string()).into_response();
+	};
+	image::serve_statik(&query.link).await
 }

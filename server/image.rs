@@ -73,6 +73,12 @@ pub(super) async fn serve(link_fut: impl Future<Output = CoreResult<Option<Strin
 	}
 }
 
+pub(super) async fn serve_statik(link: &str) -> Response {
+	self::proxy(link)
+		.await
+		.unwrap_or_else(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response())
+}
+
 async fn proxy(url: &str) -> Result<Response, Box<dyn Error>> {
 	let res = reqwest::get(url).await?;
 
