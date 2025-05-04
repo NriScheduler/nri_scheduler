@@ -118,10 +118,11 @@ pub(super) async fn sign_in_tg(
 }
 
 async fn registration_tg(repo: &Repository, body: TelegramAuthDto) -> Result<Uuid, AppError> {
-	let nickname = body.username.deep_unwrap_or_else(|| {
+	let nickname = body.username.unwrap_or_default().unwrap_or_else(|| {
 		body
 			.first_name
-			.deep_unwrap_or_else(|| format!("user_{}", body.id))
+			.unwrap_or_default()
+			.unwrap_or_else(|| format!("user_{}", body.id))
 	});
 
 	repo.registration_tg(&nickname, body.id).await
