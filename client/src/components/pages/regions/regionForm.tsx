@@ -15,11 +15,12 @@ import { TimesonesList } from "./timezones";
 import { Field } from "../../ui/field";
 import { toaster } from "../../ui/toaster";
 import { addRegion } from "../../../api";
+import { TIMEZONES } from "../../../store/profile";
 import { loadRegions } from "../../../store/regions";
 
 interface IFormAddRegion {
 	readonly name: string;
-	readonly timezone: string;
+	readonly offset: number;
 }
 
 export const RegionForm = () => {
@@ -34,12 +35,13 @@ export const RegionForm = () => {
 	} = useForm<IFormAddRegion>({
 		mode: "onChange",
 		defaultValues: {
-			timezone: "",
+			offset: undefined,
 		},
 	});
 
 	const onSubmit = handleSubmit(async (data) => {
-		const { name, timezone } = data;
+		const { name, offset } = data;
+		const timezone = TIMEZONES.get(offset)!;
 
 		setRegionLoading(true);
 		try {
@@ -50,7 +52,7 @@ export const RegionForm = () => {
 				});
 				loadRegions();
 				setValue("name", "");
-				setValue("timezone", "");
+				setValue("offset", "" as unknown as number);
 			}
 		} finally {
 			setRegionLoading(false);
@@ -90,11 +92,11 @@ export const RegionForm = () => {
 
 					<Field
 						label="Часовой пояс"
-						errorText={errors.timezone?.message}
-						invalid={!!errors.timezone}
+						errorText={errors.offset?.message}
+						invalid={!!errors.offset}
 					>
 						<Controller
-							name="timezone"
+							name="offset"
 							control={control}
 							rules={{
 								required: "Выберите часовой пояс",
