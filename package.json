@@ -22,16 +22,16 @@
 		"@schedule-x/theme-default": "^2.29.0",
 		"dayjs": "^1.11.13",
 		"nanostores": "^1.0.1",
-		"preact": "^10.26.5",
+		"preact": "^10.26.6",
 		"preact-router": "^4.1.2",
 		"procetar": "^0.3.2",
-		"react-hook-form": "^7.56.1",
+		"react-hook-form": "^7.56.2",
 		"react-icons": "^5.5.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.25.1",
 		"@preact/preset-vite": "^2.10.1",
-		"@types/node": "^22.15.3",
+		"@types/node": "^22.15.14",
 		"dotenv": "^16.5.0",
 		"eslint": "^9.25.1",
 		"eslint-config-prettier": "^10.1.2",
@@ -45,6 +45,6 @@
 		"terser": "^5.39.0",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.31.1",
-		"vite": "^6.3.4"
+		"vite": "^6.3.5"
 	}
 }
