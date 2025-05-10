@@ -99,9 +99,20 @@ const EventCard = ({
 		},
 		{
 			label: "Записаны",
-			value: event?.players?.length
-				? event.players.join(", ")
-				: "Пока никто не записался",
+			value: event?.players?.length ? (
+				<>
+					{event.players.map(([userId, nickname], i) => (
+						<>
+							<Link key={userId} href="#" colorPalette="blue">
+								{nickname}
+							</Link>
+							{i !== event.players.length - 1 ? ", " : ""}
+						</>
+					))}
+				</>
+			) : (
+				"Пока никто не записался"
+			),
 		},
 		{
 			label: "Продолжительность",

@@ -628,7 +628,7 @@ WHERE id = $1;",
 				, l.map_link AS location_map_link
 				, e.date
 				, e.cancelled
-				, COALESCE(jsonb_agg(u.nickname) FILTER (WHERE u.nickname is not null), '[]') AS players
+				, COALESCE(jsonb_agg(jsonb_build_array(u.id, u.nickname)), '[]') AS players
 				, e.max_slots
 				, e.plan_duration
 				, bool_or(y.id is not null) AS you_applied

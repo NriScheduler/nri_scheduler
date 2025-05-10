@@ -359,7 +359,7 @@ export interface IApiEvent {
 	readonly date: string;
 	readonly max_slots: number | null;
 	readonly plan_duration: number | null;
-	readonly players: ReadonlyArray<string>;
+	readonly players: ReadonlyArray<readonly [userId: UUID, nickName: string]>;
 	readonly you_applied: boolean;
 	readonly you_are_master: boolean;
 	readonly your_approval: boolean | null;

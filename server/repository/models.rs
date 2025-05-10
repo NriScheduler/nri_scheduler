@@ -87,7 +87,7 @@ pub(crate) struct Event {
 	pub location_id: Uuid,
 	pub location_map_link: Option<String>,
 	pub date: DateTime<Utc>,
-	pub players: SqlxJson<Vec<String>>,
+	pub players: SqlxJson<Vec<(Uuid, String)>>,
 	pub max_slots: Option<i16>,
 	pub plan_duration: Option<i16>,
 	pub you_applied: bool,
