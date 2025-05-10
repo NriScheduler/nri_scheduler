@@ -82,7 +82,11 @@ const EventCard = ({
 	const [youApplied, setYouApplied] = useState(event.you_applied);
 
 	const stats = [
-		{ label: "Мастер игры", value: event.master, href: "#" },
+		{
+			label: "Мастер игры",
+			value: event.master,
+			href: `/profile/${event.master_id}`,
+		},
 		{
 			label: "Место проведения",
 			value: event.location,
@@ -103,7 +107,11 @@ const EventCard = ({
 				<>
 					{event.players.map(([userId, nickname], i) => (
 						<>
-							<Link key={userId} href="#" colorPalette="blue">
+							<Link
+								key={userId}
+								href={`/profile/${userId}`}
+								colorPalette="blue"
+							>
 								{nickname}
 							</Link>
 							{i !== event.players.length - 1 ? ", " : ""}
@@ -156,7 +164,7 @@ const EventCard = ({
 			<Card.Body>
 				<HStack mb="6" gap="3">
 					<Heading size="3xl">
-						Игра по компании:&nbsp;
+						Игра по кампании:&nbsp;
 						<Link
 							colorPalette="cyan"
 							variant="underline"

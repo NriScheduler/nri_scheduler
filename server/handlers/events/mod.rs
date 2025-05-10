@@ -217,7 +217,7 @@ async fn check_company(company_id: Uuid, user_id: Uuid, repo: &Repository) -> Re
 	};
 
 	if company.master != user_id {
-		return AppError::scenario_error("Вы не можете управлять данной компанией", None::<&str>)
+		return AppError::scenario_error("Вы не можете управлять данной кампанией", None::<&str>)
 			.into();
 	}
 

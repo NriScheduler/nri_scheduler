@@ -112,7 +112,7 @@ const checkResponse = async <T>(
 			console.info("http response body parsing error");
 			console.error(err);
 		}
-		toaster.loading({ title: "Ошибка обращения к серверу" });
+		toaster.error({ title: "Ошибка обращения к серверу" });
 		console.info("Http response is not ok");
 		console.error({
 			status: response.status,
@@ -156,7 +156,7 @@ const checkResponse = async <T>(
 		return null;
 	} catch (err) {
 		if (err instanceof Error && err.name === "AbortError") {
-			toaster.loading({ title: "Истекло время ожидания ответа сервера" });
+			toaster.warning({ title: "Истекло время ожидания ответа сервера" });
 		} else {
 			toaster.error({ title: "Неизвестная ошибка" });
 			console.info("Хрень какая-то...");
@@ -527,6 +527,16 @@ export interface IApiProfile {
 	readonly get_tz_from_device: boolean;
 }
 
+export interface IApiShortProfile {
+	readonly id: UUID;
+	readonly nickname: string;
+	readonly about: string | null;
+	readonly avatar_link: string | null;
+	readonly city: string | null;
+	readonly region: string | null;
+	readonly verified: boolean;
+}
+
 export const getMyProfile: () => Promise<IApiResponse<IApiProfile> | null> =
 	async (isSoft = false) => {
 		const res = await ajax<IApiProfile>(
@@ -550,7 +560,7 @@ export const softCheck = () =>
 	)(true);
 
 export const getAnotherUserProfile = (userId: UUID) => {
-	return ajax<IApiProfile>(`/api/profile/${userId}`);
+	return ajax<IApiShortProfile>(`/api/profile/${userId}`);
 };
 
 export const updateMyProfile = (

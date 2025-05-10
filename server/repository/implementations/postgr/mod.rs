@@ -15,7 +15,7 @@ use crate::{
 	},
 	repository::models::{
 		AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
-		PlayerApp, Profile, Region, ShortEvent, UserForAuthEmail,
+		PlayerApp, Profile, Region, ShortEvent, ShortProfile, UserForAuthEmail,
 	},
 	shared::RecordId,
 	system_models::{AppError, CoreResult},
@@ -177,6 +177,32 @@ impl Store for PostgresStore {
 		.await?;
 
 		Ok(may_be_profile)
+	}
+
+	async fn read_another_profile(&self, user_id: Uuid) -> CoreResult<Option<ShortProfile>> {
+		sqlx::query_as::<_, ShortProfile>(
+			"select
+				u.id
+				, u.nickname
+				, u.about_me as about
+				, u.city
+				, r.name as region
+				, CASE
+					WHEN avatar_link IS NOT NULL THEN ('/avatar/' || id)
+					ELSE NULL
+				END AS avatar_link
+				, (u.email_verified or u.tg_id is not null) as verified
+			FROM users u
+			left join cities c
+				on c.name = u.city
+			left join regions r
+				on r.name = c.region
+			WHERE u.id = $1;",
+		)
+		.bind(user_id)
+		.fetch_optional(&self.pool)
+		.await
+		.map_err(AppError::from)
 	}
 
 	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult {
@@ -628,7 +654,7 @@ WHERE id = $1;",
 				, l.map_link AS location_map_link
 				, e.date
 				, e.cancelled
-				, COALESCE(jsonb_agg(jsonb_build_array(u.id, u.nickname)), '[]') AS players
+				, COALESCE(jsonb_agg(jsonb_build_array(u.id, u.nickname)) FILTER (WHERE u.id is not null), '[]') AS players
 				, e.max_slots
 				, e.plan_duration
 				, bool_or(y.id is not null) AS you_applied

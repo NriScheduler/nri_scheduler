@@ -29,7 +29,7 @@ import { EVENT_FORMAT } from "../../../utils";
 const Company = lazy(() => import("./company"));
 const Location = lazy(() => import("./location"));
 const Event = lazy(() => import("./event"));
-const sceleton = <Skeleton alignSelf="100%" w="30%" />;
+const skeleton = <Skeleton alignSelf="100%" w="30%" />;
 
 const DEFAULT_EVENT_DURATION = 4;
 
@@ -169,7 +169,7 @@ export const CalendarPage = () => {
 
 					{mastery && profile?.verified && showSwitch && (
 						<Stack direction="row" gap={4}>
-							<Suspense fallback={sceleton}>
+							<Suspense fallback={skeleton}>
 								<Event
 									openDraw={openDraw}
 									setOpenDraw={setOpenDraw}
@@ -181,10 +181,10 @@ export const CalendarPage = () => {
 									profileCity={profile.city}
 								/>
 							</Suspense>
-							<Suspense fallback={sceleton}>
+							<Suspense fallback={skeleton}>
 								<Company data={companyList} />
 							</Suspense>
-							<Suspense fallback={sceleton}>
+							<Suspense fallback={skeleton}>
 								<Location />
 							</Suspense>
 						</Stack>

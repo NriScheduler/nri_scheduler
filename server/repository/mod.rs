@@ -6,7 +6,7 @@ use chrono::{DateTime, FixedOffset};
 use implementations::PostgresStore;
 use models::{
 	AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
-	PlayerApp, Profile, Region, ShortEvent, UserForAuthEmail,
+	PlayerApp, Profile, Region, ShortEvent, ShortProfile, UserForAuthEmail,
 };
 use uuid::Uuid;
 
@@ -38,6 +38,7 @@ trait Store {
 	) -> CoreResult<Option<UserForAuthEmail>>;
 	async fn get_user_for_signing_in_tg(&self, tg_id: i64) -> CoreResult<Option<Uuid>>;
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>>;
+	async fn read_another_profile(&self, user_id: Uuid) -> CoreResult<Option<ShortProfile>>;
 	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult;
 	async fn get_avatar_link(&self, user_id: Uuid) -> CoreResult<Option<String>>;
 	async fn set_avatar(&self, user_id: Uuid, url: &str) -> CoreResult;
@@ -219,6 +220,13 @@ impl Repository {
 
 	pub(crate) async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>> {
 		return self.store.read_profile(user_id).await;
+	}
+
+	pub(crate) async fn read_another_profile(
+		&self,
+		user_id: Uuid,
+	) -> CoreResult<Option<ShortProfile>> {
+		return self.store.read_another_profile(user_id).await;
 	}
 
 	pub(crate) async fn update_profile(
