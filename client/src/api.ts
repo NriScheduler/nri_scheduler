@@ -374,6 +374,7 @@ export interface IEventsFilter {
 	applied?: boolean | null;
 	not_rejected?: boolean | null;
 	imamaster?: boolean | null;
+	company?: UUID[] | null;
 }
 
 export const readEventsList = (
@@ -386,7 +387,7 @@ export const readEventsList = (
 	if (filters) {
 		Object.entries(filters).forEach(([key, val]) => {
 			if (val !== null && val !== undefined && val !== "") {
-				query[key] = val;
+				query[key] = Array.isArray(val) ? val.join() : val;
 			}
 		});
 	}

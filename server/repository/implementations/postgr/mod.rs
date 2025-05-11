@@ -573,6 +573,12 @@ WHERE id = $1;",
 					ON c.id = e.company",
 		);
 
+		if !query_args.company.is_empty() {
+			qb.push(" AND e.company = ANY(");
+			qb.push_bind(query_args.company);
+			qb.push(')');
+		}
+
 		if query_args.location.is_some() || query_args.region.is_some() || query_args.city.is_some() {
 			qb.push(" INNER JOIN locations l ON l.id = e.location");
 		}

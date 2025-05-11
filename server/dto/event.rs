@@ -2,6 +2,8 @@ use chrono::{DateTime, FixedOffset};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::shared::deserialize_list;
+
 #[derive(Debug, Deserialize)]
 pub(crate) struct ReadEventsDto {
 	pub date_from: DateTime<FixedOffset>,
@@ -21,6 +23,8 @@ pub(crate) struct ReadEventsDto {
 	pub not_rejected: Option<bool>,
 	#[serde(default)]
 	pub imamaster: Option<bool>,
+	#[serde(default, deserialize_with = "deserialize_list")]
+	pub company: Vec<Uuid>,
 }
 
 #[derive(Deserialize)]

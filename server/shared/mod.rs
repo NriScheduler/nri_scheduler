@@ -1,4 +1,7 @@
+mod deserialize_list;
+
 use ::std::time::Duration;
+pub(super) use deserialize_list::deserialize_list;
 use rand::Rng as _;
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;

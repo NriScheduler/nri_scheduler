@@ -2,7 +2,7 @@ use ::std::{error::Error, sync::LazyLock};
 use axum::{
 	Form, Json, RequestExt,
 	extract::{
-		FromRequest, Request,
+		FromRequest, Query, Request,
 		rejection::{FormRejection, JsonRejection},
 	},
 	http::{HeaderValue, Method, header},
@@ -32,9 +32,8 @@ where
 
 	async fn from_request(req: Request, _: &S) -> Result<Self, Self::Rejection> {
 		if req.method() == Method::GET {
-			let query = req.uri().query().unwrap_or_default();
-			let params = serde_urlencoded::from_str::<'_, T>(query);
-			params.map(Dto).map_err(|err| {
+			let query = req.extract::<Query<T>, _>().await;
+			query.map(|Query(dto)| Dto(dto)).map_err(|err| {
 				AppError::scenario_error("Переданы некорректные параметры запроса", Some(err))
 			})
 		} else {
