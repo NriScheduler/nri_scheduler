@@ -2,7 +2,7 @@ use chrono::{DateTime, FixedOffset};
 use serde::Deserialize;
 use uuid::Uuid;
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct ReadEventsDto {
 	pub date_from: DateTime<FixedOffset>,
 	pub date_to: DateTime<FixedOffset>,
@@ -11,6 +11,10 @@ pub(crate) struct ReadEventsDto {
 	pub master: Option<Uuid>,
 	#[serde(default)]
 	pub location: Option<Uuid>,
+	#[serde(default)]
+	pub region: Option<String>,
+	#[serde(default)]
+	pub city: Option<String>,
 	#[serde(default)]
 	pub applied: Option<bool>,
 	#[serde(default)]

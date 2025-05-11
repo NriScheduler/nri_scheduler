@@ -369,6 +369,8 @@ export interface IApiEvent {
 export interface IEventsFilter {
 	master?: UUID | null;
 	location?: UUID | null;
+	region?: string | null;
+	city?: string | null;
 	applied?: boolean | null;
 	not_rejected?: boolean | null;
 	imamaster?: boolean | null;
@@ -383,7 +385,7 @@ export const readEventsList = (
 
 	if (filters) {
 		Object.entries(filters).forEach(([key, val]) => {
-			if (val !== null && val !== undefined) {
+			if (val !== null && val !== undefined && val !== "") {
 				query[key] = val;
 			}
 		});

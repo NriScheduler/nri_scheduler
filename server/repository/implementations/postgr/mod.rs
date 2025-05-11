@@ -570,14 +570,30 @@ WHERE id = $1;",
 					, e.plan_duration
 				FROM events e
 				INNER JOIN companies c
-					ON c.id = e.company
-				INNER JOIN locations l
-					ON l.id = e.location",
+					ON c.id = e.company",
 		);
+
+		if query_args.location.is_some() || query_args.region.is_some() || query_args.city.is_some() {
+			qb.push(" INNER JOIN locations l ON l.id = e.location");
+		}
 
 		if let Some(location_id) = query_args.location {
 			qb.push(" AND l.id = ");
 			qb.push_bind(location_id);
+		}
+
+		if query_args.region.is_some() || query_args.city.is_some() {
+			qb.push(" INNER JOIN cities ci ON ci.name = l.city");
+		}
+
+		if let Some(city) = query_args.city {
+			qb.push(" AND ci.name = ");
+			qb.push_bind(city);
+		}
+
+		if let Some(region) = query_args.region {
+			qb.push(" INNER JOIN regions r ON r.name = ci.region AND r.name = ");
+			qb.push_bind(region);
 		}
 
 		qb.push(" INNER JOIN users m ON m.id = c.master");
@@ -625,16 +641,12 @@ WHERE id = $1;",
 			};
 		}
 
-		qb.push(
-			" GROUP BY e.id, c.name, c.id, m.nickname, m.id, l.name, l.id, e.date, e.cancelled, y.approval;",
-		);
+		qb.push(';');
 
-		let events = qb
-			.build_query_as::<ShortEvent>()
+		qb.build_query_as::<ShortEvent>()
 			.fetch_all(&self.pool)
-			.await?;
-
-		Ok(events)
+			.await
+			.map_err(AppError::from)
 	}
 
 	async fn read_event(
