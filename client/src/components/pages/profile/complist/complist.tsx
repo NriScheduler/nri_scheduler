@@ -12,16 +12,13 @@ import {
 	Text,
 	useBreakpointValue,
 } from "@chakra-ui/react";
-import { useStore } from "@nanostores/preact";
 
 import { IApiCompany } from "../../../../api";
-import {
-	$checkboxState,
-	toggleCheckbox,
-} from "../../../../store/checkboxStore";
 
 interface ICompList {
 	readonly list: ReadonlyArray<IApiCompany>;
+	isChecked: boolean;
+	toggleCheckbox: () => void;
 }
 
 interface ICompItem {
@@ -47,8 +44,8 @@ const CompItem = ({ item }: ICompItem) => {
 					<Heading>{item.name}</Heading>
 				</Card.Header>
 				<Card.Body gap="2">
-					<Card.Description>
-						<Text lineClamp="4">{item.description}</Text>
+					<Card.Description lineClamp="4">
+						{item.description}
 					</Card.Description>
 				</Card.Body>
 			</Card.Root>
@@ -56,9 +53,7 @@ const CompItem = ({ item }: ICompItem) => {
 	);
 };
 
-export const CompList = ({ list }: ICompList) => {
-	const isChecked = useStore($checkboxState);
-
+export const CompList = ({ list, isChecked, toggleCheckbox }: ICompList) => {
 	// Адаптивные значения
 	const gridColumns = useBreakpointValue({
 		base: isChecked ? 2 : 1,
