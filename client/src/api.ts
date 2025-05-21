@@ -500,10 +500,7 @@ export const approveApplication = (appId: UUID) => {
 	);
 };
 export const rejectApplication = (appId: UUID) => {
-	return ajax<null>(
-		`/api/apps/approve/${appId}`,
-		prepareAjax(undefined, POST),
-	);
+	return ajax<null>(`/api/apps/reject/${appId}`, prepareAjax(undefined, POST));
 };
 
 export const enum ETzVariant {

@@ -7,7 +7,7 @@ export const PROFILE_TABS = [
 
 export const PROFILE_TEXTS = {
 	switchLabels: {
-		player: "Заявки на игры",
+		player: "Заявки на мои игры",
 		master: "Мои заявки",
 	},
 	emptyStates: {
@@ -25,3 +25,11 @@ export const PROFILE_TEXTS = {
 		},
 	},
 };
+
+export const getGridColumnsConfig = (isChecked: boolean) => ({
+	base: isChecked ? 2 : 1,
+	sm: isChecked ? 2 : 1,
+	md: isChecked ? 3 : 1,
+	lg: isChecked ? 4 : 1,
+	xl: isChecked ? 4 : 1,
+});

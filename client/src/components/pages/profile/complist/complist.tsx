@@ -1,18 +1,17 @@
 import { h } from "preact";
-import { FaBars, FaBorderAll } from "react-icons/fa";
 
 import {
 	Card,
 	Grid,
 	Heading,
-	Icon,
+	HStack,
 	Link,
 	Stack,
-	Switch,
-	Text,
 	useBreakpointValue,
 } from "@chakra-ui/react";
 
+import { getGridColumnsConfig } from "../profile.data";
+import { ViewToggle } from "../../../view-toggle";
 import { IApiCompany } from "../../../../api";
 
 interface ICompList {
@@ -55,33 +54,13 @@ const CompItem = ({ item }: ICompItem) => {
 
 export const CompList = ({ list, isChecked, toggleCheckbox }: ICompList) => {
 	// Адаптивные значения
-	const gridColumns = useBreakpointValue({
-		base: isChecked ? 2 : 1,
-		sm: isChecked ? 2 : 1,
-		md: isChecked ? 3 : 1,
-		lg: isChecked ? 4 : 1,
-		xl: isChecked ? 4 : 1,
-	});
+	const gridColumns = useBreakpointValue(getGridColumnsConfig(isChecked));
 
 	return (
 		<Stack>
-			<Switch.Root
-				colorPalette="cyan"
-				size="lg"
-				mb={6}
-				ml="auto"
-				display="block"
-				checked={isChecked}
-				onCheckedChange={toggleCheckbox}
-			>
-				<Switch.HiddenInput />
-				<Switch.Control>
-					<Switch.Thumb />
-					<Switch.Indicator fallback={<Icon as={FaBars} />}>
-						<Icon as={FaBorderAll} color="white" />
-					</Switch.Indicator>
-				</Switch.Control>
-			</Switch.Root>
+			<HStack justify="flex-end">
+				<ViewToggle isChecked={isChecked} toggleCheckbox={toggleCheckbox} />
+			</HStack>
 
 			<Grid templateColumns={`repeat(${gridColumns}, 1fr)`} gap="4">
 				{list.map((item) => (

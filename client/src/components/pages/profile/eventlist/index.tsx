@@ -2,12 +2,25 @@ import type { UUID } from "node:crypto";
 
 import { Fragment, h } from "preact";
 
-import { Badge, Button, Stack, Switch, Timeline } from "@chakra-ui/react";
+import {
+	Badge,
+	Button,
+	Card,
+	Grid,
+	Heading,
+	HStack,
+	Stack,
+	Switch,
+	useBreakpointValue,
+} from "@chakra-ui/react";
+import "dayjs/locale/ru";
+import dayjs from "dayjs";
 
 import { EmptyList } from "../empty-list";
-import { PROFILE_TEXTS } from "../profile.data";
+import { getGridColumnsConfig, PROFILE_TEXTS } from "../profile.data";
 import { DialogItem } from "../../../dialog";
 import { toaster } from "../../../ui/toaster";
+import { ViewToggle } from "../../../view-toggle";
 import {
 	approveApplication,
 	IMasterApp,
@@ -15,17 +28,20 @@ import {
 	rejectApplication,
 } from "../../../../api";
 
+dayjs.locale("ru");
+
 interface EventListProps {
 	isChecked: boolean;
+	layoutMode: boolean;
+	onLayoutToggle: () => void;
 	toggleCheckbox: () => void;
 	playerAppList: IPlayerApp[];
 	masterAppList: IMasterApp[];
-	// onUpdate?: () => Promise<void>;
+	onUpdate?: () => Promise<void>;
 }
 
-interface TimelineItemProps {
+interface EventItemProps {
 	item: IPlayerApp | IMasterApp;
-	index: number;
 	isMasterView: boolean;
 	onReject?: (eventId: UUID) => void;
 	onApprove?: (eventId: UUID) => void;
@@ -35,49 +51,59 @@ function isMasterApp(item: IPlayerApp | IMasterApp): item is IMasterApp {
 	return "player_name" in item;
 }
 
-const TimelineItem = ({
+const EventItem = ({
 	item,
-	index,
 	isMasterView,
 	onReject,
 	onApprove,
-}: TimelineItemProps) => {
+}: EventItemProps) => {
 	const isMaster = isMasterApp(item);
 
 	return (
-		<Timeline.Item>
-			<Timeline.Connector>
-				<Timeline.Separator />
-				<Timeline.Indicator>{index + 1}</Timeline.Indicator>
-			</Timeline.Connector>
-			<Timeline.Content>
-				<Timeline.Title>
-					{isMasterView ? (
+		<Fragment>
+			<DialogItem
+				item={item}
+				trigger={
+					<Card.Root h="full" cursor="pointer" _hover={{ shadow: "md" }}>
+						<Card.Header>
+							{isMasterView ? (
+								<Heading>
+									Игрок{" "}
+									<Badge fontSize="inherit" variant="surface">
+										{isMaster ? item.player_name : item.master_name}
+									</Badge>{" "}
+									хочет присоединиться к вашей игре по вашей кампании{" "}
+									<Badge fontSize="inherit" variant="surface">
+										{item.company_name}
+									</Badge>
+								</Heading>
+							) : (
+								<Heading>
+									Вы подали заявку на участие в игре по кампании{" "}
+									<Badge fontSize="inherit" variant="surface">
+										{item.company_name}
+									</Badge>{" "}
+									мастера{" "}
+									{isMaster ? item.player_name : item.master_name}
+								</Heading>
+							)}
+						</Card.Header>
+						<Card.Body gap="2">
+							<Card.Description lineClamp={4}>
+								{dayjs(item.event_date).format("D MMMM YYYY")}
+							</Card.Description>
+						</Card.Body>
+					</Card.Root>
+				}
+				footer={
+					isMasterView && (
 						<Fragment>
-							Игрок{" "}
-							<Badge>
-								{isMaster ? item.player_name : item.master_name}
-							</Badge>{" "}
-							хочет присоединиться к вашей игре{" "}
-							<Badge>{item.company_name}</Badge>
-						</Fragment>
-					) : (
-						<Fragment>
-							Вы подали заявку на участие в игре{" "}
-							<Badge>{item.company_name}</Badge>
-						</Fragment>
-					)}
-				</Timeline.Title>
-				<Timeline.Description></Timeline.Description>
-				{isMasterView ? (
-					<Fragment>
-						<DialogItem item={item}>
 							<Button
 								variant="outline"
 								onClick={() => onReject?.(item.id)}
 								disabled={item.approval === false}
 							>
-								Отклонить
+								{item.approval ? "Отклонить" : "Отклонено"}
 							</Button>
 							<Button
 								onClick={() => onApprove?.(item.id)}
@@ -85,21 +111,22 @@ const TimelineItem = ({
 							>
 								{item.approval ? "Подтверждено" : "Подтвердить"}
 							</Button>
-						</DialogItem>
-					</Fragment>
-				) : (
-					<DialogItem item={item} />
-				)}
-			</Timeline.Content>
-		</Timeline.Item>
+						</Fragment>
+					)
+				}
+			/>
+		</Fragment>
 	);
 };
+
 export const EventList = ({
 	isChecked,
 	toggleCheckbox,
+	layoutMode,
+	onLayoutToggle,
 	playerAppList,
 	masterAppList,
-	// onUpdate,
+	onUpdate,
 }: EventListProps) => {
 	const currentList = isChecked ? playerAppList : masterAppList;
 	const isEmpty = currentList.length === 0;
@@ -108,30 +135,40 @@ export const EventList = ({
 		: PROFILE_TEXTS.emptyStates.master;
 
 	const handleApprove = async (eventId: UUID) => {
-		await approveApplication(eventId);
-		toaster.success({ title: "Заявка подтверждена" });
+		const result = await approveApplication(eventId);
+		if (result !== null && result !== undefined) {
+			toaster.success({ title: "Заявка подтверждена" });
+			await onUpdate?.();
+		}
 	};
 
 	const handleReject = async (eventId: UUID) => {
-		await rejectApplication(eventId);
-		toaster.success({ title: "Заявка отклонена" });
+		const result = await rejectApplication(eventId);
+		if (result !== null && result !== undefined) {
+			toaster.success({ title: "Заявка отклонена" });
+			await onUpdate?.();
+		}
 	};
+
+	const gridColumns = useBreakpointValue(getGridColumnsConfig(layoutMode));
 
 	return (
 		<Stack>
-			<Switch.Root
-				ml="auto"
-				checked={isChecked}
-				onCheckedChange={toggleCheckbox}
-			>
-				<Switch.HiddenInput />
-				<Switch.Label>
-					{isChecked
-						? PROFILE_TEXTS.switchLabels.master
-						: PROFILE_TEXTS.switchLabels.player}
-				</Switch.Label>
-				<Switch.Control />
-			</Switch.Root>
+			<HStack justify="flex-end" gap={4}>
+				<Switch.Root checked={isChecked} onCheckedChange={toggleCheckbox}>
+					<Switch.HiddenInput />
+					<Switch.Label>
+						{isChecked
+							? PROFILE_TEXTS.switchLabels.master
+							: PROFILE_TEXTS.switchLabels.player}
+					</Switch.Label>
+					<Switch.Control />
+				</Switch.Root>
+				<ViewToggle
+					isChecked={layoutMode}
+					toggleCheckbox={onLayoutToggle}
+				/>
+			</HStack>
 
 			{isEmpty ? (
 				<EmptyList
@@ -139,18 +176,17 @@ export const EventList = ({
 					description={emptyTexts.description}
 				/>
 			) : (
-				<Timeline.Root variant="subtle" mt="8">
-					{currentList.map((item, index) => (
-						<TimelineItem
-							key={index}
+				<Grid templateColumns={`repeat(${gridColumns}, 1fr)`} gap="4">
+					{currentList.map((item) => (
+						<EventItem
+							key={item.id}
 							item={item}
-							index={index}
 							isMasterView={!isChecked}
 							onReject={handleReject}
 							onApprove={handleApprove}
 						/>
 					))}
-				</Timeline.Root>
+				</Grid>
 			)}
 		</Stack>
 	);

@@ -10,7 +10,6 @@ import { EventList } from "./eventlist";
 import { PROFILE_TABS, PROFILE_TEXTS } from "./profile.data";
 import { ProfileInfo } from "./profile-info";
 import {
-	EAbortReason,
 	IApiCompany,
 	IMasterApp,
 	IPlayerApp,
@@ -31,61 +30,66 @@ export const ProfilePage = () => {
 		masterAppList: [] as IMasterApp[],
 		fetching: false,
 		eventsView: false,
+		eventsType: false,
 		companyView: false,
 	});
 
 	const activeTab = useStore($activeTab);
-	const { eventsView, companyView } = useStore($checkboxState);
+	const { eventsType, eventsView, companyView } = useStore($checkboxState);
 
 	const [USER_TAB, EVENTS_TAB, COMPLIST_TAB, RESETPASS_TAB] = PROFILE_TABS;
 
-	useEffect(() => {
-		let isMounted = true;
-		let abortController: AbortController | null = null;
+	const fetchData = async () => {
+		setState((prev) => ({ ...prev, fetching: true }));
 
-		const fetchData = async () => {
-			setState((prev) => ({ ...prev, fetching: true }));
-
-			try {
-				if (activeTab === EVENTS_TAB.id) {
-					const response = await (eventsView
-						? readPlayerAppsList()
-						: readMasterAppsList());
-					if (isMounted && response?.payload) {
-						const update = eventsView
-							? { playerAppList: response.payload as IPlayerApp[] }
-							: { masterAppList: response.payload as IMasterApp[] };
-						setState((prev) => ({ ...prev, ...update }));
-					}
-				} else if (activeTab === COMPLIST_TAB.id) {
-					abortController = new AbortController();
-					const response = await readMyCompanies(null, abortController);
-					if (isMounted && response?.payload) {
-						setState((prev) => ({ ...prev, compList: response.payload }));
-					}
+		try {
+			if (activeTab === EVENTS_TAB.id) {
+				const response = await (eventsType
+					? readPlayerAppsList()
+					: readMasterAppsList());
+				if (response?.payload) {
+					const update = eventsType
+						? { playerAppList: response.payload as IPlayerApp[] }
+						: { masterAppList: response.payload as IMasterApp[] };
+					setState((prev) => ({ ...prev, ...update }));
 				}
-			} finally {
-				if (isMounted) {
-					setState((prev) => ({ ...prev, fetching: false }));
+			} else if (activeTab === COMPLIST_TAB.id) {
+				const abortController = new AbortController();
+				const response = await readMyCompanies(null, abortController);
+				if (response?.payload) {
+					setState((prev) => ({ ...prev, compList: response.payload }));
 				}
 			}
-		};
+		} finally {
+			setState((prev) => ({ ...prev, fetching: false }));
+		}
+	};
 
-		fetchData();
+	useEffect(() => {
+		let abortController = new AbortController();
+		let isMounted = true;
+
+		(async () => {
+			try {
+				await fetchData();
+			} catch (err) {
+				if (isMounted) {
+					console.error("Ошибка:", err);
+				}
+			}
+		})();
 
 		return () => {
 			isMounted = false;
-			abortController?.abort(EAbortReason.UNMOUNT);
+			abortController.abort();
 		};
-	}, [activeTab, eventsView]);
+	}, [activeTab, eventsType]);
 
 	if (!isAuthenticated) {
 		return null;
 	}
 
 	const { compList, playerAppList, masterAppList, fetching } = state;
-
-	// const handleUpdate = async () => {}
 
 	return (
 		<Container mb={6}>
@@ -109,11 +113,13 @@ export const ProfilePage = () => {
 
 				<Tabs.Content value={EVENTS_TAB.id}>
 					<EventList
-						isChecked={eventsView}
-						toggleCheckbox={() => toggleCheckbox("eventsView")}
+						isChecked={eventsType}
+						toggleCheckbox={() => toggleCheckbox("eventsType")}
+						layoutMode={eventsView}
+						onLayoutToggle={() => toggleCheckbox("eventsView")}
 						playerAppList={playerAppList}
 						masterAppList={masterAppList}
-						// onUpdate={handleUpdate}
+						onUpdate={fetchData}
 					/>
 				</Tabs.Content>
 

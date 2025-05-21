@@ -29,6 +29,7 @@ const CHECKBOX_KEY = "nri_checkboxState";
 
 export const $checkboxState = persistentAtom(CHECKBOX_KEY, {
 	eventsView: true,
+	eventsType: true,
 	companyView: true,
 });
 
