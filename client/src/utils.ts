@@ -138,7 +138,7 @@ export const DEFAULT_EVENT_STYLE: IEventStyle = {
 };
 
 export const parseEventStyle = (style: string): IEventStyle => {
-	let [, highlight, background, text] = style.split(HEX_COLOR_PREFIX);
+	const [, highlight, background, text] = style.split(HEX_COLOR_PREFIX);
 
 	return {
 		background: HEX_COLOR_PREFIX + background,

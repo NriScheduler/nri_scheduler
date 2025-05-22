@@ -39,7 +39,7 @@ export const ShortProfilePage = () => {
 	useEffect(() => {
 		let isMounted = true;
 
-		let abortController = new AbortController();
+		const abortController = new AbortController();
 
 		getAnotherUserProfile(userId)
 			.then((res) => {

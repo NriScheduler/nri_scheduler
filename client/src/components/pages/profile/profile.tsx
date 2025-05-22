@@ -52,7 +52,7 @@ export const ProfilePage = () => {
 			let isMounted = true;
 			setFetching(true);
 
-			let abortController = new AbortController();
+			const abortController = new AbortController();
 
 			readMyCompanies(null, abortController)
 				.then((response) => {

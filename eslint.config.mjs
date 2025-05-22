@@ -39,6 +39,7 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
+      "prefer-const": "error",
       "no-console": ["error", { allow: ["info", "warn", "error"] }],
       "curly": ["error", "all"],
       "eqeqeq": ["error", "always"],
