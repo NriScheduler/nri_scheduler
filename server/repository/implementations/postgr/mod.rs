@@ -427,6 +427,7 @@ WHERE id = $1;",
 				END AS cover_link
 				, u.nickname AS master_name
 				, ($2 is not null and u.id = $2) AS you_are_master
+				, c.event_style
 			FROM companies c
 			inner join users u
 				on c.master = u.id
@@ -503,15 +504,20 @@ WHERE id = $1;",
 		system: &str,
 		descr: &Option<String>,
 		cover_link: &Option<String>,
+		event_style: &Option<String>,
 	) -> CoreResult<RecordId> {
 		let new_comp_id = sqlx::query_scalar::<_, RecordId>(
-			"INSERT INTO companies (master, name, system, description, cover_link) values ($1, $2, $3, $4, $5) returning id;",
+			"INSERT INTO companies
+			(master, name, system, description, cover_link, event_style)
+			values ($1, $2, $3, $4, $5, $6)
+			returning id;",
 		)
 		.bind(master)
 		.bind(name)
 		.bind(system)
 		.bind(descr)
 		.bind(cover_link)
+		.bind(event_style)
 		.fetch_one(&self.pool)
 		.await?;
 
@@ -524,16 +530,57 @@ WHERE id = $1;",
 		master: Uuid,
 		data: ApiUpdateCompanyDto,
 	) -> CoreResult<bool> {
-		let was_updated = sqlx::query_scalar::<_, bool>(
-			"update companies set name = $1, system = $2, description = $3 where id = $4 and master = $5 returning true;",
-		)
-		.bind(data.name)
-		.bind(data.system)
-		.bind(data.description)
-		.bind(company_id)
-		.bind(master)
-		.fetch_optional(&self.pool)
-		.await?.unwrap_or_default();
+		if data.is_empty() {
+			return Ok(true);
+		}
+
+		let is_name_passed = data.name.is_some();
+		let is_system_passed = data.system.is_some();
+		let is_description_passed = data.description.is_some();
+		let is_event_style_passed = data.event_style.is_some();
+
+		let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new("update companies set");
+
+		if is_name_passed {
+			qb.push(" name = ");
+			qb.push_bind(data.name.unwrap());
+		}
+
+		if is_system_passed {
+			if is_name_passed {
+				qb.push(",");
+			}
+			qb.push(" system = ");
+			qb.push_bind(data.system.unwrap());
+		}
+
+		if is_description_passed {
+			if is_name_passed || is_system_passed {
+				qb.push(",");
+			}
+			qb.push(" description = ");
+			qb.push_bind(data.description.unwrap());
+		}
+
+		if is_event_style_passed {
+			if is_name_passed || is_system_passed || is_description_passed {
+				qb.push(",");
+			}
+			qb.push(" event_style = ");
+			qb.push_bind(data.event_style.unwrap());
+		}
+
+		qb.push(" where id = ");
+		qb.push_bind(company_id);
+		qb.push(" and master = ");
+		qb.push_bind(master);
+		qb.push(" returning true;");
+
+		let was_updated = qb
+			.build_query_scalar::<bool>()
+			.fetch_optional(&self.pool)
+			.await?
+			.unwrap_or_default();
 
 		Ok(was_updated)
 	}
@@ -568,6 +615,7 @@ WHERE id = $1;",
 					, c.name AS company
 					, e.date
 					, e.plan_duration
+					, c.event_style as style
 				FROM events e
 				INNER JOIN companies c
 					ON c.id = e.company",

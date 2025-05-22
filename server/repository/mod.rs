@@ -78,6 +78,7 @@ trait Store {
 		system: &str,
 		descr: &Option<String>,
 		cover_link: &Option<String>,
+		event_style: &Option<String>,
 	) -> CoreResult<RecordId>;
 
 	async fn update_company(
@@ -311,10 +312,11 @@ impl Repository {
 		system: &str,
 		descr: &Option<String>,
 		cover_link: &Option<String>,
+		event_style: &Option<String>,
 	) -> CoreResult<RecordId> {
 		return self
 			.store
-			.add_company(master, name, system, descr, cover_link)
+			.add_company(master, name, system, descr, cover_link, event_style)
 			.await;
 	}
 

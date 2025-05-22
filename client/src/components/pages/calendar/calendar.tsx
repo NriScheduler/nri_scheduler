@@ -10,7 +10,12 @@ import { route as navigate } from "preact-router";
 
 import { Container, HStack, Skeleton, Stack, Switch } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
-import { CalendarApp, createViewMonthGrid } from "@schedule-x/calendar";
+import {
+	CalendarApp,
+	CalendarEventExternal,
+	CalendarType,
+	createViewMonthGrid,
+} from "@schedule-x/calendar";
 import { ScheduleXCalendar, useCalendarApp } from "@schedule-x/preact";
 import { CalendarAppSingleton } from "@schedule-x/shared";
 import dayjs from "dayjs";
@@ -24,7 +29,11 @@ import {
 	enableMastery,
 } from "../../../store/mastery";
 import { $profile, $tz } from "../../../store/profile";
-import { EVENT_FORMAT } from "../../../utils";
+import {
+	convertEventStyleToCalendarType,
+	escapeCalendarId,
+	EVENT_FORMAT,
+} from "../../../utils";
 
 const Company = lazy(() => import("./company"));
 const Location = lazy(() => import("./location"));
@@ -55,26 +64,41 @@ export const CalendarPage = () => {
 			imamaster: $mastery.get(),
 		}).then((res) => {
 			if (res !== null) {
-				calendar.events.set(
-					res.payload.map((apiEv) => {
-						const start = dayjs(apiEv.date).tz(tz);
-						let end = start.add(
-							apiEv.plan_duration || DEFAULT_EVENT_DURATION,
-							"h",
-						);
+				const calendars: Record<string, CalendarType> = {};
 
-						if (!end.isSame(start, "day")) {
-							end = start.endOf("day");
-						}
+				const events = res.payload.map((apiEv) => {
+					const start = dayjs(apiEv.date).tz(tz);
+					let end = start.add(
+						apiEv.plan_duration || DEFAULT_EVENT_DURATION,
+						"h",
+					);
 
-						return {
-							id: apiEv.id,
-							title: apiEv.company,
-							start: start.format(EVENT_FORMAT),
-							end: end.format(EVENT_FORMAT),
-						};
-					}),
-				);
+					if (!end.isSame(start, "day")) {
+						end = start.endOf("day");
+					}
+
+					const event: CalendarEventExternal = {
+						id: apiEv.id,
+						title: apiEv.company,
+						start: start.format(EVENT_FORMAT),
+						end: end.format(EVENT_FORMAT),
+					};
+
+					const style = apiEv.style;
+					if (style) {
+						const calendarId = escapeCalendarId(style);
+						calendars[calendarId] =
+							convertEventStyleToCalendarType(style);
+						event.calendarId = calendarId;
+					}
+
+					return event;
+				});
+
+				const app = calendar["$app"] as CalendarAppSingleton;
+				app.config.calendars.value = calendars;
+
+				calendar.events.set(events);
 			}
 		});
 	};

@@ -50,7 +50,7 @@ static PUBLIC_KEY: LazyLock<Vec<u8>> =
 #[derive(Debug, Deserialize, Serialize)]
 struct Claims {
 	sub: Uuid,
-	exp: u64,
+	exp: f64,
 	verified: bool,
 }
 
@@ -106,7 +106,7 @@ pub(super) async fn auth_middleware(
 		return AppResponse::system_error("Time went backwards", None).into_response();
 	};
 
-	if now >= claims.exp {
+	if now as f64 >= claims.exp {
 		return AppError::SessionExpired.into_response();
 	}
 
@@ -135,7 +135,7 @@ pub(super) async fn auth_and_verified_middleware(
 		return AppResponse::system_error("Time went backwards", None).into_response();
 	};
 
-	if now >= claims.exp {
+	if now as f64 >= claims.exp {
 		return AppError::SessionExpired.into_response();
 	}
 
@@ -170,7 +170,7 @@ pub(super) async fn optional_auth_middleware(
 		return AppResponse::system_error("Time went backwards", None).into_response();
 	};
 
-	if now >= claims.exp {
+	if now as f64 >= claims.exp {
 		return handle_invalid_jwt_for_optional_auth(req, next).await;
 	}
 

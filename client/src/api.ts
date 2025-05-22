@@ -284,6 +284,16 @@ export interface IApiCompany {
 	readonly cover_link: string | null;
 }
 
+export interface IApiStyledCompany {
+	readonly id: UUID;
+	readonly master: UUID;
+	readonly name: string;
+	readonly system: string;
+	readonly description: string | null;
+	readonly cover_link: string | null;
+	readonly event_style: string | null;
+}
+
 export interface IApiCompanyInfo {
 	readonly id: UUID;
 	readonly master: UUID;
@@ -293,6 +303,7 @@ export interface IApiCompanyInfo {
 	readonly description: string | null;
 	readonly cover_link: string | null;
 	readonly you_are_master: boolean;
+	readonly event_style: string | null;
 }
 
 export const readMyCompanies = (
@@ -317,24 +328,19 @@ export const readCompanyById = (companyId: UUID) =>
 export const addCompany = (
 	name: string,
 	system: string,
-	description?: string | null,
-	cover_link?: string | null,
-) =>
-	ajax<UUID>(
-		"/api/companies",
-		prepareAjax({ name, system, description, cover_link }, POST),
-	);
+	data: Partial<
+		Omit<
+			IApiStyledCompany,
+			"id" | "master" | "name" | "system" | "cover_link"
+		>
+	>,
+) => ajax<UUID>("/api/companies", prepareAjax({ name, system, ...data }, POST));
 
 export const updateCompany = (
 	companyId: UUID,
-	name: string,
-	system: string,
-	description?: string | null,
+	data: Partial<Omit<IApiStyledCompany, "id" | "master" | "cover_link">>,
 ) => {
-	return ajax<null>(
-		`/api/companies/${companyId}`,
-		prepareAjax({ name, system, description }, PUT),
-	);
+	return ajax<null>(`/api/companies/${companyId}`, prepareAjax(data, PUT));
 };
 
 export const setCompanyCover = (companyId: UUID, url: string) =>
@@ -345,6 +351,7 @@ export interface IApiShortEvent {
 	readonly company: string;
 	readonly date: string;
 	readonly plan_duration: number | null;
+	readonly style: string | null;
 }
 
 export interface IApiEvent {
