@@ -50,7 +50,7 @@ static PUBLIC_KEY: LazyLock<Vec<u8>> =
 #[derive(Debug, Deserialize, Serialize)]
 struct Claims {
 	sub: Uuid,
-	exp: f64,
+	exp: u64,
 	verified: bool,
 }
 
@@ -106,7 +106,7 @@ pub(super) async fn auth_middleware(
 		return AppResponse::system_error("Time went backwards", None).into_response();
 	};
 
-	if now as f64 >= claims.exp {
+	if now >= claims.exp {
 		return AppError::SessionExpired.into_response();
 	}
 
@@ -135,7 +135,7 @@ pub(super) async fn auth_and_verified_middleware(
 		return AppResponse::system_error("Time went backwards", None).into_response();
 	};
 
-	if now as f64 >= claims.exp {
+	if now >= claims.exp {
 		return AppError::SessionExpired.into_response();
 	}
 
@@ -170,7 +170,7 @@ pub(super) async fn optional_auth_middleware(
 		return AppResponse::system_error("Time went backwards", None).into_response();
 	};
 
-	if now as f64 >= claims.exp {
+	if now >= claims.exp {
 		return handle_invalid_jwt_for_optional_auth(req, next).await;
 	}
 
@@ -204,7 +204,11 @@ pub(super) fn generate_jwt(user_id: Uuid, verified: bool) -> CoreResult<String> 
 	// Время истечения срока действия токена (текущее время + время жизни сессии)
 	let expiration_time = SystemTime::now()
 		.checked_add(Duration::from_secs(SESSION_LIFETIME))
-		.ok_or_else(|| AppError::system_error("Time went backwards"))?;
+		.ok_or_else(|| AppError::system_error("Time went backwards"))?
+		.duration_since(UNIX_EPOCH)
+		.map(|dur| dur.as_millis())
+		.map_err(AppError::system_error)
+		.map(serde_json::to_value)??;
 
 	let mut header = JweHeader::new();
 	header.set_content_encryption(A256GCM);
@@ -213,7 +217,9 @@ pub(super) fn generate_jwt(user_id: Uuid, verified: bool) -> CoreResult<String> 
 
 	let mut payload = JwtPayload::new();
 	payload.set_subject(user_id);
-	payload.set_expires_at(&expiration_time);
+	payload
+		.set_claim("exp", Some(expiration_time))
+		.map_err(AppError::system_error)?;
 	payload
 		.set_claim("verified", Some(verified))
 		.map_err(AppError::system_error)?;
