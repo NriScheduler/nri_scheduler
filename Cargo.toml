@@ -42,11 +42,11 @@ sha2 = "0.10.8"
 sqlx = { version = "0.8.6", default-features = false, features = ["derive", "postgres", "runtime-tokio", "tls-none"] }
 sqlx-core = { version = "0.8.6", features = ["migrate"] }
 sqlx-postgres = { version = "0.8.6", features = ["migrate", "chrono", "uuid"] }
-tokio = { version = "1.45.0", features = ["full"] }
+tokio = { version = "1.45.1", features = ["full"] }
 tokio-stream = { version = "0.1.17", features = ["sync"] }
 tower-http = { version = "0.6.4", features = ["fs"], optional = true }
 utoipa = { version = "5.3.1", features = ["uuid", "chrono"], optional = true }
-utoipa-swagger-ui = { version = "9.0.1", features = ["axum"], optional = true }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"], optional = true }
 uuid = { version = "1.16.0", features = ["serde"] }
 
 [features]
