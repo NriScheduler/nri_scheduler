@@ -1,5 +1,6 @@
 import type { UUID } from "node:crypto";
 
+import "dayjs/locale/ru";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -12,6 +13,7 @@ import { YYYY_MM_DD } from "../utils";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.locale("ru");
 
 // --== User ==--
 

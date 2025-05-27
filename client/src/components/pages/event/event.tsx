@@ -26,7 +26,6 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
-import "dayjs/locale/ru";
 import dayjs from "dayjs";
 
 import { NotFoundPage } from "../not-found/not-found";
@@ -63,8 +62,6 @@ import {
 	navBack,
 	YYYY_MM_DD,
 } from "../../../utils";
-
-dayjs.locale("ru");
 
 const EventCard = ({
 	event,

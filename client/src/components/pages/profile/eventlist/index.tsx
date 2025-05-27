@@ -13,7 +13,6 @@ import {
 	Switch,
 	useBreakpointValue,
 } from "@chakra-ui/react";
-import "dayjs/locale/ru";
 import dayjs from "dayjs";
 
 import { EmptyList } from "../empty-list";
@@ -27,8 +26,6 @@ import {
 	IPlayerApp,
 	rejectApplication,
 } from "../../../../api";
-
-dayjs.locale("ru");
 
 interface EventListProps {
 	isChecked: boolean;

@@ -1,8 +1,8 @@
-import { atom } from "nanostores";
+import { map } from "nanostores";
 
 type CheckboxState = Record<string, boolean>;
 
-const persistentAtom = (key: string, initialValue: CheckboxState) => {
+const persistentMap = (key: string, initialValue: CheckboxState) => {
 	const getSavedValue = (): CheckboxState => {
 		if (typeof window === "undefined") {
 			return initialValue;
@@ -16,7 +16,7 @@ const persistentAtom = (key: string, initialValue: CheckboxState) => {
 		}
 	};
 
-	const store = atom<CheckboxState>(getSavedValue());
+	const store = map<CheckboxState>(getSavedValue());
 
 	store.listen((value) => {
 		localStorage.setItem(key, JSON.stringify(value));
@@ -27,14 +27,12 @@ const persistentAtom = (key: string, initialValue: CheckboxState) => {
 
 const CHECKBOX_KEY = "nri_checkboxState";
 
-export const $checkboxState = persistentAtom(CHECKBOX_KEY, {
+export const $checkboxState = persistentMap(CHECKBOX_KEY, {
 	eventsView: true,
 	eventsType: true,
 	companyView: true,
 });
 
-export const toggleCheckbox = (checkboxId: string) =>
-	$checkboxState.set({
-		...$checkboxState.get(),
-		[checkboxId]: !$checkboxState.get()[checkboxId],
-	});
+export const toggleCheckbox = (checkboxId: string) => {
+	$checkboxState.setKey(checkboxId, !$checkboxState.get()[checkboxId]);
+};

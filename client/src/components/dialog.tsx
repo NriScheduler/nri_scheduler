@@ -1,25 +1,22 @@
 import { Fragment, h } from "preact";
-import React, { useEffect, useState } from "preact/compat";
+import { ReactNode, useEffect, useState } from "preact/compat";
 
 import { Badge, DataList, Dialog, Link, Portal } from "@chakra-ui/react";
-import "dayjs/locale/ru";
 import dayjs from "dayjs";
 
 import { CloseButton } from "./ui/close-button";
 import { IMasterApp, IPlayerApp } from "../api";
 
-dayjs.locale("ru");
-
 type AppItem = IPlayerApp | IMasterApp;
 
 interface IDialogItem {
 	item: AppItem;
-	trigger: React.ReactNode;
-	footer?: React.ReactNode;
+	trigger: ReactNode;
+	footer?: ReactNode;
 	title?: string;
 	additionalData?: Array<{
 		label: string;
-		value: React.ReactNode;
+		value: ReactNode;
 		link?: string;
 	}>;
 }
@@ -76,7 +73,7 @@ export const DialogItem = ({
 			link:
 				"player_name" in item
 					? `/profile/${item.player_id}`
-					: `/master/${item.master_id}`,
+					: `/profile/${item.master_id}`,
 		},
 		{
 			label: "Статус",

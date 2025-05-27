@@ -10,6 +10,7 @@ import { EventList } from "./eventlist";
 import { PROFILE_TABS, PROFILE_TEXTS } from "./profile.data";
 import { ProfileInfo } from "./profile-info";
 import {
+	EAbortReason,
 	IApiCompany,
 	IMasterApp,
 	IPlayerApp,
@@ -24,64 +25,58 @@ import { useAuthVerification } from "../../../utils";
 export const ProfilePage = () => {
 	const { profile, isAuthenticated } = useAuthVerification();
 
-	const [state, setState] = useState({
+	const [data, setData] = useState({
 		compList: [] as ReadonlyArray<IApiCompany>,
 		playerAppList: [] as IPlayerApp[],
 		masterAppList: [] as IMasterApp[],
-		fetching: false,
-		eventsView: false,
-		eventsType: false,
-		companyView: false,
 	});
+
+	const [isFetching, setIsFetching] = useState(false);
 
 	const activeTab = useStore($activeTab);
 	const { eventsType, eventsView, companyView } = useStore($checkboxState);
 
 	const [USER_TAB, EVENTS_TAB, COMPLIST_TAB, RESETPASS_TAB] = PROFILE_TABS;
 
-	const fetchData = async () => {
-		setState((prev) => ({ ...prev, fetching: true }));
+	const fetchData = async (abortController?: AbortController) => {
+		setIsFetching(true);
 
 		try {
 			if (activeTab === EVENTS_TAB.id) {
 				const response = await (eventsType
 					? readPlayerAppsList()
 					: readMasterAppsList());
+
 				if (response?.payload) {
 					const update = eventsType
 						? { playerAppList: response.payload as IPlayerApp[] }
 						: { masterAppList: response.payload as IMasterApp[] };
-					setState((prev) => ({ ...prev, ...update }));
+					setData((prev) => ({ ...prev, ...update }));
 				}
 			} else if (activeTab === COMPLIST_TAB.id) {
-				const abortController = new AbortController();
 				const response = await readMyCompanies(null, abortController);
 				if (response?.payload) {
-					setState((prev) => ({ ...prev, compList: response.payload }));
+					setData((prev) => ({ ...prev, compList: response.payload }));
 				}
 			}
 		} finally {
-			setState((prev) => ({ ...prev, fetching: false }));
+			setIsFetching(false);
 		}
 	};
 
 	useEffect(() => {
 		let abortController = new AbortController();
-		let isMounted = true;
 
 		(async () => {
 			try {
-				await fetchData();
+				await fetchData(abortController);
 			} catch (err) {
-				if (isMounted) {
-					console.error("Ошибка:", err);
-				}
+				console.error("Ошибка:", err);
 			}
 		})();
 
 		return () => {
-			isMounted = false;
-			abortController.abort();
+			abortController.abort(EAbortReason.UNMOUNT);
 		};
 	}, [activeTab, eventsType]);
 
@@ -89,7 +84,7 @@ export const ProfilePage = () => {
 		return null;
 	}
 
-	const { compList, playerAppList, masterAppList, fetching } = state;
+	const { compList, playerAppList, masterAppList } = data;
 
 	return (
 		<Container mb={6}>
@@ -124,7 +119,7 @@ export const ProfilePage = () => {
 				</Tabs.Content>
 
 				<Tabs.Content value={COMPLIST_TAB.id}>
-					{fetching ? (
+					{isFetching ? (
 						<Spinner size="sm" />
 					) : compList.length > 0 ? (
 						<CompList
