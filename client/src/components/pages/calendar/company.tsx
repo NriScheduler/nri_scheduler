@@ -45,7 +45,7 @@ const Company = ({ data }: ICompanyProps) => {
 	const onSubmit = handleSubmit((companyData) => {
 		if (data) {
 			const { name, system, description } = companyData;
-			addCompany(name, system, description).then((res) => {
+			addCompany(name, system, { description }).then((res) => {
 				if (res !== null) {
 					reset();
 					setOpen(false);

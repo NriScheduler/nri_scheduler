@@ -23,6 +23,7 @@ import { TimesonesList } from "./timezones";
 import { Field } from "../../ui/field";
 import { toaster } from "../../ui/toaster";
 import { addCity } from "../../../api";
+import { TIMEZONES } from "../../../store/profile";
 
 interface IRegionOption {
 	name: string;
@@ -36,7 +37,7 @@ interface ICityFormProps {
 
 interface IFormAddCity {
 	readonly name: string;
-	readonly timezone: string;
+	readonly offset: number;
 	readonly region: string;
 	readonly useRegionTimezone: boolean;
 }
@@ -54,7 +55,7 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 	} = useForm<IFormAddCity>({
 		mode: "onChange",
 		defaultValues: {
-			timezone: "",
+			offset: undefined,
 			region: "",
 			name: "",
 			useRegionTimezone: true,
@@ -71,23 +72,23 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 	const handleRegionChange = (regionName: string) => {
 		const region = regionOptions.find((r) => r.name === regionName);
 		if (region && shouldUseRegionTimezone) {
-			setValue("timezone", region.timezone, { shouldValidate: true });
+			setValue("offset", Number(region.timezone), { shouldValidate: true });
 		}
 	};
 
 	const onSubmit = handleSubmit(async (data: IFormAddCity) => {
-		const { name, timezone, region, useRegionTimezone } = data;
+		const { name, offset, region, useRegionTimezone } = data;
 		setCityLoading(true);
 
 		try {
-			const timezoneToSend = useRegionTimezone ? null : timezone;
-			const res = await addCity(name, region, timezoneToSend);
+			const ownTimezone = useRegionTimezone ? null : TIMEZONES.get(offset)!;
+			const res = await addCity(name, region, ownTimezone);
 			if (res) {
 				toaster.success({
 					title: res.result,
 				});
 				setValue("name", "");
-				setValue("timezone", "");
+				setValue("offset", "" as unknown as number);
 				setValue("region", "");
 				setValue("useRegionTimezone", true);
 			}
@@ -101,7 +102,7 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 		setValue("useRegionTimezone", checked);
 		if (checked && selectedRegion) {
 			// Если включаем "Брать из региона", устанавливаем таймзону региона
-			setValue("timezone", selectedRegion.timezone);
+			setValue("offset", Number(selectedRegion.timezone));
 		}
 	};
 
@@ -186,12 +187,12 @@ export const CityForm = ({ regionOptions, loading }: ICityFormProps) => {
 
 					<Field
 						label="Часовой пояс"
-						errorText={errors.timezone?.message}
-						invalid={!!errors.timezone}
+						errorText={errors.offset?.message}
+						invalid={!!errors.offset}
 						disabled={shouldUseRegionTimezone}
 					>
 						<Controller
-							name="timezone"
+							name="offset"
 							control={control}
 							rules={{
 								required: !shouldUseRegionTimezone

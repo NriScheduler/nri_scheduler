@@ -112,7 +112,7 @@ const checkResponse = async <T>(
 			console.info("http response body parsing error");
 			console.error(err);
 		}
-		toaster.loading({ title: "Ошибка обращения к серверу" });
+		toaster.error({ title: "Ошибка обращения к серверу" });
 		console.info("Http response is not ok");
 		console.error({
 			status: response.status,
@@ -156,7 +156,7 @@ const checkResponse = async <T>(
 		return null;
 	} catch (err) {
 		if (err instanceof Error && err.name === "AbortError") {
-			toaster.loading({ title: "Истекло время ожидания ответа сервера" });
+			toaster.warning({ title: "Истекло время ожидания ответа сервера" });
 		} else {
 			toaster.error({ title: "Неизвестная ошибка" });
 			console.info("Хрень какая-то...");
@@ -284,6 +284,16 @@ export interface IApiCompany {
 	readonly cover_link: string | null;
 }
 
+export interface IApiStyledCompany {
+	readonly id: UUID;
+	readonly master: UUID;
+	readonly name: string;
+	readonly system: string;
+	readonly description: string | null;
+	readonly cover_link: string | null;
+	readonly event_style: string | null;
+}
+
 export interface IApiCompanyInfo {
 	readonly id: UUID;
 	readonly master: UUID;
@@ -293,6 +303,7 @@ export interface IApiCompanyInfo {
 	readonly description: string | null;
 	readonly cover_link: string | null;
 	readonly you_are_master: boolean;
+	readonly event_style: string | null;
 }
 
 export const readMyCompanies = (
@@ -317,24 +328,19 @@ export const readCompanyById = (companyId: UUID) =>
 export const addCompany = (
 	name: string,
 	system: string,
-	description?: string | null,
-	cover_link?: string | null,
-) =>
-	ajax<UUID>(
-		"/api/companies",
-		prepareAjax({ name, system, description, cover_link }, POST),
-	);
+	data: Partial<
+		Omit<
+			IApiStyledCompany,
+			"id" | "master" | "name" | "system" | "cover_link"
+		>
+	>,
+) => ajax<UUID>("/api/companies", prepareAjax({ name, system, ...data }, POST));
 
 export const updateCompany = (
 	companyId: UUID,
-	name: string,
-	system: string,
-	description?: string | null,
+	data: Partial<Omit<IApiStyledCompany, "id" | "master" | "cover_link">>,
 ) => {
-	return ajax<null>(
-		`/api/companies/${companyId}`,
-		prepareAjax({ name, system, description }, PUT),
-	);
+	return ajax<null>(`/api/companies/${companyId}`, prepareAjax(data, PUT));
 };
 
 export const setCompanyCover = (companyId: UUID, url: string) =>
@@ -345,6 +351,7 @@ export interface IApiShortEvent {
 	readonly company: string;
 	readonly date: string;
 	readonly plan_duration: number | null;
+	readonly style: string | null;
 }
 
 export interface IApiEvent {
@@ -359,7 +366,7 @@ export interface IApiEvent {
 	readonly date: string;
 	readonly max_slots: number | null;
 	readonly plan_duration: number | null;
-	readonly players: ReadonlyArray<string>;
+	readonly players: ReadonlyArray<readonly [userId: UUID, nickName: string]>;
 	readonly you_applied: boolean;
 	readonly you_are_master: boolean;
 	readonly your_approval: boolean | null;
@@ -369,9 +376,12 @@ export interface IApiEvent {
 export interface IEventsFilter {
 	master?: UUID | null;
 	location?: UUID | null;
+	region?: string | null;
+	city?: string | null;
 	applied?: boolean | null;
 	not_rejected?: boolean | null;
 	imamaster?: boolean | null;
+	company?: UUID[] | null;
 }
 
 export const readEventsList = (
@@ -383,8 +393,8 @@ export const readEventsList = (
 
 	if (filters) {
 		Object.entries(filters).forEach(([key, val]) => {
-			if (val !== null && val !== undefined) {
-				query[key] = val;
+			if (val !== null && val !== undefined && val !== "") {
+				query[key] = Array.isArray(val) ? val.join() : val;
 			}
 		});
 	}
@@ -524,6 +534,16 @@ export interface IApiProfile {
 	readonly get_tz_from_device: boolean;
 }
 
+export interface IApiShortProfile {
+	readonly id: UUID;
+	readonly nickname: string;
+	readonly about: string | null;
+	readonly avatar_link: string | null;
+	readonly city: string | null;
+	readonly region: string | null;
+	readonly verified: boolean;
+}
+
 export const getMyProfile: () => Promise<IApiResponse<IApiProfile> | null> =
 	async (isSoft = false) => {
 		const res = await ajax<IApiProfile>(
@@ -547,7 +567,7 @@ export const softCheck = () =>
 	)(true);
 
 export const getAnotherUserProfile = (userId: UUID) => {
-	return ajax<IApiProfile>(`/api/profile/${userId}`);
+	return ajax<IApiShortProfile>(`/api/profile/${userId}`);
 };
 
 export const updateMyProfile = (

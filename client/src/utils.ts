@@ -2,6 +2,7 @@ import { useEffect, useState } from "preact/hooks";
 import { route } from "preact-router";
 
 import { useStore } from "@nanostores/preact";
+import type { CalendarType } from "@schedule-x/calendar";
 
 import { $profile, IStorePrifile, TStorePrifile } from "./store/profile";
 
@@ -121,3 +122,63 @@ export const calcMapIconLink = (mapLink: string | null | undefined): string => {
 		return "";
 	}
 };
+
+const HEX_COLOR_PREFIX = "#";
+
+export interface IEventStyle {
+	readonly background: string;
+	readonly highlight: string;
+	readonly text: string;
+}
+
+export const DEFAULT_EVENT_STYLE: IEventStyle = {
+	background: "var(--sx-color-primary-container)",
+	highlight: "var(--sx-color-primary)",
+	text: "var(--sx-color-on-primary-container)",
+};
+
+export const parseEventStyle = (style: string): IEventStyle => {
+	const [, highlight, background, text] = style.split(HEX_COLOR_PREFIX);
+
+	return {
+		background: HEX_COLOR_PREFIX + background,
+		highlight: HEX_COLOR_PREFIX + highlight,
+		text: HEX_COLOR_PREFIX + text,
+	};
+};
+
+export const convertEventStyleToCSS = (style: string | null | undefined) => {
+	const { highlight, background, text } = style
+		? parseEventStyle(style)
+		: DEFAULT_EVENT_STYLE;
+
+	return {
+		backgroundColor: background,
+		borderLeft: `4px solid ${highlight}`,
+		color: text,
+	};
+};
+
+export const convertEventStyleToCalendarType = (
+	style: string,
+): CalendarType => {
+	const { highlight, background, text } = parseEventStyle(style);
+
+	const color = {
+		main: highlight,
+		container: background,
+		onContainer: text,
+	};
+
+	return {
+		colorName: style.replaceAll(HEX_COLOR_PREFIX, ""),
+		lightColors: color,
+		darkColors: color,
+	};
+};
+
+export const stringifyEventStyle = (style: IEventStyle): string =>
+	`${style.highlight}${style.background}${style.text}`;
+
+export const escapeCalendarId = (style: string) =>
+	style.replaceAll(HEX_COLOR_PREFIX, "");

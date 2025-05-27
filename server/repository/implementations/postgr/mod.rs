@@ -15,7 +15,7 @@ use crate::{
 	},
 	repository::models::{
 		AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
-		PlayerApp, Profile, Region, ShortEvent, UserForAuthEmail,
+		PlayerApp, Profile, Region, ShortEvent, ShortProfile, UserForAuthEmail,
 	},
 	shared::RecordId,
 	system_models::{AppError, CoreResult},
@@ -177,6 +177,32 @@ impl Store for PostgresStore {
 		.await?;
 
 		Ok(may_be_profile)
+	}
+
+	async fn read_another_profile(&self, user_id: Uuid) -> CoreResult<Option<ShortProfile>> {
+		sqlx::query_as::<_, ShortProfile>(
+			"select
+				u.id
+				, u.nickname
+				, u.about_me as about
+				, u.city
+				, r.name as region
+				, CASE
+					WHEN avatar_link IS NOT NULL THEN ('/avatar/' || id)
+					ELSE NULL
+				END AS avatar_link
+				, (u.email_verified or u.tg_id is not null) as verified
+			FROM users u
+			left join cities c
+				on c.name = u.city
+			left join regions r
+				on r.name = c.region
+			WHERE u.id = $1;",
+		)
+		.bind(user_id)
+		.fetch_optional(&self.pool)
+		.await
+		.map_err(AppError::from)
 	}
 
 	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult {
@@ -401,6 +427,7 @@ WHERE id = $1;",
 				END AS cover_link
 				, u.nickname AS master_name
 				, ($2 is not null and u.id = $2) AS you_are_master
+				, c.event_style
 			FROM companies c
 			inner join users u
 				on c.master = u.id
@@ -477,15 +504,20 @@ WHERE id = $1;",
 		system: &str,
 		descr: &Option<String>,
 		cover_link: &Option<String>,
+		event_style: &Option<String>,
 	) -> CoreResult<RecordId> {
 		let new_comp_id = sqlx::query_scalar::<_, RecordId>(
-			"INSERT INTO companies (master, name, system, description, cover_link) values ($1, $2, $3, $4, $5) returning id;",
+			"INSERT INTO companies
+			(master, name, system, description, cover_link, event_style)
+			values ($1, $2, $3, $4, $5, $6)
+			returning id;",
 		)
 		.bind(master)
 		.bind(name)
 		.bind(system)
 		.bind(descr)
 		.bind(cover_link)
+		.bind(event_style)
 		.fetch_one(&self.pool)
 		.await?;
 
@@ -498,16 +530,57 @@ WHERE id = $1;",
 		master: Uuid,
 		data: ApiUpdateCompanyDto,
 	) -> CoreResult<bool> {
-		let was_updated = sqlx::query_scalar::<_, bool>(
-			"update companies set name = $1, system = $2, description = $3 where id = $4 and master = $5 returning true;",
-		)
-		.bind(data.name)
-		.bind(data.system)
-		.bind(data.description)
-		.bind(company_id)
-		.bind(master)
-		.fetch_optional(&self.pool)
-		.await?.unwrap_or_default();
+		if data.is_empty() {
+			return Ok(true);
+		}
+
+		let is_name_passed = data.name.is_some();
+		let is_system_passed = data.system.is_some();
+		let is_description_passed = data.description.is_some();
+		let is_event_style_passed = data.event_style.is_some();
+
+		let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new("update companies set");
+
+		if is_name_passed {
+			qb.push(" name = ");
+			qb.push_bind(data.name.unwrap());
+		}
+
+		if is_system_passed {
+			if is_name_passed {
+				qb.push(",");
+			}
+			qb.push(" system = ");
+			qb.push_bind(data.system.unwrap());
+		}
+
+		if is_description_passed {
+			if is_name_passed || is_system_passed {
+				qb.push(",");
+			}
+			qb.push(" description = ");
+			qb.push_bind(data.description.unwrap());
+		}
+
+		if is_event_style_passed {
+			if is_name_passed || is_system_passed || is_description_passed {
+				qb.push(",");
+			}
+			qb.push(" event_style = ");
+			qb.push_bind(data.event_style.unwrap());
+		}
+
+		qb.push(" where id = ");
+		qb.push_bind(company_id);
+		qb.push(" and master = ");
+		qb.push_bind(master);
+		qb.push(" returning true;");
+
+		let was_updated = qb
+			.build_query_scalar::<bool>()
+			.fetch_optional(&self.pool)
+			.await?
+			.unwrap_or_default();
 
 		Ok(was_updated)
 	}
@@ -542,16 +615,39 @@ WHERE id = $1;",
 					, c.name AS company
 					, e.date
 					, e.plan_duration
+					, c.event_style as style
 				FROM events e
 				INNER JOIN companies c
-					ON c.id = e.company
-				INNER JOIN locations l
-					ON l.id = e.location",
+					ON c.id = e.company",
 		);
+
+		if !query_args.company.is_empty() {
+			qb.push(" AND e.company = ANY(");
+			qb.push_bind(query_args.company);
+			qb.push(')');
+		}
+
+		if query_args.location.is_some() || query_args.region.is_some() || query_args.city.is_some() {
+			qb.push(" INNER JOIN locations l ON l.id = e.location");
+		}
 
 		if let Some(location_id) = query_args.location {
 			qb.push(" AND l.id = ");
 			qb.push_bind(location_id);
+		}
+
+		if query_args.region.is_some() || query_args.city.is_some() {
+			qb.push(" INNER JOIN cities ci ON ci.name = l.city");
+		}
+
+		if let Some(city) = query_args.city {
+			qb.push(" AND ci.name = ");
+			qb.push_bind(city);
+		}
+
+		if let Some(region) = query_args.region {
+			qb.push(" INNER JOIN regions r ON r.name = ci.region AND r.name = ");
+			qb.push_bind(region);
 		}
 
 		qb.push(" INNER JOIN users m ON m.id = c.master");
@@ -599,16 +695,12 @@ WHERE id = $1;",
 			};
 		}
 
-		qb.push(
-			" GROUP BY e.id, c.name, c.id, m.nickname, m.id, l.name, l.id, e.date, e.cancelled, y.approval;",
-		);
+		qb.push(';');
 
-		let events = qb
-			.build_query_as::<ShortEvent>()
+		qb.build_query_as::<ShortEvent>()
 			.fetch_all(&self.pool)
-			.await?;
-
-		Ok(events)
+			.await
+			.map_err(AppError::from)
 	}
 
 	async fn read_event(
@@ -628,7 +720,7 @@ WHERE id = $1;",
 				, l.map_link AS location_map_link
 				, e.date
 				, e.cancelled
-				, COALESCE(jsonb_agg(u.nickname) FILTER (WHERE u.nickname is not null), '[]') AS players
+				, COALESCE(jsonb_agg(jsonb_build_array(u.id, u.nickname)) FILTER (WHERE u.id is not null), '[]') AS players
 				, e.max_slots
 				, e.plan_duration
 				, bool_or(y.id is not null) AS you_applied

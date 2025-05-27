@@ -171,7 +171,7 @@ pub(super) async fn read_another_profile(
 	Extension(_user_id): Extension<Option<Uuid>>, // когда-нибудь пригодится для определения показывать ли контакты
 	Path(profile_id): Path<Uuid>,
 ) -> AppResult {
-	let profile = state.repo.read_profile(profile_id).await?;
+	let profile = state.repo.read_another_profile(profile_id).await?;
 
 	Ok(match profile {
 		None => AppResponse::scenario_fail("Пользователь не найден", None),

@@ -20,6 +20,17 @@ pub(crate) struct User {
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct ShortProfile {
+	pub id: Uuid,
+	pub nickname: String,
+	pub about: Option<String>,
+	pub avatar_link: Option<String>,
+	pub city: Option<String>,
+	pub region: Option<String>,
+	pub verified: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
 pub(crate) struct Profile {
 	pub id: Uuid,
 	pub nickname: String,
@@ -55,6 +66,7 @@ pub(crate) struct CompanyInfo {
 	pub description: Option<String>,
 	pub cover_link: Option<String>,
 	pub you_are_master: bool,
+	pub event_style: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
@@ -74,6 +86,7 @@ pub(crate) struct ShortEvent {
 	pub company: String,
 	pub date: DateTime<Utc>,
 	pub plan_duration: Option<i16>,
+	pub style: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
@@ -87,7 +100,7 @@ pub(crate) struct Event {
 	pub location_id: Uuid,
 	pub location_map_link: Option<String>,
 	pub date: DateTime<Utc>,
-	pub players: SqlxJson<Vec<String>>,
+	pub players: SqlxJson<Vec<(Uuid, String)>>,
 	pub max_slots: Option<i16>,
 	pub plan_duration: Option<i16>,
 	pub you_applied: bool,

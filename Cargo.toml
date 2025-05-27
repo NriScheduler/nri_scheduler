@@ -22,7 +22,7 @@ panic = 'abort'
 
 [dependencies]
 argon2 = "0.5.3"
-axum = "0.8.3"
+axum = "0.8.4"
 axum-extra = { version = "0.10.1", features = ["cookie"] }
 axum-server = { version = "0.7.2", features = ["tls-rustls"], optional = true }
 chrono = { version = "0.4.41", features = ["serde"] }
@@ -31,23 +31,22 @@ futures = "0.3.31"
 futures-util = "0.3.31"
 hex = "0.4.3"
 hmac = "0.12.1"
-josekit = "0.10.1"
-lettre = "0.11.15"
+josekit = "0.10.3"
+lettre = { version = "0.11.16", default-features = false, features = ["builder", "pool", "rustls-tls", "smtp-transport"] }
 rand = "0.9.1"
 regex = "1.11.1"
-reqwest = { version = "0.12.15", features = ["stream"] }
+reqwest = { version = "0.12.15", default-features = false, features = ["json", "rustls-tls", "stream"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
-serde_urlencoded = "0.7.1"
 sha2 = "0.10.8"
-sqlx = { version = "0.8.5", default-features = false, features = ["derive", "runtime-tokio", "tls-none", "postgres"] }
-sqlx-core = { version = "0.8.5", features = ["migrate"] }
-sqlx-postgres = { version = "0.8.5", features = ["migrate", "chrono", "uuid"] }
-tokio = { version = "1.44.2", features = ["full"] }
+sqlx = { version = "0.8.6", default-features = false, features = ["derive", "postgres", "runtime-tokio", "tls-none"] }
+sqlx-core = { version = "0.8.6", features = ["migrate"] }
+sqlx-postgres = { version = "0.8.6", features = ["migrate", "chrono", "uuid"] }
+tokio = { version = "1.45.1", features = ["full"] }
 tokio-stream = { version = "0.1.17", features = ["sync"] }
-tower-http = { version = "0.6.2", features = ["fs"], optional = true }
+tower-http = { version = "0.6.4", features = ["fs"], optional = true }
 utoipa = { version = "5.3.1", features = ["uuid", "chrono"], optional = true }
-utoipa-swagger-ui = { version = "9.0.1", features = ["axum"], optional = true }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"], optional = true }
 uuid = { version = "1.16.0", features = ["serde"] }
 
 [features]
