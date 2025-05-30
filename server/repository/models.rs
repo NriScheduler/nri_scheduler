@@ -47,6 +47,12 @@ pub(crate) struct Profile {
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct UserPair {
+	pub id: Uuid,
+	pub nickname: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
 pub(crate) struct Company {
 	pub id: Uuid,
 	pub master: Uuid,

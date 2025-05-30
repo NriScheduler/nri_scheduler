@@ -191,3 +191,19 @@ pub(crate) struct TelegramAuthDto {
 pub(crate) struct TgAvatar {
 	pub link: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct TouchSearch {
+	#[serde(default)]
+	pub masters: bool,
+	#[serde(default)]
+	pub players: bool,
+	#[serde(default)]
+	pub co_players: bool,
+}
+
+impl TouchSearch {
+	pub fn is_empty(&self) -> bool {
+		!self.masters && !self.players && !self.co_players
+	}
+}

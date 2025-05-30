@@ -544,6 +544,11 @@ export interface IApiShortProfile {
 	readonly verified: boolean;
 }
 
+export interface IApiUserPair {
+	readonly id: UUID;
+	readonly nickname: string;
+}
+
 export const getMyProfile: () => Promise<IApiResponse<IApiProfile> | null> =
 	async (isSoft = false) => {
 		const res = await ajax<IApiProfile>(
@@ -568,6 +573,21 @@ export const softCheck = () =>
 
 export const getAnotherUserProfile = (userId: UUID) => {
 	return ajax<IApiShortProfile>(`/api/profile/${userId}`);
+};
+
+export interface ITouchesFilter {
+	readonly masters: boolean | null | undefined;
+	readonly players: boolean | null | undefined;
+	readonly coPlayers: boolean | null | undefined;
+}
+
+export const getTouchesHistory = (search?: ITouchesFilter | null) => {
+	const query = new URLSearchParams({
+		masters: Boolean(search?.masters).toString(),
+		players: Boolean(search?.players).toString(),
+		co_players: Boolean(search?.coPlayers).toString(),
+	});
+	return ajax<ReadonlyArray<IApiUserPair>>(`/api/touches-history?${query}`);
 };
 
 export const updateMyProfile = (
