@@ -69,7 +69,7 @@ const EventItem = ({
 									<Badge fontSize="inherit" variant="surface">
 										{isMaster ? item.player_name : item.master_name}
 									</Badge>{" "}
-									хочет присоединиться к вашей игре по вашей кампании{" "}
+									хочет присоединиться к вашей игре по кампании{" "}
 									<Badge fontSize="inherit" variant="surface">
 										{item.company_name}
 									</Badge>
