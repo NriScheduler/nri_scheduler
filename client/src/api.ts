@@ -45,7 +45,7 @@ export interface IRequestInit {
 
 const ajax = <T>(
 	input: string,
-	init?: IRequestInit,
+	init?: IRequestInit | null,
 	abort?: AbortController,
 	isSoft = false,
 ): Promise<IApiResponse<T> | null> => {
@@ -469,8 +469,8 @@ export interface IPlayerApp {
 	readonly master_name: string;
 }
 
-export const readPlayerAppsList = () =>
-	ajax<ReadonlyArray<IPlayerApp>>(`/api/apps`);
+export const readPlayerAppsList = (abortController?: AbortController) =>
+	ajax<ReadonlyArray<IPlayerApp>>(`/api/apps`, null, abortController);
 export const readPlayerApp = (appId: UUID) =>
 	ajax<IPlayerApp>(`/api/apps/${appId}`);
 export const readPlayerAppByEvent = (eventId: UUID) =>
@@ -492,8 +492,8 @@ export interface IMasterApp {
 	readonly player_name: string;
 }
 
-export const readMasterAppsList = () =>
-	ajax<ReadonlyArray<IMasterApp>>(`/api/apps/master`);
+export const readMasterAppsList = (abortController?: AbortController) =>
+	ajax<ReadonlyArray<IMasterApp>>(`/api/apps/master`, null, abortController);
 export const readMasterAppsListByEvent = (eventId: UUID) =>
 	ajax<ReadonlyArray<IMasterApp>>(`/api/apps/master/by_event/${eventId}`);
 export const readMasterAppsListCompanyClosest = (companyId: UUID) =>

@@ -25,6 +25,10 @@ import { useAuthVerification } from "../../../utils";
 export const ProfilePage = () => {
 	const { profile, isAuthenticated } = useAuthVerification();
 
+	if (!isAuthenticated) {
+		return null;
+	}
+
 	const [data, setData] = useState({
 		compList: [] as ReadonlyArray<IApiCompany>,
 		playerAppList: [] as IPlayerApp[],
@@ -39,13 +43,13 @@ export const ProfilePage = () => {
 	const [USER_TAB, EVENTS_TAB, COMPLIST_TAB, RESETPASS_TAB] = PROFILE_TABS;
 
 	const fetchData = async (abortController?: AbortController) => {
-		setIsFetching(true);
-
 		try {
 			if (activeTab === EVENTS_TAB.id) {
+				setIsFetching(true);
+
 				const response = await (eventsType
-					? readPlayerAppsList()
-					: readMasterAppsList());
+					? readPlayerAppsList(abortController)
+					: readMasterAppsList(abortController));
 
 				if (response?.payload) {
 					const update = eventsType
@@ -54,6 +58,8 @@ export const ProfilePage = () => {
 					setData((prev) => ({ ...prev, ...update }));
 				}
 			} else if (activeTab === COMPLIST_TAB.id) {
+				setIsFetching(true);
+
 				const response = await readMyCompanies(null, abortController);
 				if (response?.payload) {
 					setData((prev) => ({ ...prev, compList: response.payload }));
@@ -65,24 +71,14 @@ export const ProfilePage = () => {
 	};
 
 	useEffect(() => {
-		let abortController = new AbortController();
+		const abortController = new AbortController();
 
-		(async () => {
-			try {
-				await fetchData(abortController);
-			} catch (err) {
-				console.error("Ошибка:", err);
-			}
-		})();
+		fetchData(abortController).catch((err) => console.error("Ошибка:", err));
 
 		return () => {
 			abortController.abort(EAbortReason.UNMOUNT);
 		};
 	}, [activeTab, eventsType]);
-
-	if (!isAuthenticated) {
-		return null;
-	}
 
 	const { compList, playerAppList, masterAppList } = data;
 

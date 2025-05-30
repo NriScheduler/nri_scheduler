@@ -70,10 +70,7 @@ export const DialogItem = ({
 		{
 			label: "player_name" in item ? "Игрок" : "Мастер",
 			value: "player_name" in item ? item.player_name : item.master_name,
-			link:
-				"player_name" in item
-					? `/profile/${item.player_id}`
-					: `/profile/${item.master_id}`,
+			link: `/profile/${"player_name" in item ? item.player_id : item.master_id}`,
 		},
 		{
 			label: "Статус",
