@@ -40,6 +40,11 @@ type ProfileFormData = {
 
 export const ProfileEdit = () => {
 	const { profile, isAuthenticated } = useAuthVerification();
+
+	if (!isAuthenticated || !profile) {
+		return null;
+	}
+
 	const allRegions = useStore($regions);
 	const [citiesOptions, setCitiesOptions] = useState<string[]>([]);
 
@@ -104,10 +109,6 @@ export const ProfileEdit = () => {
 			});
 		}
 	};
-
-	if (!isAuthenticated || !profile) {
-		return null;
-	}
 
 	return (
 		<Container mb={6}>
