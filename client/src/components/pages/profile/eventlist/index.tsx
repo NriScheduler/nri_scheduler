@@ -81,7 +81,9 @@ const EventItem = ({
 										{item.company_name}
 									</Badge>{" "}
 									мастера{" "}
-									{isMaster ? item.player_name : item.master_name}
+									<Badge fontSize="inherit" variant="surface">
+										{isMaster ? item.player_name : item.master_name}
+									</Badge>
 								</Heading>
 							)}
 						</Card.Header>
