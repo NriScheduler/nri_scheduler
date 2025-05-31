@@ -1,13 +1,13 @@
-import { ComponentChild, h } from "preact";
-import { forwardRef } from "preact/compat";
+import { h } from "preact";
+import { forwardRef, ReactNode } from "preact/compat";
 
 import { Field as ChakraField } from "@chakra-ui/react";
 
 export interface IFieldProps extends Omit<ChakraField.RootProps, "label"> {
-	label?: ComponentChild;
-	helperText?: ComponentChild;
-	errorText?: ComponentChild;
-	optionalText?: ComponentChild;
+	label?: ReactNode;
+	helperText?: ReactNode;
+	errorText?: ReactNode;
+	optionalText?: ReactNode;
 }
 
 export const Field = forwardRef<HTMLDivElement, IFieldProps>(

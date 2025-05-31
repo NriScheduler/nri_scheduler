@@ -1,5 +1,5 @@
-import { ComponentChild, h, VNode } from "preact";
-import { cloneElement, forwardRef } from "preact/compat";
+import { h, VNode } from "preact";
+import { cloneElement, forwardRef, ReactNode } from "preact/compat";
 
 import {
 	BoxProps,
@@ -11,8 +11,8 @@ import {
 export interface IInputGroupProps extends BoxProps {
 	startElementProps?: InputElementProps;
 	endElementProps?: InputElementProps;
-	startElement?: ComponentChild;
-	endElement?: ComponentChild;
+	startElement?: ReactNode;
+	endElement?: ReactNode;
 	children: VNode<InputElementProps>;
 	startOffset?: InputElementProps["paddingStart"];
 	endOffset?: InputElementProps["paddingEnd"];
