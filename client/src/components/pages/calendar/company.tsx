@@ -1,5 +1,4 @@
 import { h } from "preact";
-import { useEffect, useState } from "preact/compat";
 import { useForm } from "react-hook-form";
 
 import {
@@ -26,13 +25,15 @@ import {
 import { Field } from "../../ui/field";
 import { addCompany, IApiCompany } from "../../../api";
 import { $profile } from "../../../store/profile";
+import { loadCompanies, sharedCompanies } from "../../../store/sharedDataStore";
 
 export interface ICompanyProps {
-	readonly data: ReadonlyArray<IApiCompany>;
+	isOpen: boolean;
+	openDrawer: () => void;
+	closeDrawer: () => void;
 }
 
-const Company = ({ data }: ICompanyProps) => {
-	const [open, setOpen] = useState(false);
+const Company = ({ isOpen, openDrawer, closeDrawer }: ICompanyProps) => {
 	const {
 		register,
 		handleSubmit,
@@ -41,35 +42,26 @@ const Company = ({ data }: ICompanyProps) => {
 	} = useForm<IApiCompany>();
 
 	const profile = useStore($profile);
+	const companies = useStore(sharedCompanies);
 
 	const onSubmit = handleSubmit((companyData) => {
-		if (data) {
+		if (companies) {
 			const { name, system, description } = companyData;
 			addCompany(name, system, description).then((res) => {
 				if (res !== null) {
 					reset();
-					setOpen(false);
+					closeDrawer();
+					loadCompanies().then(sharedCompanies.set);
 				}
 			});
 		}
 	});
 
-	useEffect(() => {
-		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				setOpen(false);
-			}
-		};
-
-		document.addEventListener("keydown", handleKeyDown, { passive: true });
-		return () => {
-			document.removeEventListener("keydown", handleKeyDown);
-			setOpen(false);
-		};
-	}, []);
-
 	return (
-		<DrawerRoot open={open} onOpenChange={(e) => setOpen(e.open)}>
+		<DrawerRoot
+			open={isOpen}
+			onOpenChange={(e) => (e.open ? openDrawer() : closeDrawer())}
+		>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
 				<Button w="30%" disabled={!profile?.signed} variant="outline">
@@ -125,9 +117,9 @@ const Company = ({ data }: ICompanyProps) => {
 					<Heading size="md" mt={6} mb={4}>
 						Доступные мне
 					</Heading>
-					{data ? (
+					{companies ? (
 						<List.Root as="ol" ml={4}>
-							{data.map((item) => (
+							{companies.map((item) => (
 								<List.Item key={item.id}>{item.name}</List.Item>
 							))}
 						</List.Root>

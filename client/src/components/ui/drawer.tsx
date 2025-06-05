@@ -1,5 +1,5 @@
 import { h, RefObject } from "preact";
-import { forwardRef } from "preact/compat";
+import { forwardRef, useEffect, useState } from "preact/compat";
 
 import { Drawer as ChakraDrawer, Portal } from "@chakra-ui/react";
 
@@ -10,6 +10,56 @@ interface IDrawerContentProps extends ChakraDrawer.ContentProps {
 	portalRef?: RefObject<HTMLElement>;
 	offset?: ChakraDrawer.ContentProps["padding"];
 }
+
+interface IDrawerRootProps extends ChakraDrawer.RootProps {
+	defaultOpen?: boolean;
+}
+
+export const DrawerRoot = forwardRef<HTMLDivElement, IDrawerRootProps>(
+	function DrawerRoot(
+		{ open, onOpenChange, defaultOpen = false, ...props },
+		ref,
+	) {
+		// Внутреннее состояние для неконтролируемого режима
+		const [isOpen, setIsOpen] = useState(defaultOpen);
+
+		// Определяем, используем ли мы контролируемый режим
+		const isControlled = open !== undefined;
+		const currentOpen = isControlled ? open : isOpen;
+
+		const handleOpenChange = (e: { open: boolean }) => {
+			if (!isControlled) {
+				setIsOpen(e.open);
+			}
+			onOpenChange?.(e);
+		};
+
+		useEffect(() => {
+			if (!currentOpen) {
+				return;
+			}
+
+			const handleEscape = (e: KeyboardEvent) => {
+				if (e.key === "Escape") {
+					handleOpenChange({ open: false });
+				}
+			};
+
+			document.addEventListener("keydown", handleEscape);
+			return () => document.removeEventListener("keydown", handleEscape);
+		}, [currentOpen]);
+
+		return (
+			<ChakraDrawer.Root
+				ref={ref}
+				open={currentOpen}
+				onOpenChange={handleOpenChange}
+				modal={true}
+				{...props}
+			/>
+		);
+	},
+);
 
 export const DrawerContent = forwardRef<HTMLDivElement, IDrawerContentProps>(
 	function DrawerContent(props, ref) {
@@ -44,7 +94,7 @@ export const DrawerCloseTrigger = forwardRef<
 });
 
 export const DrawerTrigger = ChakraDrawer.Trigger;
-export const DrawerRoot = ChakraDrawer.Root;
+// export const DrawerRoot = ChakraDrawer.Root;
 export const DrawerFooter = ChakraDrawer.Footer;
 export const DrawerHeader = ChakraDrawer.Header;
 export const DrawerBody = ChakraDrawer.Body;
