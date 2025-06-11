@@ -3,7 +3,7 @@ import "../calendar/calendar.css";
 
 import type { UUID } from "node:crypto";
 
-import { h } from "preact";
+import { Fragment, h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { useRouter } from "preact-router";
 import { useForm } from "react-hook-form";
@@ -20,10 +20,14 @@ import {
 	Link,
 	Skeleton,
 	Stack,
+	Text,
 	Textarea,
 } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
 
 import { NotFoundPage } from "../not-found/not-found";
+import { EventItem } from "../../event-item";
+import { GridLayout } from "../../grid-layout";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -36,6 +40,7 @@ import {
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
 import { IApiCompanyInfo, readCompanyById, updateCompany } from "../../../api";
+import { $eventsStore, fetchEvents } from "../../../store/eventList";
 import { convertEventStyleToCSS, navBack } from "../../../utils";
 
 const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
@@ -116,6 +121,9 @@ export const CompanyPage = () => {
 	const companyId = route.matches?.id as UUID;
 	const [fetching, setFetching] = useState(false);
 	const [company, setCompany] = useState<IApiCompanyInfo | null>(null);
+
+	const { list, title, isLoading, isMaster } = useStore($eventsStore);
+
 	const [open, setOpen] = useState(false);
 	const {
 		register,
@@ -169,6 +177,19 @@ export const CompanyPage = () => {
 			document.removeEventListener("keydown", onEscClose);
 		};
 	}, [companyId]);
+
+	useEffect(() => {
+		if (company !== null) {
+			fetchEvents({
+				you_are_master: company?.you_are_master,
+				company_id: companyId,
+			});
+		}
+	}, [company]);
+
+	if (isLoading) {
+		return <Text>Загрузка...</Text>;
+	}
 
 	return (
 		<Container>
@@ -261,7 +282,21 @@ export const CompanyPage = () => {
 			{fetching ? (
 				<CompanyCardSkeleton />
 			) : company !== null ? (
-				<CompanyCard company={company} />
+				<Fragment>
+					<CompanyCard company={company} />
+					<Stack mt={2} mb={6}>
+						<Heading size="xl">{title}</Heading>
+						<GridLayout gridColumns={4}>
+							{list.map((item) => (
+								<EventItem
+									item={item}
+									key={item.id}
+									isMaster={isMaster}
+								/>
+							))}
+						</GridLayout>
+					</Stack>
+				</Fragment>
 			) : (
 				<NotFoundPage
 					checkButton={false}

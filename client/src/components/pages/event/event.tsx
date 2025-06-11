@@ -29,6 +29,8 @@ import { useStore } from "@nanostores/preact";
 import dayjs from "dayjs";
 
 import { NotFoundPage } from "../not-found/not-found";
+import { EventItem } from "../../event-item";
+import { GridLayout } from "../../grid-layout";
 import { CloseButton } from "../../ui/close-button";
 import {
 	DrawerBackdrop,
@@ -55,6 +57,7 @@ import {
 	reopenEvent,
 	updateEvent,
 } from "../../../api";
+import { $eventsStore, fetchEvents } from "../../../store/eventList";
 import { $profile, $tz } from "../../../store/profile";
 import {
 	calcMapIconLink,
@@ -361,6 +364,9 @@ export const EventPage = () => {
 	const [locationList, setLocationList] = useState<
 		ReadonlyArray<IApiLocation>
 	>([]);
+
+	const { list, title, isLoading, isMaster } = useStore($eventsStore);
+
 	const [isDisableEditEventSubmitButton, setIsDisableEditEventSubmitButton] =
 		useState(false);
 	const tz = useStore($tz);
@@ -452,6 +458,7 @@ export const EventPage = () => {
 			return "Вы указали прошлое время";
 		}
 	};
+
 	useEffect(() => {
 		if (eventId) {
 			setFetching(true);
@@ -472,6 +479,19 @@ export const EventPage = () => {
 				});
 		}
 	}, [route.matches?.id]);
+
+	useEffect(() => {
+		if (event !== null) {
+			fetchEvents({
+				you_are_master: event?.you_are_master,
+				company_id: event?.company_id,
+			});
+		}
+	}, [event]);
+
+	if (isLoading) {
+		return <Text>Загрузка...</Text>;
+	}
 
 	const eventDate = dayjs(event?.date).tz(tz);
 
@@ -643,7 +663,21 @@ export const EventPage = () => {
 				{fetching ? (
 					<EventCardSkeleton />
 				) : event !== null ? (
-					<EventCard event={event} updateEventData={updateEventData} />
+					<Stack gap={4}>
+						<EventCard event={event} updateEventData={updateEventData} />
+						<Stack mt={2} mb={6}>
+							<Heading size="xl">{title}</Heading>
+							<GridLayout gridColumns={4}>
+								{list.map((item) => (
+									<EventItem
+										item={item}
+										key={item.id}
+										isMaster={isMaster}
+									/>
+								))}
+							</GridLayout>
+						</Stack>
+					</Stack>
 				) : (
 					<NotFoundPage
 						checkButton={false}
