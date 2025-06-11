@@ -4,6 +4,8 @@ use regex::Regex;
 use serde::{Deserialize, Deserializer, de::Error as _};
 use uuid::Uuid;
 
+use crate::shared::deserialize_missed;
+
 static EMAIL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 	Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").expect("Email regex should build without errors")
 });
@@ -173,14 +175,14 @@ pub(crate) struct VerificationDto {
 #[derive(Debug, Deserialize)]
 pub(crate) struct TelegramAuthDto {
 	pub auth_date: i64,
-	#[serde(default, deserialize_with = "check_missed")]
+	#[serde(default, deserialize_with = "deserialize_missed")]
 	pub first_name: Option<Option<String>>,
 	pub id: i64,
-	#[serde(default, deserialize_with = "check_missed")]
+	#[serde(default, deserialize_with = "deserialize_missed")]
 	pub last_name: Option<Option<String>>,
-	#[serde(default, deserialize_with = "check_missed")]
+	#[serde(default, deserialize_with = "deserialize_missed")]
 	pub photo_url: Option<Option<String>>,
-	#[serde(default, deserialize_with = "check_missed")]
+	#[serde(default, deserialize_with = "deserialize_missed")]
 	pub username: Option<Option<String>>,
 	pub hash: String,
 }
@@ -190,29 +192,18 @@ pub(crate) struct TgAvatar {
 	pub link: String,
 }
 
-fn check_missed<'de, D: Deserializer<'de>>(deser: D) -> Result<Option<Option<String>>, D::Error> {
-	// Если поле отсутствует, serde не вызовет эту функцию, поэтому нужен #[serde(default)]
-	Ok(Some(Option::deserialize(deser)?))
+#[derive(Debug, Deserialize)]
+pub(crate) struct TouchSearch {
+	#[serde(default)]
+	pub masters: bool,
+	#[serde(default)]
+	pub players: bool,
+	#[serde(default)]
+	pub co_players: bool,
 }
 
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[derive(Deserialize)]
-	struct Test {
-		#[serde(default, deserialize_with = "check_missed")]
-		test: Option<Option<String>>,
-	}
-
-	#[test]
-	fn test_mti_validation() {
-		let t1 = serde_json::from_str::<Test>(r#"{"test": "test"}"#).unwrap();
-		let t2 = serde_json::from_str::<Test>(r#"{"test": null}"#).unwrap();
-		let t3 = serde_json::from_str::<Test>(r#"{}"#).unwrap();
-
-		assert_eq!(t1.test, Some(Some("test".into())));
-		assert_eq!(t2.test, Some(None));
-		assert_eq!(t3.test, None);
+impl TouchSearch {
+	pub fn is_empty(&self) -> bool {
+		!self.masters && !self.players && !self.co_players
 	}
 }

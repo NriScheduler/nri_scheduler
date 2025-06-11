@@ -47,7 +47,7 @@ const Company = ({ isOpen, openDrawer, closeDrawer }: ICompanyProps) => {
 	const onSubmit = handleSubmit((companyData) => {
 		if (companies) {
 			const { name, system, description } = companyData;
-			addCompany(name, system, description).then((res) => {
+			addCompany(name, system, { description }).then((res) => {
 				if (res !== null) {
 					reset();
 					closeDrawer();

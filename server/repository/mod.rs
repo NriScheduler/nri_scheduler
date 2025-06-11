@@ -6,14 +6,14 @@ use chrono::{DateTime, FixedOffset};
 use implementations::PostgresStore;
 use models::{
 	AppForApproval, City, Company, CompanyInfo, Event, EventForApplying, Location, MasterApp,
-	PlayerApp, Profile, Region, ShortEvent, ShortProfile, UserForAuthEmail,
+	PlayerApp, Profile, Region, ShortEvent, ShortProfile, UserForAuthEmail, UserPair,
 };
 use uuid::Uuid;
 
 use crate::{
 	auth,
 	dto::{
-		auth::UpdateProfileDto,
+		auth::{TouchSearch, UpdateProfileDto},
 		company::{ApiUpdateCompanyDto, ReadCompaniesDto},
 		event::{ReadEventsDto, UpdateEventDto},
 		location::ReadLocationDto,
@@ -39,6 +39,11 @@ trait Store {
 	async fn get_user_for_signing_in_tg(&self, tg_id: i64) -> CoreResult<Option<Uuid>>;
 	async fn read_profile(&self, user_id: Uuid) -> CoreResult<Option<Profile>>;
 	async fn read_another_profile(&self, user_id: Uuid) -> CoreResult<Option<ShortProfile>>;
+	async fn read_touches_history(
+		&self,
+		user_id: Uuid,
+		search: TouchSearch,
+	) -> CoreResult<Vec<UserPair>>;
 	async fn update_profile(&self, user_id: Uuid, profile: UpdateProfileDto) -> CoreResult;
 	async fn get_avatar_link(&self, user_id: Uuid) -> CoreResult<Option<String>>;
 	async fn set_avatar(&self, user_id: Uuid, url: &str) -> CoreResult;
@@ -78,6 +83,7 @@ trait Store {
 		system: &str,
 		descr: &Option<String>,
 		cover_link: &Option<String>,
+		event_style: &Option<String>,
 	) -> CoreResult<RecordId>;
 
 	async fn update_company(
@@ -229,6 +235,14 @@ impl Repository {
 		return self.store.read_another_profile(user_id).await;
 	}
 
+	pub(crate) async fn read_touches_history(
+		&self,
+		user_id: Uuid,
+		search: TouchSearch,
+	) -> CoreResult<Vec<UserPair>> {
+		return self.store.read_touches_history(user_id, search).await;
+	}
+
 	pub(crate) async fn update_profile(
 		&self,
 		user_id: Uuid,
@@ -311,10 +325,11 @@ impl Repository {
 		system: &str,
 		descr: &Option<String>,
 		cover_link: &Option<String>,
+		event_style: &Option<String>,
 	) -> CoreResult<RecordId> {
 		return self
 			.store
-			.add_company(master, name, system, descr, cover_link)
+			.add_company(master, name, system, descr, cover_link, event_style)
 			.await;
 	}
 

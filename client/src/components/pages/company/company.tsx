@@ -1,3 +1,6 @@
+import "@schedule-x/theme-default/dist/index.css";
+import "../calendar/calendar.css";
+
 import type { UUID } from "node:crypto";
 
 import { h } from "preact";
@@ -33,7 +36,7 @@ import {
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
 import { IApiCompanyInfo, readCompanyById, updateCompany } from "../../../api";
-import { navBack } from "../../../utils";
+import { convertEventStyleToCSS, navBack } from "../../../utils";
 
 const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 	const stats = [
@@ -47,6 +50,12 @@ const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 			<Card.Body>
 				<HStack mb="6" gap="3">
 					<Heading size="3xl">Кампания - {company.name}</Heading>
+					<div
+						className="sx__month-grid-event"
+						style={convertEventStyleToCSS(company.event_style)}
+					>
+						Внешний вид события в календаре
+					</div>
 				</HStack>
 				<DataList.Root orientation="horizontal">
 					{stats.map((item) => (
@@ -118,7 +127,7 @@ export const CompanyPage = () => {
 		if (companyId) {
 			const { name, system, description } = companyData;
 			setFetching(true);
-			updateCompany(companyId, name, system, description)
+			updateCompany(companyId, { name, system, description })
 				.then((res) => {
 					if (res !== null) {
 						setOpen(false);

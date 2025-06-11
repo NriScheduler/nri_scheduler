@@ -53,6 +53,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
 							"/profile/send-email-verification",
 							post(H::verify::send_email_verification),
 						)
+						.route("/touches-history", get(H::read_touches_history))
 						.layer(middleware::from_fn(auth::auth_middleware)),
 				)
 				.merge(

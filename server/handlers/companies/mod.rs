@@ -71,6 +71,7 @@ pub(crate) async fn add_company(
 			&body.system,
 			&body.description,
 			&body.cover_link,
+			&body.event_style,
 		)
 		.await?;
 

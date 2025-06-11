@@ -1,5 +1,6 @@
 import type { UUID } from "node:crypto";
 
+import "dayjs/locale/ru";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -12,6 +13,7 @@ import { YYYY_MM_DD } from "../utils";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.locale("ru");
 
 // --== User ==--
 
@@ -96,9 +98,9 @@ export const $avatarLink = computed([_profile, _tgAvatarLink], (p, tg) =>
 		}
 
 		if (tg) {
-			let tgPhotoRes = await getTgAvatar(tg).catch(() => null);
+			const tgPhotoRes = await getTgAvatar(tg).catch(() => null);
 			if (tgPhotoRes && tgPhotoRes.ok) {
-				let tgPhotoBuf = await tgPhotoRes.blob().catch(() => null);
+				const tgPhotoBuf = await tgPhotoRes.blob().catch(() => null);
 				if (tgPhotoBuf) {
 					return {
 						link: URL.createObjectURL(tgPhotoBuf),
@@ -109,7 +111,7 @@ export const $avatarLink = computed([_profile, _tgAvatarLink], (p, tg) =>
 		}
 
 		if ("id" in p) {
-			let gen = await procetar(p.id);
+			const gen = await procetar(p.id);
 			return {
 				link: gen,
 				source: "Сгенерированный аватар",
@@ -180,7 +182,7 @@ $profile.listen((p) => {
 			let msg: string = event.data;
 			const match = msg.match(DATE_REGEXP)?.[0];
 			if (match) {
-				let date = dayjs(match).tz($tz.get()).format(YYYY_MM_DD);
+				const date = dayjs(match).tz($tz.get()).format(YYYY_MM_DD);
 				msg = msg.replace(match, date);
 			}
 			toaster.success({ title: msg });

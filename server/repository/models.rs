@@ -47,6 +47,12 @@ pub(crate) struct Profile {
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
+pub(crate) struct UserPair {
+	pub id: Uuid,
+	pub nickname: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, FromRow)]
 pub(crate) struct Company {
 	pub id: Uuid,
 	pub master: Uuid,
@@ -66,6 +72,7 @@ pub(crate) struct CompanyInfo {
 	pub description: Option<String>,
 	pub cover_link: Option<String>,
 	pub you_are_master: bool,
+	pub event_style: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]
@@ -85,6 +92,7 @@ pub(crate) struct ShortEvent {
 	pub company: String,
 	pub date: DateTime<Utc>,
 	pub plan_duration: Option<i16>,
+	pub style: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, FromRow)]

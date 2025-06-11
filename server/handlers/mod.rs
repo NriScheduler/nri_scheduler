@@ -22,7 +22,9 @@ use crate::{
 	cookie::{remove_auth_cookie, set_auth_cookie},
 	dto::{
 		Dto, FileLinkDto,
-		auth::{RegistrationEmailDto, SignInDto, TelegramAuthDto, TgAvatar, UpdateProfileDto},
+		auth::{
+			RegistrationEmailDto, SignInDto, TelegramAuthDto, TgAvatar, TouchSearch, UpdateProfileDto,
+		},
 	},
 	image,
 	repository::Repository,
@@ -205,4 +207,17 @@ pub(super) async fn tg_avatar(Dto(query): Dto<TgAvatar>) -> Response {
 		return (StatusCode::BAD_REQUEST, err.to_string()).into_response();
 	};
 	image::serve_statik(&query.link).await
+}
+
+pub(super) async fn read_touches_history(
+	State(state): State<Arc<AppState>>,
+	Extension(user_id): Extension<Uuid>,
+	Dto(search): Dto<TouchSearch>,
+) -> AppResult {
+	let touches = state.repo.read_touches_history(user_id, search).await?;
+	let payload = serde_json::to_value(touches)?;
+	Ok(AppResponse::scenario_success(
+		"Список касаний",
+		Some(payload),
+	))
 }

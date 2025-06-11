@@ -45,7 +45,7 @@ export interface IRequestInit {
 
 const ajax = <T>(
 	input: string,
-	init?: IRequestInit,
+	init?: IRequestInit | null,
 	abort?: AbortController,
 	isSoft = false,
 ): Promise<IApiResponse<T> | null> => {
@@ -284,6 +284,16 @@ export interface IApiCompany {
 	readonly cover_link: string | null;
 }
 
+export interface IApiStyledCompany {
+	readonly id: UUID;
+	readonly master: UUID;
+	readonly name: string;
+	readonly system: string;
+	readonly description: string | null;
+	readonly cover_link: string | null;
+	readonly event_style: string | null;
+}
+
 export interface IApiCompanyInfo {
 	readonly id: UUID;
 	readonly master: UUID;
@@ -293,6 +303,7 @@ export interface IApiCompanyInfo {
 	readonly description: string | null;
 	readonly cover_link: string | null;
 	readonly you_are_master: boolean;
+	readonly event_style: string | null;
 }
 
 export const readMyCompanies = (
@@ -317,24 +328,19 @@ export const readCompanyById = (companyId: UUID) =>
 export const addCompany = (
 	name: string,
 	system: string,
-	description?: string | null,
-	cover_link?: string | null,
-) =>
-	ajax<UUID>(
-		"/api/companies",
-		prepareAjax({ name, system, description, cover_link }, POST),
-	);
+	data: Partial<
+		Omit<
+			IApiStyledCompany,
+			"id" | "master" | "name" | "system" | "cover_link"
+		>
+	>,
+) => ajax<UUID>("/api/companies", prepareAjax({ name, system, ...data }, POST));
 
 export const updateCompany = (
 	companyId: UUID,
-	name: string,
-	system: string,
-	description?: string | null,
+	data: Partial<Omit<IApiStyledCompany, "id" | "master" | "cover_link">>,
 ) => {
-	return ajax<null>(
-		`/api/companies/${companyId}`,
-		prepareAjax({ name, system, description }, PUT),
-	);
+	return ajax<null>(`/api/companies/${companyId}`, prepareAjax(data, PUT));
 };
 
 export const setCompanyCover = (companyId: UUID, url: string) =>
@@ -345,6 +351,7 @@ export interface IApiShortEvent {
 	readonly company: string;
 	readonly date: string;
 	readonly plan_duration: number | null;
+	readonly style: string | null;
 }
 
 export interface IApiEvent {
@@ -462,8 +469,8 @@ export interface IPlayerApp {
 	readonly master_name: string;
 }
 
-export const readPlayerAppsList = () =>
-	ajax<ReadonlyArray<IPlayerApp>>(`/api/apps`);
+export const readPlayerAppsList = (abortController?: AbortController) =>
+	ajax<ReadonlyArray<IPlayerApp>>(`/api/apps`, null, abortController);
 export const readPlayerApp = (appId: UUID) =>
 	ajax<IPlayerApp>(`/api/apps/${appId}`);
 export const readPlayerAppByEvent = (eventId: UUID) =>
@@ -485,8 +492,8 @@ export interface IMasterApp {
 	readonly player_name: string;
 }
 
-export const readMasterAppsList = () =>
-	ajax<ReadonlyArray<IMasterApp>>(`/api/apps/master`);
+export const readMasterAppsList = (abortController?: AbortController) =>
+	ajax<ReadonlyArray<IMasterApp>>(`/api/apps/master`, null, abortController);
 export const readMasterAppsListByEvent = (eventId: UUID) =>
 	ajax<ReadonlyArray<IMasterApp>>(`/api/apps/master/by_event/${eventId}`);
 export const readMasterAppsListCompanyClosest = (companyId: UUID) =>
@@ -503,10 +510,7 @@ export const approveApplication = (appId: UUID) => {
 	);
 };
 export const rejectApplication = (appId: UUID) => {
-	return ajax<null>(
-		`/api/apps/approve/${appId}`,
-		prepareAjax(undefined, POST),
-	);
+	return ajax<null>(`/api/apps/reject/${appId}`, prepareAjax(undefined, POST));
 };
 
 export const enum ETzVariant {
@@ -540,6 +544,11 @@ export interface IApiShortProfile {
 	readonly verified: boolean;
 }
 
+export interface IApiUserPair {
+	readonly id: UUID;
+	readonly nickname: string;
+}
+
 export const getMyProfile: () => Promise<IApiResponse<IApiProfile> | null> =
 	async (isSoft = false) => {
 		const res = await ajax<IApiProfile>(
@@ -564,6 +573,21 @@ export const softCheck = () =>
 
 export const getAnotherUserProfile = (userId: UUID) => {
 	return ajax<IApiShortProfile>(`/api/profile/${userId}`);
+};
+
+export interface ITouchesFilter {
+	readonly masters: boolean | null | undefined;
+	readonly players: boolean | null | undefined;
+	readonly coPlayers: boolean | null | undefined;
+}
+
+export const getTouchesHistory = (search?: ITouchesFilter | null) => {
+	const query = new URLSearchParams({
+		masters: Boolean(search?.masters).toString(),
+		players: Boolean(search?.players).toString(),
+		co_players: Boolean(search?.coPlayers).toString(),
+	});
+	return ajax<ReadonlyArray<IApiUserPair>>(`/api/touches-history?${query}`);
 };
 
 export const updateMyProfile = (
