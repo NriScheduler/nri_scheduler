@@ -1,6 +1,8 @@
 use ::std::sync::Arc;
+#[cfg(not(feature = "swagger"))]
+use axum::Router;
 use axum::{
-	Router, middleware,
+	Router as AxumRouter, middleware,
 	routing::{get, post, put},
 };
 #[cfg(feature = "cors")]
@@ -8,18 +10,30 @@ use axum::{http::StatusCode, routing::options};
 #[cfg(feature = "static")]
 use tower_http::services::{ServeDir, ServeFile};
 #[cfg(feature = "swagger")]
+use utoipa::OpenApi;
+#[cfg(feature = "swagger")]
+use utoipa_axum::router::OpenApiRouter as Router;
+#[cfg(feature = "swagger")]
 use utoipa_swagger_ui::SwaggerUi;
 
 #[cfg(feature = "cors")]
 use crate::cors;
-#[cfg(feature = "swagger")]
-use crate::openapi;
 #[cfg(feature = "vite")]
 use crate::vite::proxy_to_vite;
 use crate::{auth, handlers as H, state::AppState};
 
-pub fn create_router(state: Arc<AppState>) -> Router {
-	let router = Router::new()
+pub fn create_router(state: Arc<AppState>) -> AxumRouter {
+	#[cfg(feature = "swagger")]
+	#[derive(OpenApi)]
+	struct ApiDoc;
+
+	#[cfg(not(feature = "swagger"))]
+	let router = AxumRouter::new();
+
+	#[cfg(feature = "swagger")]
+	let router = Router::with_openapi(ApiDoc::openapi());
+
+	let router = router
 		.route("/avatar/{id}", get(H::read_avatar))
 		.route("/cover/{id}", get(H::companies::read_company_cover))
 		.nest(
@@ -108,7 +122,10 @@ pub fn create_router(state: Arc<AppState>) -> Router {
 		.layer(middleware::from_fn(cors::cors_middleware));
 
 	#[cfg(feature = "swagger")]
-	let router = router.merge(SwaggerUi::new("/swagger").url("/swagger.json", openapi::get_schema()));
+	let (router, api) = router.split_for_parts();
+
+	#[cfg(feature = "swagger")]
+	let router = router.merge(SwaggerUi::new("/swagger").url("/swagger.json", api));
 
 	#[cfg(feature = "static")]
 	let router = router
