@@ -131,10 +131,15 @@ export interface IEventStyle {
 	readonly text: string;
 }
 
+// export const DEFAULT_EVENT_STYLE: IEventStyle = {
+// 	background: "var(--sx-color-primary-container)",
+// 	highlight: "var(--sx-color-primary)",
+// 	text: "var(--sx-color-on-primary-container)",
+// };
 export const DEFAULT_EVENT_STYLE: IEventStyle = {
-	background: "var(--sx-color-primary-container)",
-	highlight: "var(--sx-color-primary)",
-	text: "var(--sx-color-on-primary-container)",
+	background: "#a2e2f1",
+	highlight: "#0891b2",
+	text: "#21005e",
 };
 
 export const parseEventStyle = (style: string): IEventStyle => {
