@@ -51,7 +51,7 @@ interface PreviewCompanyProps {
 	control: Control<CompanyFormValues>;
 }
 
-const PreviewCompany = ({ control }: PreviewCompanyProps) => {
+export const PreviewCompany = ({ control }: PreviewCompanyProps) => {
 	const { open, onToggle } = useDisclosure();
 
 	const currentStyles = useWatch({
