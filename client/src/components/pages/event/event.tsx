@@ -30,7 +30,6 @@ import dayjs from "dayjs";
 
 import { NotFoundPage } from "../not-found/not-found";
 import { EventItem } from "../../event-item";
-import { GridLayout } from "../../grid-layout";
 import { CloseButton } from "../../ui/close-button";
 import {
 	DrawerBackdrop,
@@ -365,7 +364,7 @@ export const EventPage = () => {
 		ReadonlyArray<IApiLocation>
 	>([]);
 
-	const { list, title, isLoading, isMaster } = useStore($eventsStore);
+	const { list, title, isMaster } = useStore($eventsStore);
 
 	const [isDisableEditEventSubmitButton, setIsDisableEditEventSubmitButton] =
 		useState(false);
@@ -387,6 +386,7 @@ export const EventPage = () => {
 			itemToValue: (item) => item.id,
 		});
 	}, [locationList]);
+
 	const {
 		register,
 		handleSubmit,
@@ -394,6 +394,7 @@ export const EventPage = () => {
 		clearErrors,
 		formState: { errors },
 	} = useForm<IFormEditEvent>();
+
 	const onSubmit = handleSubmit((data) => {
 		const { location, start, startTime, max_slots, plan_duration } = data;
 
@@ -460,38 +461,41 @@ export const EventPage = () => {
 	};
 
 	useEffect(() => {
-		if (eventId) {
+		if (!eventId) {
+			return;
+		}
+
+		const loadEventData = async () => {
 			setFetching(true);
-			readEvent(eventId)
-				.then((res) => {
-					if (res !== null) {
-						setEvent(res.payload);
-						return res?.payload;
-					}
-				})
-				.then((eventData) => {
-					if (eventData?.you_are_master) {
-						return getLocations();
-					}
-				})
-				.finally(() => {
-					setFetching(false);
+
+			try {
+				const eventResponse = await readEvent(eventId);
+
+				if (!eventResponse?.payload) {
+					return;
+				}
+
+				const eventData = eventResponse.payload;
+				setEvent(eventData);
+
+				if (eventData.you_are_master) {
+					await getLocations();
+				}
+
+				await fetchEvents({
+					type: "event",
+					eventId: eventData.id,
+					youAreMaster: eventData.you_are_master,
 				});
-		}
+			} catch (error) {
+				console.error("Failed to load event data:", error);
+			} finally {
+				setFetching(false);
+			}
+		};
+
+		loadEventData();
 	}, [route.matches?.id]);
-
-	useEffect(() => {
-		if (event !== null) {
-			fetchEvents({
-				you_are_master: event?.you_are_master,
-				company_id: event?.company_id,
-			});
-		}
-	}, [event]);
-
-	if (isLoading) {
-		return <Text>Загрузка...</Text>;
-	}
 
 	const eventDate = dayjs(event?.date).tz(tz);
 
@@ -663,21 +667,28 @@ export const EventPage = () => {
 				{fetching ? (
 					<EventCardSkeleton />
 				) : event !== null ? (
-					<Stack gap={4}>
-						<EventCard event={event} updateEventData={updateEventData} />
-						<Stack mt={2} mb={6}>
-							<Heading size="xl">{title}</Heading>
-							<GridLayout gridColumns={4}>
-								{list.map((item) => (
-									<EventItem
-										item={item}
-										key={item.id}
-										isMaster={isMaster}
-									/>
-								))}
-							</GridLayout>
+					<HStack gap={6} alignItems={"flex-start"}>
+						<Stack w={list.length > 0 ? "2/3" : "full"}>
+							<EventCard
+								event={event}
+								updateEventData={updateEventData}
+							/>
 						</Stack>
-					</Stack>
+						{list.length > 0 && (
+							<Card.Root w="1/3">
+								<Card.Body gap="4">
+									<Card.Title>{title}</Card.Title>
+									{list.map((item) => (
+										<EventItem
+											item={item}
+											key={item.id}
+											isMaster={isMaster}
+										/>
+									))}
+								</Card.Body>
+							</Card.Root>
+						)}
+					</HStack>
 				) : (
 					<NotFoundPage
 						checkButton={false}

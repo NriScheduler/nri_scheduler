@@ -5,9 +5,18 @@ import { atom, computed } from "nanostores";
 import {
 	IMasterApp,
 	IPlayerApp,
+	readMasterAppsList,
+	readMasterAppsListByEvent,
 	readMasterAppsListCompanyClosest,
+	readPlayerAppByEvent,
 	readPlayerAppCompanyClosest,
+	readPlayerAppsList,
 } from "../api";
+
+type EventSource =
+	| { type: "company"; companyId: UUID; youAreMaster: boolean }
+	| { type: "event"; eventId: UUID; youAreMaster: boolean }
+	| { type: "profile"; youAreMaster: boolean };
 
 interface EventsState {
 	list: Array<IPlayerApp | IMasterApp>;
@@ -52,17 +61,35 @@ const setIsMaster = (value: boolean) => {
 	$isMaster.set(value);
 };
 
-export const fetchEvents = async (event: {
-	you_are_master: boolean;
-	company_id: UUID;
-}) => {
+const getApiCall = (source: EventSource) => {
+	if (source.youAreMaster) {
+		switch (source.type) {
+			case "company":
+				return () => readMasterAppsListCompanyClosest(source.companyId);
+			case "event":
+				return () => readMasterAppsListByEvent(source.eventId);
+			case "profile":
+				return readMasterAppsList;
+		}
+	} else {
+		switch (source.type) {
+			case "company":
+				return () => readPlayerAppCompanyClosest(source.companyId);
+			case "event":
+				return () => readPlayerAppByEvent(source.eventId);
+			case "profile":
+				return readPlayerAppsList;
+		}
+	}
+};
+
+export const fetchEvents = async (source: EventSource) => {
 	try {
 		setEventsLoading(true);
-		setIsMaster(event.you_are_master);
+		setIsMaster(source.youAreMaster);
 
-		const response = event.you_are_master
-			? await readMasterAppsListCompanyClosest(event.company_id)
-			: await readPlayerAppCompanyClosest(event.company_id);
+		const apiCall = getApiCall(source);
+		const response = await apiCall();
 
 		if (response?.payload) {
 			const payloadArray = Array.isArray(response.payload)

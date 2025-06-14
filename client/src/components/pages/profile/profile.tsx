@@ -1,24 +1,16 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 
-import { Container, Spinner, Tabs } from "@chakra-ui/react";
+import { Container, Tabs } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 
 import { CompList } from "./complist/complist";
-import { EmptyList } from "./empty-list";
 import { EventList } from "./eventlist";
-import { PROFILE_TABS, PROFILE_TEXTS } from "./profile.data";
+import { PROFILE_TABS } from "./profile.data";
 import { ProfileInfo } from "./profile-info";
-import {
-	EAbortReason,
-	IApiCompany,
-	IMasterApp,
-	IPlayerApp,
-	readMasterAppsList,
-	readMyCompanies,
-	readPlayerAppsList,
-} from "../../../api";
+import { EAbortReason, IApiCompany, readMyCompanies } from "../../../api";
 import { $checkboxState, toggleCheckbox } from "../../../store/checkboxStore";
+import { fetchEvents } from "../../../store/eventList";
 import { $activeTab, setActiveTab } from "../../../store/tabsStore";
 import { useAuthVerification } from "../../../utils";
 
@@ -29,58 +21,56 @@ export const ProfilePage = () => {
 		return null;
 	}
 
-	const [data, setData] = useState({
-		compList: [] as ReadonlyArray<IApiCompany>,
-		playerAppList: [] as IPlayerApp[],
-		masterAppList: [] as IMasterApp[],
-	});
-
+	const [compList, setCompList] = useState<readonly IApiCompany[]>([]);
 	const [isFetching, setIsFetching] = useState(false);
 
+	//STORE HOOKS
 	const activeTab = useStore($activeTab);
 	const { eventsType, eventsView, companyView } = useStore($checkboxState);
-
+	//TAB CONSTANTS
 	const [USER_TAB, EVENTS_TAB, COMPLIST_TAB, RESETPASS_TAB] = PROFILE_TABS;
+
+	const fetchEventsData = async () => {
+		await fetchEvents({
+			type: "profile",
+			youAreMaster: !eventsType,
+		});
+	};
+
+	const fetchCompaniesData = async (abortController?: AbortController) => {
+		setIsFetching(true);
+
+		const response = await readMyCompanies(null, abortController);
+		if (response?.payload) {
+			setCompList(response.payload);
+		}
+
+		setIsFetching(false);
+	};
 
 	const fetchData = async (abortController?: AbortController) => {
 		try {
-			if (activeTab === EVENTS_TAB.id) {
-				setIsFetching(true);
-
-				const response = await (eventsType
-					? readPlayerAppsList(abortController)
-					: readMasterAppsList(abortController));
-
-				if (response?.payload) {
-					const update = eventsType
-						? { playerAppList: response.payload as IPlayerApp[] }
-						: { masterAppList: response.payload as IMasterApp[] };
-					setData((prev) => ({ ...prev, ...update }));
-				}
-			} else if (activeTab === COMPLIST_TAB.id) {
-				setIsFetching(true);
-
-				const response = await readMyCompanies(null, abortController);
-				if (response?.payload) {
-					setData((prev) => ({ ...prev, compList: response.payload }));
-				}
+			switch (activeTab) {
+				case EVENTS_TAB.id:
+					await fetchEventsData();
+					break;
+				case COMPLIST_TAB.id:
+					await fetchCompaniesData(abortController);
+					break;
 			}
-		} finally {
-			setIsFetching(false);
+		} catch (error) {
+			console.error("Fetch error: ", error);
 		}
 	};
 
 	useEffect(() => {
 		const abortController = new AbortController();
-
-		fetchData(abortController).catch((err) => console.error("Ошибка:", err));
+		fetchData(abortController);
 
 		return () => {
 			abortController.abort(EAbortReason.UNMOUNT);
 		};
 	}, [activeTab, eventsType]);
-
-	const { compList, playerAppList, masterAppList } = data;
 
 	return (
 		<Container mb={6}>
@@ -105,29 +95,19 @@ export const ProfilePage = () => {
 				<Tabs.Content value={EVENTS_TAB.id}>
 					<EventList
 						isChecked={eventsType}
-						toggleCheckbox={() => toggleCheckbox("eventsType")}
 						layoutMode={eventsView}
+						toggleCheckbox={() => toggleCheckbox("eventsType")}
 						onLayoutToggle={() => toggleCheckbox("eventsView")}
-						playerAppList={playerAppList}
-						masterAppList={masterAppList}
-						onUpdate={fetchData}
 					/>
 				</Tabs.Content>
 
 				<Tabs.Content value={COMPLIST_TAB.id}>
-					{isFetching ? (
-						<Spinner size="sm" />
-					) : compList.length > 0 ? (
-						<CompList
-							list={compList}
-							isChecked={companyView}
-							toggleCheckbox={() => toggleCheckbox("companyView")}
-						/>
-					) : (
-						<EmptyList
-							title={PROFILE_TEXTS.emptyStates.companies.title}
-						/>
-					)}
+					<CompList
+						list={compList}
+						isChecked={companyView}
+						toggleCheckbox={() => toggleCheckbox("companyView")}
+						isLoading={isFetching}
+					/>
 				</Tabs.Content>
 
 				<Tabs.Content value={RESETPASS_TAB.id}>resetpass</Tabs.Content>

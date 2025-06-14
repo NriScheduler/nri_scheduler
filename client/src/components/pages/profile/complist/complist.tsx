@@ -6,17 +6,20 @@ import {
 	Heading,
 	HStack,
 	Link,
+	Spinner,
 	Stack,
 	useBreakpointValue,
 } from "@chakra-ui/react";
 
-import { getGridColumnsConfig } from "../profile.data";
+import { EmptyList } from "../empty-list";
+import { getGridColumnsConfig, PROFILE_TEXTS } from "../profile.data";
 import { ViewToggle } from "../../../view-toggle";
 import { IApiCompany } from "../../../../api";
 
 interface ICompList {
 	readonly list: ReadonlyArray<IApiCompany>;
 	isChecked: boolean;
+	isLoading: boolean;
 	toggleCheckbox: () => void;
 }
 
@@ -52,8 +55,12 @@ const CompItem = ({ item }: ICompItem) => {
 	);
 };
 
-export const CompList = ({ list, isChecked, toggleCheckbox }: ICompList) => {
-	// Адаптивные значения
+export const CompList = ({
+	list,
+	isChecked,
+	toggleCheckbox,
+	isLoading,
+}: ICompList) => {
 	const gridColumns = useBreakpointValue(getGridColumnsConfig(isChecked));
 
 	return (
@@ -62,11 +69,17 @@ export const CompList = ({ list, isChecked, toggleCheckbox }: ICompList) => {
 				<ViewToggle isChecked={isChecked} toggleCheckbox={toggleCheckbox} />
 			</HStack>
 
-			<Grid templateColumns={`repeat(${gridColumns}, 1fr)`} gap="4">
-				{list.map((item) => (
-					<CompItem key={item.id} item={item} />
-				))}
-			</Grid>
+			{isLoading ? (
+				<Spinner size="sm" />
+			) : list.length > 0 ? (
+				<Grid templateColumns={`repeat(${gridColumns}, 1fr)`} gap="4">
+					{list.map((item) => (
+						<CompItem key={item.id} item={item} />
+					))}
+				</Grid>
+			) : (
+				<EmptyList title={PROFILE_TEXTS.emptyStates.companies.title} />
+			)}
 		</Stack>
 	);
 };
