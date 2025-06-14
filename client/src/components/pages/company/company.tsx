@@ -20,10 +20,13 @@ import {
 	Link,
 	Skeleton,
 	Stack,
+	Text,
 	Textarea,
 } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
 
 import { NotFoundPage } from "../not-found/not-found";
+import { EventItem } from "../../event-item";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -36,6 +39,7 @@ import {
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
 import { IApiCompanyInfo, readCompanyById, updateCompany } from "../../../api";
+import { $eventsStore, fetchEvents } from "../../../store/eventList";
 import { convertEventStyleToCSS, navBack } from "../../../utils";
 
 const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
@@ -46,7 +50,13 @@ const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 	];
 
 	return (
-		<Card.Root width="full">
+		<Card.Root width="full" overflow="hidden">
+			<Image
+				height={200}
+				width="100%"
+				src="/assets/company_cover.webp"
+				alt="Обложка кампании"
+			/>
 			<Card.Body>
 				<HStack mb="6" gap="3">
 					<Heading size="3xl">Кампания - {company.name}</Heading>
@@ -116,6 +126,9 @@ export const CompanyPage = () => {
 	const companyId = route.matches?.id as UUID;
 	const [fetching, setFetching] = useState(false);
 	const [company, setCompany] = useState<IApiCompanyInfo | null>(null);
+
+	const { list, title, isLoading, isMaster } = useStore($eventsStore);
+
 	const [open, setOpen] = useState(false);
 	const {
 		register,
@@ -153,22 +166,42 @@ export const CompanyPage = () => {
 			}
 		};
 		document.addEventListener("keydown", onEscClose, { passive: true });
-		if (companyId) {
+
+		const loadCompanyData = async () => {
 			setFetching(true);
-			readCompanyById(companyId)
-				.then((res) => {
-					if (res !== null) {
-						setCompany(res.payload);
-					}
-				})
-				.finally(() => {
-					setFetching(false);
+
+			try {
+				const companyResponse = await readCompanyById(companyId);
+
+				if (!companyResponse?.payload) {
+					return;
+				}
+
+				const companyData = companyResponse.payload;
+				setCompany(companyData);
+
+				await fetchEvents({
+					type: "company",
+					companyId: companyData.id,
+					youAreMaster: companyData.you_are_master,
 				});
-		}
+			} catch (error) {
+				console.error("Failed to load event data:", error);
+			} finally {
+				setFetching(false);
+			}
+		};
+
+		loadCompanyData();
+
 		return () => {
 			document.removeEventListener("keydown", onEscClose);
 		};
 	}, [companyId]);
+
+	if (isLoading) {
+		return <Text>Загрузка...</Text>;
+	}
 
 	return (
 		<Container>
@@ -252,16 +285,28 @@ export const CompanyPage = () => {
 					</DrawerRoot>
 				</HStack>
 			)}
-			<Image
-				height={200}
-				width="100%"
-				src="/assets/company_cover.webp"
-				alt="Обложка кампании"
-			/>
 			{fetching ? (
 				<CompanyCardSkeleton />
 			) : company !== null ? (
-				<CompanyCard company={company} />
+				<HStack gap={6} alignItems={"flex-start"}>
+					<Stack w={list.length > 0 ? "2/3" : "full"}>
+						<CompanyCard company={company} />
+					</Stack>
+					{list.length > 0 && (
+						<Card.Root w="1/3">
+							<Card.Body gap="4">
+								<Card.Title>{title}</Card.Title>
+								{list.map((item) => (
+									<EventItem
+										item={item}
+										key={item.id}
+										isMaster={isMaster}
+									/>
+								))}
+							</Card.Body>
+						</Card.Root>
+					)}
+				</HStack>
 			) : (
 				<NotFoundPage
 					checkButton={false}
