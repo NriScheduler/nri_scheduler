@@ -131,16 +131,40 @@ export interface IEventStyle {
 	readonly text: string;
 }
 
-// export const DEFAULT_EVENT_STYLE: IEventStyle = {
-// 	background: "var(--sx-color-primary-container)",
-// 	highlight: "var(--sx-color-primary)",
-// 	text: "var(--sx-color-on-primary-container)",
-// };
-export const DEFAULT_EVENT_STYLE: IEventStyle = {
-	background: "#a2e2f1",
-	highlight: "#0891b2",
-	text: "#21005e",
+const toHex = (c: number) => c.toString(16).padStart(2, "0");
+
+const rgbToHex = (rgb: string) => {
+	const [r, g, b] = (rgb.match(/\d+/g) || [0, 0, 0]).map(Number);
+	return `${HEX_COLOR_PREFIX}${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
 };
+
+class DefaultEventStyle implements IEventStyle {
+	public readonly background = "";
+	public readonly highlight: string = "";
+	public readonly text: string = "";
+
+	constructor() {
+		setTimeout(() => {
+			const div = document.createElement("div");
+			document.body.appendChild(div);
+			div.style.backgroundColor = "var(--sx-color-primary-container)";
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			this.background = rgbToHex(getComputedStyle(div).backgroundColor);
+			div.style.backgroundColor = "var(--sx-color-primary)";
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			this.highlight = rgbToHex(getComputedStyle(div).backgroundColor);
+			div.style.backgroundColor = "var(--sx-color-on-primary-container)";
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			this.text = rgbToHex(getComputedStyle(div).backgroundColor);
+			document.body.removeChild(div);
+		}, 0);
+	}
+}
+
+export const DEFAULT_EVENT_STYLE = new DefaultEventStyle();
 
 export const parseEventStyle = (style: string): IEventStyle => {
 	const [, highlight, background, text] = style.split(HEX_COLOR_PREFIX);
