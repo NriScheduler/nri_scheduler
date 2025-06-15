@@ -49,9 +49,10 @@ interface CompanyFormValues extends IApiCompany {
 
 interface PreviewCompanyProps {
 	control: Control<CompanyFormValues>;
+	value: string;
 }
 
-export const PreviewCompany = ({ control }: PreviewCompanyProps) => {
+export const PreviewCompany = ({ control, value }: PreviewCompanyProps) => {
 	const { open, onToggle } = useDisclosure();
 
 	const currentStyles = useWatch({
@@ -61,27 +62,22 @@ export const PreviewCompany = ({ control }: PreviewCompanyProps) => {
 
 	return (
 		<Fragment>
-			<Button variant="outline" onClick={onToggle}>
-				Изменить стиль
-			</Button>
-
-			<Presence
-				present={open}
-				animationName={{ _open: "fade-in", _closed: "fade-out" }}
-				animationDuration="moderate"
-			>
-				<Stack gap={2}>
-					<Box
-						p="1"
-						background={currentStyles.background}
-						borderLeftWidth="4px"
-						borderColor={currentStyles.highlight}
-						color={currentStyles.text}
-						borderRadius="4px"
-					>
-						00:00 Название кампании
-					</Box>
-
+			<Stack gap={2}>
+				<Box
+					p="1"
+					background={currentStyles.background}
+					borderLeftWidth="4px"
+					borderColor={currentStyles.highlight}
+					color={currentStyles.text}
+					borderRadius="4px"
+				>
+					{value || "Название компании"}
+				</Box>
+				<Presence
+					present={open}
+					animationName={{ _open: "fade-in", _closed: "fade-out" }}
+					animationDuration="moderate"
+				>
 					<Stack gap={2}>
 						{(["background", "highlight", "text"] as const).map(
 							(name) => (
@@ -129,8 +125,11 @@ export const PreviewCompany = ({ control }: PreviewCompanyProps) => {
 							),
 						)}
 					</Stack>
-				</Stack>
-			</Presence>
+				</Presence>
+				<Button variant="outline" onClick={onToggle}>
+					Изменить стиль
+				</Button>
+			</Stack>
 		</Fragment>
 	);
 };
@@ -144,6 +143,7 @@ const Company = ({ data }: ICompanyProps) => {
 		handleSubmit,
 		reset,
 		control,
+		watch,
 		formState: { errors },
 	} = useForm<CompanyFormValues>({
 		defaultValues: {
@@ -243,7 +243,7 @@ const Company = ({ data }: ICompanyProps) => {
 								<Text flexShrink="0">Оформление</Text>
 								<Separator flex="1" />
 							</HStack>
-							<PreviewCompany control={control} />
+							<PreviewCompany control={control} value={watch("name")} />
 						</Stack>
 
 						<Button type="submit" w="full" mt={4}>
