@@ -71,7 +71,7 @@ export const PreviewCompany = ({ control, value }: PreviewCompanyProps) => {
 					color={currentStyles.text}
 					borderRadius="4px"
 				>
-					{value || "Название компании"}
+					{value || "Название кампании"}
 				</Box>
 				<Presence
 					present={open}

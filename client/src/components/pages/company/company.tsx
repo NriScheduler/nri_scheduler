@@ -141,6 +141,7 @@ export const CompanyPage = () => {
 		handleSubmit,
 		control,
 		reset,
+		watch,
 		formState: { errors },
 	} = useForm<CompanyFormValues>();
 
@@ -282,7 +283,10 @@ export const CompanyPage = () => {
 											<Text flexShrink="0">Оформление</Text>
 											<Separator flex="1" />
 										</HStack>
-										<PreviewCompany control={control} />
+										<PreviewCompany
+											control={control}
+											value={watch("name")}
+										/>
 									</Stack>
 
 									<Button type="submit" w="full" mt={4}>
