@@ -18,11 +18,14 @@ import {
 	Image,
 	Input,
 	Link,
+	Separator,
 	Skeleton,
 	Stack,
+	Text,
 	Textarea,
 } from "@chakra-ui/react";
 
+import { PreviewCompany } from "../calendar/company";
 import { NotFoundPage } from "../not-found/not-found";
 import {
 	DrawerBackdrop,
@@ -35,8 +38,24 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
-import { IApiCompanyInfo, readCompanyById, updateCompany } from "../../../api";
-import { convertEventStyleToCSS, navBack } from "../../../utils";
+import {
+	IApiCompany,
+	IApiCompanyInfo,
+	readCompanyById,
+	updateCompany,
+} from "../../../api";
+import {
+	convertEventStyleToCSS,
+	DEFAULT_EVENT_STYLE,
+	IEventStyle,
+	navBack,
+	parseEventStyle,
+	stringifyEventStyle,
+} from "../../../utils";
+
+interface CompanyFormValues extends IApiCompany {
+	style: IEventStyle;
+}
 
 const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 	const stats = [
@@ -120,14 +139,23 @@ export const CompanyPage = () => {
 	const {
 		register,
 		handleSubmit,
+		control,
+		reset,
+		watch,
 		formState: { errors },
-	} = useForm<IApiCompanyInfo>();
+	} = useForm<CompanyFormValues>();
 
 	const onSubmit = handleSubmit((companyData) => {
 		if (companyId) {
-			const { name, system, description } = companyData;
+			const { name, system, description, style } = companyData;
+			const eventStyle = stringifyEventStyle(style);
 			setFetching(true);
-			updateCompany(companyId, { name, system, description })
+			updateCompany(companyId, {
+				name,
+				system,
+				description,
+				event_style: eventStyle,
+			})
 				.then((res) => {
 					if (res !== null) {
 						setOpen(false);
@@ -153,12 +181,22 @@ export const CompanyPage = () => {
 			}
 		};
 		document.addEventListener("keydown", onEscClose, { passive: true });
+
 		if (companyId) {
 			setFetching(true);
 			readCompanyById(companyId)
 				.then((res) => {
 					if (res !== null) {
+						const companyData = res.payload;
 						setCompany(res.payload);
+						reset({
+							name: companyData.name,
+							system: companyData.system,
+							description: companyData.description,
+							style: companyData.event_style
+								? parseEventStyle(companyData.event_style)
+								: DEFAULT_EVENT_STYLE,
+						});
 					}
 				})
 				.finally(() => {
@@ -168,7 +206,7 @@ export const CompanyPage = () => {
 		return () => {
 			document.removeEventListener("keydown", onEscClose);
 		};
-	}, [companyId]);
+	}, [companyId, reset]);
 
 	return (
 		<Container>
@@ -195,6 +233,11 @@ export const CompanyPage = () => {
 							</DrawerHeader>
 							<DrawerBody>
 								<form onSubmit={onSubmit}>
+									<HStack>
+										<Separator flex="1" />
+										<Text flexShrink="0">Данные</Text>
+										<Separator flex="1" />
+									</HStack>
 									<Stack
 										gap="4"
 										align="flex-start"
@@ -212,7 +255,6 @@ export const CompanyPage = () => {
 												{...register("name", {
 													required: "Заполните поле",
 												})}
-												defaultValue={company?.name}
 											/>
 										</Field>
 										<Field
@@ -225,23 +267,38 @@ export const CompanyPage = () => {
 												{...register("system", {
 													required: "Заполните поле",
 												})}
-												defaultValue={company?.system}
 											/>
 										</Field>
 										<Field label="Описание">
 											<Textarea
 												placeholder="Расскажите о своей кампании"
 												{...register("description")}
-											>
-												{company?.description}
-											</Textarea>
+											/>
 										</Field>
 									</Stack>
-									<Button type="submit" w="full" mt={6}>
+
+									<Stack gap={2}>
+										<HStack mt={2}>
+											<Separator flex="1" />
+											<Text flexShrink="0">Оформление</Text>
+											<Separator flex="1" />
+										</HStack>
+										<PreviewCompany
+											control={control}
+											value={watch("name")}
+										/>
+									</Stack>
+
+									<Button type="submit" w="full" mt={4}>
 										Редактировать
 									</Button>
 									<DrawerTrigger asChild>
-										<Button type="button" w="full" mt={6}>
+										<Button
+											type="button"
+											variant="subtle"
+											w="full"
+											mt={2}
+										>
 											Отмена
 										</Button>
 									</DrawerTrigger>
