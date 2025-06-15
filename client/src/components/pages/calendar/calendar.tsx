@@ -29,13 +29,12 @@ import {
 	disableMastery,
 	enableMastery,
 } from "../../../store/mastery";
+import { $profile } from "../../../store/profile";
 import { loadSharedData } from "../../../store/sharedDataStore";
-import { $profile, $tz } from "../../../store/profile";
 import {
 	convertEventStyleToCalendarType,
 	escapeCalendarId,
-	EVENT_FORMAT,
-  useEventTime,
+	useEventTime,
 } from "../../../utils";
 
 const Company = lazy(() => import("./company"));
@@ -241,6 +240,7 @@ export const CalendarPage = () => {
 							closeDrawer={() => toggleDrawer("filter", false)}
 							openDrawer={() => toggleDrawer("filter", true)}
 							applyFilters={applyFilters}
+							isMaster={mastery}
 						/>
 					</Stack>
 				</HStack>

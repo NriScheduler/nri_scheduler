@@ -1,47 +1,47 @@
 import { UUID } from "node:crypto";
 
 import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import { HiCog } from "react-icons/hi";
 
 import {
+	Badge,
 	Button,
 	CheckboxControl,
 	CheckboxHiddenInput,
 	CheckboxLabel,
 	CheckboxRoot,
+	Combobox,
 	HStack,
-	Input,
+	Portal,
 	Separator,
+	Span,
 	Stack,
 	Text,
+	useFilter,
+	useListCollection,
+	Wrap,
 } from "@chakra-ui/react";
-import {
-	AutoComplete,
-	AutoCompleteInput,
-	AutoCompleteItem,
-	AutoCompleteList,
-	AutoCompleteTag,
-} from "@choc-ui/chakra-autocomplete";
 import { useStore } from "@nanostores/preact";
 
+import { CloseButton } from "../../ui/close-button";
 import {
 	DrawerBackdrop,
 	DrawerBody,
 	DrawerCloseTrigger,
 	DrawerContent,
-	DrawerFooter,
 	DrawerHeader,
 	DrawerRoot,
 	DrawerTitle,
 	DrawerTrigger,
 } from "../../ui/drawer";
-import { Field } from "../../ui/field";
 import { IEventsFilter } from "../../../api";
 import {
-	filterStore,
-	getChangedFilters,
-	resetFilters,
+	$masterFilters,
+	$playerFilters,
+	IFilterState,
+	initialMasterFilters,
+	initialPlayerFilters,
 } from "../../../store/filters";
 import {
 	sharedCompanies,
@@ -53,150 +53,250 @@ interface ICalendarFilterProps {
 	openDrawer: () => void;
 	closeDrawer: () => void;
 	applyFilters: (filters: IEventsFilter) => void;
+	isMaster: boolean;
 }
 
-const LocationFilter = () => {
-	const locations = useStore(sharedLocations);
-	const { location, region, city } = useStore(filterStore);
-	const selectedLocation = locations.find((loc) => loc.id === location);
+interface Location {
+	readonly id: UUID;
+	readonly name: string;
+	readonly region: string;
+	readonly city: string;
+}
 
-	const onLocationChange = (value: UUID) => {
-		filterStore.setKey("location", value);
-		const found = locations.find((l) => l.id === value);
-		filterStore.setKey("region", found?.region || "");
-		filterStore.setKey("city", found?.city || "");
+interface Company {
+	readonly id: UUID;
+	readonly name: string;
+}
+
+interface IFilterProps {
+	isMaster: boolean;
+}
+
+const LocationFilter = ({ isMaster }: IFilterProps) => {
+	const locations = useStore(sharedLocations);
+	const filterStore = useMemo(
+		() => (isMaster ? $masterFilters : $playerFilters),
+		[isMaster],
+	);
+
+	const { location } = useStore(filterStore);
+
+	const transformedData = useMemo(
+		() =>
+			locations.map((item) => ({
+				id: item.id,
+				name: item.name ?? "",
+				region: item.region ?? "",
+				city: item.city ?? "",
+			})),
+		[locations],
+	);
+
+	const { contains } = useFilter({ sensitivity: "base" });
+
+	const { collection, filter } = useListCollection({
+		initialItems: transformedData,
+		filter: contains,
+		itemToString: (item) => `${item.name}, ${item.city}`,
+		itemToValue: (item) => item.id.toString(),
+	});
+
+	const selectedLocation = useMemo(
+		() => transformedData.find((loc) => loc.id === location) || null,
+		[transformedData, location],
+	);
+
+	const handleValueChange = (values: string[]) => {
+		const selectedId = values[0] || null;
+		const selected = selectedId
+			? transformedData.find((loc) => loc.id === selectedId)
+			: null;
+
+		filterStore.set({
+			...filterStore.get(),
+			location: selected?.id || null,
+			region: selected?.region || null,
+			city: selected?.city || null,
+		});
 	};
 
-	useEffect(() => {
-		if (!location) {
-			return;
-		}
-		if (selectedLocation) {
-			filterStore.setKey("region", selectedLocation.region || "");
-			filterStore.setKey("city", selectedLocation.city || "");
-		}
-	}, [location]);
-
 	return (
-		<Stack gap={4}>
-			<Field label="Локация * ">
-				<AutoComplete
-					openOnFocus
-					freeSolo
-					value={location || ""}
-					onChange={(value) => onLocationChange(value)}
-				>
-					<AutoCompleteInput variant="outline" />
-					<AutoCompleteList bg="inherit">
-						{locations.map((loc) => (
-							<AutoCompleteItem
-								key={loc.id}
-								value={loc.id}
-								label={loc.name}
-								textTransform="capitalize"
-								_hover={{
-									bg: "gray.200",
-								}}
-							/>
+		<Combobox.Root<Location>
+			closeOnSelect
+			collection={collection}
+			inputBehavior="autocomplete"
+			placeholder="Выберите локацию"
+			onInputValueChange={(details) => filter(details.inputValue)}
+			onValueChange={({ value }) => handleValueChange(value || [])}
+			value={selectedLocation ? [selectedLocation.id] : []}
+		>
+			<Combobox.Label>Локация</Combobox.Label>
+
+			<Combobox.Control>
+				<Combobox.Input
+					value={
+						selectedLocation
+							? `${selectedLocation.name}, ${selectedLocation.city}`
+							: ""
+					}
+				/>
+				<Combobox.IndicatorGroup>
+					<Combobox.ClearTrigger
+						onClick={() => {
+							filterStore.set({
+								...filterStore.get(),
+								location: null,
+								region: null,
+								city: null,
+							});
+						}}
+					/>
+					<Combobox.Trigger />
+				</Combobox.IndicatorGroup>
+			</Combobox.Control>
+			<Portal>
+				<Combobox.Positioner zIndex={"popover !important"}>
+					<Combobox.Content>
+						<Combobox.Empty>Ничего не найдено</Combobox.Empty>
+						{collection.items.map((item) => (
+							<Combobox.Item item={item} key={item.id}>
+								<Stack gap={0}>
+									<Span textStyle="sm" fontWeight="medium">
+										{item.name}
+									</Span>
+									<Span textStyle="xs" color="fg.muted">
+										{item.region} - {item.city}
+									</Span>
+								</Stack>
+								<Combobox.ItemIndicator />
+							</Combobox.Item>
 						))}
-					</AutoCompleteList>
-				</AutoComplete>
-			</Field>
-			<Field label="Регион">
-				<Input
-					placeholder="Регион"
-					value={region || ""}
-					onChange={(e) =>
-						filterStore.setKey("region", e.currentTarget.value)
-					}
-					disabled={!location}
-				/>
-			</Field>
-			<Field label="Город">
-				<Input
-					placeholder="Город"
-					value={city || ""}
-					onChange={(e) =>
-						filterStore.setKey("city", e.currentTarget.value)
-					}
-					disabled={!location}
-				/>
-			</Field>
-		</Stack>
+					</Combobox.Content>
+				</Combobox.Positioner>
+			</Portal>
+		</Combobox.Root>
 	);
 };
 
-const CompaniesFilter = () => {
+const CompaniesFilter = ({ isMaster }: IFilterProps) => {
 	const companies = useStore(sharedCompanies);
-	const selectedCompanies = useStore(filterStore).company;
-	const [inputValue, setInputValue] = useState("");
+	const filterStore = useMemo(
+		() => (isMaster ? $masterFilters : $playerFilters),
+		[isMaster],
+	);
+
+	const { company: selectedCompanyIds } = useStore(filterStore);
+
+	const transformedData = useMemo<Company[]>(
+		() =>
+			companies.map((item) => ({
+				id: item.id,
+				name: item.name ?? "",
+			})),
+		[companies],
+	);
+
+	const { contains } = useFilter({ sensitivity: "base" });
+
+	const { collection, filter } = useListCollection({
+		initialItems: transformedData,
+		filter: contains,
+		itemToString: (item) => item.name,
+		itemToValue: (item) => item.id.toString(),
+	});
+
+	const selectedCompanies = useMemo(
+		() =>
+			selectedCompanyIds
+				? transformedData.filter((item) =>
+						selectedCompanyIds.includes(item.id),
+					)
+				: [],
+		[transformedData, selectedCompanyIds],
+	);
+	const handleValueChange = (values: UUID[]) => {
+		filterStore.set({
+			...filterStore.get(),
+			company: values.length > 0 ? values : null,
+		});
+	};
 
 	return (
-		<Field label="Кампании">
-			<AutoComplete
-				openOnFocus
-				multiple
-				value={selectedCompanies}
-				restoreOnBlurIfEmpty={false}
-				onChange={(vals) => {
-					filterStore.setKey("company", vals);
-					setInputValue("");
-				}}
-			>
-				<AutoCompleteInput
-					variant="outline"
-					disabled={companies.length < 1}
-					placeholder="Выберите кампанию"
-					value={inputValue}
-				>
-					{({ tags }) =>
-						tags.map((tag, tid) => (
-							<AutoCompleteTag
-								key={tid}
-								label={tag.label}
-								onRemove={tag.onRemove}
-								mb={4}
-								mr={2}
-								onClick={(e) => {
-									e.preventDefault();
-									tag.onRemove();
-								}}
-							/>
-						))
-					}
-				</AutoCompleteInput>
+		<Combobox.Root<Company>
+			collection={collection}
+			placeholder="Выберите кампанию"
+			onInputValueChange={(details) => filter(details.inputValue)}
+			onValueChange={({ value }) =>
+				handleValueChange((value || []) as UUID[])
+			}
+			value={selectedCompanyIds || []}
+			// closeOnSelect
+			multiple
+		>
+			<Combobox.Label>Кампании</Combobox.Label>
 
-				<AutoCompleteList bg="inherit">
-					{companies.map((company) => (
-						<AutoCompleteItem
-							key={company.id}
-							value={company.id}
-							label={company.name}
-							textTransform="capitalize"
-							_hover={{
-								bg: "gray.200",
+			<Combobox.Control>
+				<Combobox.Input />
+				<Combobox.IndicatorGroup>
+					<Combobox.Trigger />
+				</Combobox.IndicatorGroup>
+			</Combobox.Control>
+			<Wrap gap={2}>
+				{selectedCompanies.map((company) => (
+					<Badge key={company.id} size="sm" pl={2} pr={1}>
+						{company.name}
+						<CloseButton
+							size="xs"
+							onClick={() => {
+								const newIds =
+									selectedCompanyIds?.filter(
+										(id) => id !== company.id,
+									) || [];
+								handleValueChange(newIds);
 							}}
 						/>
-					))}
-				</AutoCompleteList>
-			</AutoComplete>
-		</Field>
+					</Badge>
+				))}
+			</Wrap>
+			<Portal>
+				<Combobox.Positioner zIndex={"popover !important"}>
+					<Combobox.Content>
+						<Combobox.Empty>Ничего не найдено</Combobox.Empty>
+						{collection.items.map((item) => (
+							<Combobox.Item item={item} key={item.id}>
+								<Span flex="1">{item.name}</Span>
+								<Combobox.ItemIndicator />
+							</Combobox.Item>
+						))}
+					</Combobox.Content>
+				</Combobox.Positioner>
+			</Portal>
+		</Combobox.Root>
 	);
 };
 
-const MasterFilter = () => {
+const MasterFilter = ({ isMaster }: IFilterProps) => {
+	const filterStore = useMemo(
+		() => (isMaster ? $masterFilters : $playerFilters),
+		[isMaster],
+	);
+
 	const { showOwnGames, showOtherMasters } = useStore(filterStore);
 
-	const toggleOwn = () => filterStore.setKey("showOwnGames", !showOwnGames);
-	const toggleOthers = () =>
+	const toggleOwn = useCallback(() => {
+		filterStore.setKey("showOwnGames", !showOwnGames);
+	}, [filterStore, showOwnGames]);
+
+	const toggleOthers = useCallback(() => {
 		filterStore.setKey("showOtherMasters", !showOtherMasters);
+	}, [filterStore, showOtherMasters]);
 
 	return (
 		<Stack gap={2} w="full">
 			<CheckboxRoot
 				mt={2}
-				checked={showOwnGames}
-				onChange={() => toggleOwn()}
+				checked={showOwnGames ?? false}
+				onChange={toggleOwn}
 			>
 				<CheckboxHiddenInput />
 				<CheckboxControl />
@@ -205,26 +305,13 @@ const MasterFilter = () => {
 
 			<CheckboxRoot
 				mt={2}
-				checked={showOtherMasters}
-				onChange={() => toggleOthers()}
+				checked={showOtherMasters ?? false}
+				onChange={toggleOthers}
 			>
 				<CheckboxHiddenInput />
 				<CheckboxControl />
 				<CheckboxLabel>Игры, которые ведут другие</CheckboxLabel>
 			</CheckboxRoot>
-
-			{/* {showOtherMasters && (
-				<Field label="Мастера на игре">
-					<Input
-						type="text"
-						placeholder="Выберите из списка"
-						value={master}
-						onChange={(e) =>
-							filterStore.setKey("master", e.currentTarget.value)
-						}
-					/>
-				</Field>
-			)} */}
 		</Stack>
 	);
 };
@@ -234,39 +321,100 @@ export const CalendarFilter = ({
 	openDrawer,
 	closeDrawer,
 	applyFilters,
+	isMaster,
 }: ICalendarFilterProps) => {
-	const { applied, not_rejected } = useStore(filterStore);
 	const [activeCount, setActiveCount] = useState(0);
 
-	const handleSubmit = async (e: Event) => {
-		e.preventDefault();
+	// Оптимизированные хранилища и состояния
+	const filterStore = useMemo(
+		() => (isMaster ? $masterFilters : $playerFilters),
+		[isMaster],
+	);
 
-		const { showOwnGames, showOtherMasters, ...rest } = filterStore.get();
+	const filters = useStore(filterStore);
+	const initialFilters = useMemo(
+		() => (isMaster ? initialMasterFilters : initialPlayerFilters),
+		[isMaster],
+	);
 
-		let imamaster: boolean | null = null;
+	// Обработчик отправки формы
+	const handleSubmit = useCallback(
+		async (e: Event) => {
+			e.preventDefault();
 
-		if (showOwnGames && !showOtherMasters) {
-			imamaster = true;
-		} else if (!showOwnGames && showOtherMasters) {
-			imamaster = false;
-		}
+			const { showOwnGames, showOtherMasters, ...rest } = filters;
 
-		const filtered: Partial<IEventsFilter> = {
-			...rest,
-			...(imamaster !== null ? { imamaster } : {}),
+			const imamaster =
+				showOwnGames && !showOtherMasters
+					? true
+					: !showOwnGames && showOtherMasters
+						? false
+						: null;
+
+			applyFilters({
+				...rest,
+				...(imamaster !== null && { imamaster }),
+			});
+			closeDrawer();
+		},
+		[filters, applyFilters, closeDrawer],
+	);
+
+	// Получение измененных фильтров
+	const getChangedFilters = useMemo(() => {
+		return (): Partial<IFilterState> => {
+			const changed: Partial<IFilterState> = {};
+
+			const filterKeys: Array<keyof IFilterState> = [
+				"location",
+				"region",
+				"city",
+				"master",
+				"company",
+				"applied",
+				"not_rejected",
+				"imamaster",
+				"showOwnGames",
+				"showOtherMasters",
+			];
+
+			filterKeys.forEach((key) => {
+				if (filters[key] !== initialFilters[key]) {
+					// Проверка типа для каждого поля
+					if (key === "company" && Array.isArray(filters[key])) {
+						changed.company =
+							filters.company as `${string}-${string}-${string}-${string}-${string}`[];
+					} else if (key === "location" || key === "master") {
+						changed[key] = filters[key] as
+							| `${string}-${string}-${string}-${string}-${string}`
+							| null;
+					} else {
+						changed[key] = filters[key] as never;
+					}
+				}
+			});
+
+			return changed;
+		};
+	}, [filters, initialFilters]);
+
+	// Сброс фильтров
+	const resetFilters = useCallback(() => {
+		filterStore.set({ ...initialFilters });
+		setActiveCount(0);
+	}, [filterStore, initialFilters]);
+
+	// Подписка на изменения фильтров
+	useEffect(() => {
+		const updateCount = () => {
+			setActiveCount(Object.keys(getChangedFilters()).length);
 		};
 
-		applyFilters(filtered);
-		closeDrawer();
-	};
+		const unsubscribe = filterStore.listen(updateCount);
+		updateCount(); // Инициализация
 
-	useEffect(() => {
-		const unsubscribe = filterStore.subscribe(() => {
-			const changed = getChangedFilters();
-			setActiveCount(Object.keys(changed).length);
-		});
-		return () => unsubscribe();
-	}, []);
+		return unsubscribe;
+	}, [filterStore, getChangedFilters]);
 
 	return (
 		<DrawerRoot
@@ -292,16 +440,16 @@ export const CalendarFilter = ({
 								<Text flexShrink="0">Геолокация</Text>
 								<Separator flex="1" />
 							</HStack>
-							<LocationFilter />
+							<LocationFilter isMaster={isMaster} />
 							<HStack>
 								<Separator flex="1" />
 								<Text flexShrink="0">Организатор</Text>
 								<Separator flex="1" />
 							</HStack>
 							<HStack gap="2" w="full">
-								<MasterFilter />
+								<MasterFilter isMaster={isMaster} />
 							</HStack>
-							<CompaniesFilter />
+							<CompaniesFilter isMaster={isMaster} />
 
 							<HStack mb={2}>
 								<Separator flex="1" />
@@ -309,17 +457,22 @@ export const CalendarFilter = ({
 								<Separator flex="1" />
 							</HStack>
 							<CheckboxRoot
-								checked={Boolean(applied)}
-								onChange={() => filterStore.setKey("applied", !applied)}
+								checked={filters.applied ?? false}
+								onChange={() =>
+									$masterFilters.setKey("applied", !filters.applied)
+								}
 							>
 								<CheckboxHiddenInput />
 								<CheckboxControl />
 								<CheckboxLabel>Заявка подана</CheckboxLabel>
 							</CheckboxRoot>
 							<CheckboxRoot
-								checked={Boolean(not_rejected)}
+								checked={filters.not_rejected ?? false}
 								onChange={() =>
-									filterStore.setKey("not_rejected", !not_rejected)
+									$masterFilters.setKey(
+										"not_rejected",
+										!filters.not_rejected,
+									)
 								}
 							>
 								<CheckboxHiddenInput />
@@ -327,25 +480,27 @@ export const CalendarFilter = ({
 								<CheckboxLabel>Не отклонена</CheckboxLabel>
 							</CheckboxRoot>
 						</Stack>
+						<HStack gap={2} mt={6}>
+							<Button
+								w="1/2"
+								type="submit"
+								// disabled={isSubmitting}
+								onClick={handleSubmit}
+							>
+								Применить {activeCount === 0 ? "" : `(${activeCount})`}
+							</Button>
+							<Button
+								w="1/2"
+								type="reset"
+								variant="outline"
+								// disabled={isLoading}
+								onClick={resetFilters}
+							>
+								Сбросить
+							</Button>
+						</HStack>
 					</form>
 				</DrawerBody>
-				<DrawerFooter>
-					<Button
-						type="submit"
-						// disabled={isSubmitting}
-						onClick={handleSubmit}
-					>
-						Применить {activeCount === 0 ? "" : `(${activeCount})`}
-					</Button>
-					<Button
-						type="reset"
-						variant="outline"
-						// disabled={isLoading}
-						onClick={() => resetFilters()}
-					>
-						Сбросить
-					</Button>
-				</DrawerFooter>
 				<DrawerCloseTrigger />
 			</DrawerContent>
 		</DrawerRoot>
