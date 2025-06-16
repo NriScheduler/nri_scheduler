@@ -1,11 +1,8 @@
 use ::std::{error::Error, sync::Arc};
-use axum::{
-	Router as AxumRouter, middleware,
-	routing::{get, post, put},
-};
+use axum::{Router as AxumRouter, middleware};
 #[cfg(feature = "cors")]
 use axum::{http::StatusCode, routing::options};
-use okapi_operation::axum_integration::Router as OkapiRouter;
+use okapi_operation::axum_integration::{Router as OkapiRouter, get, post, put};
 #[cfg(feature = "static")]
 use tower_http::services::{ServeDir, ServeFile};
 use utoipa::openapi::OpenApi as UtoipaSpec;
