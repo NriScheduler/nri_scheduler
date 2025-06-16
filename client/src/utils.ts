@@ -2,11 +2,10 @@ import { useEffect, useState } from "preact/hooks";
 import { route } from "preact-router";
 
 import { useStore } from "@nanostores/preact";
-
+import type { CalendarType } from "@schedule-x/calendar";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import type { CalendarType } from "@schedule-x/calendar";
 
 import { IApiShortEvent } from "./api";
 import { $profile, $tz, IStorePrifile, TStorePrifile } from "./store/profile";
