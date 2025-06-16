@@ -256,7 +256,7 @@ const Company = ({ data }: ICompanyProps) => {
 							<Text flexShrink="0">Ранее созданные кампании</Text>
 							<Separator flex="1" />
 						</HStack>
-						{data ? (
+						{data?.length ? (
 							<List.Root as="ol" ml={4}>
 								{data.map((item) => (
 									<List.Item key={item.id}>{item.name}</List.Item>
