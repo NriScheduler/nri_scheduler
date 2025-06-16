@@ -253,7 +253,7 @@ const Company = ({ data }: ICompanyProps) => {
 					<Stack gap={2} mt={4}>
 						<HStack>
 							<Separator flex="1" />
-							<Text flexShrink="0">Доступные мне</Text>
+							<Text flexShrink="0">Ранее созданные кампании</Text>
 							<Separator flex="1" />
 						</HStack>
 						{data ? (
