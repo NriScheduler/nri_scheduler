@@ -8,7 +8,14 @@ import { lazy, Suspense } from "preact/compat";
 import { useEffect, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 
-import { Container, HStack, Skeleton, Stack, Switch } from "@chakra-ui/react";
+import {
+	Box,
+	Container,
+	Flex,
+	HStack,
+	Skeleton,
+	Switch,
+} from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 import {
 	CalendarApp,
@@ -97,6 +104,7 @@ export const CalendarPage = () => {
 
 				const app = calendar["$app"] as CalendarAppSingleton;
 				app.config.calendars.value = calendars;
+				app.config.theme = "master";
 
 				calendar.events.set(events);
 			}
@@ -115,6 +123,8 @@ export const CalendarPage = () => {
 			},
 		},
 	});
+
+	// calendar.setTheme(mastery ? "dark" : "light");
 
 	useEffect(() => {
 		const app = calendar["$app"] as CalendarAppSingleton;
@@ -166,55 +176,74 @@ export const CalendarPage = () => {
 	}, [profile?.signed]);
 
 	return (
-		<section>
-			<Container>
-				<HStack flexWrap="wrap" mb="5" minHeight="40px" gap={10}>
-					{!profile?.verified && profile?.signed && (
-						<HoverCard content="Нельзя перейти в режим мастера - контактные данные не подтверждены">
-							<Warning />
-						</HoverCard>
-					)}
-					{showSwitch && (
-						<Switch.Root
-							size="lg"
-							checked={mastery && profile?.verified}
-							disabled={!profile?.verified}
-							onCheckedChange={() =>
-								mastery ? disableMastery() : enableMastery()
-							}
-						>
-							<Switch.HiddenInput />
-							<Switch.Control>
-								<Switch.Thumb />
-							</Switch.Control>
-							<Switch.Label>Режим мастера</Switch.Label>
-						</Switch.Root>
-					)}
+		<section className={"calendar-page"}>
+			<Container h={"full"} pb={"6"}>
+				<Flex gap="4" direction="column" h={"full"}>
+					<HStack
+						flexDirection={{ base: "column", md: "row" }}
+						minH={"40px"}
+						gap={4}
+						justifyContent={"space-between"}
+					>
+						{!profile?.verified && profile?.signed && (
+							<HoverCard content="Нельзя перейти в режим мастера - контактные данные не подтверждены">
+								<Warning />
+							</HoverCard>
+						)}
+						{showSwitch && (
+							<Switch.Root
+								size="lg"
+								checked={mastery && profile?.verified}
+								disabled={!profile?.verified}
+								onCheckedChange={() =>
+									mastery ? disableMastery() : enableMastery()
+								}
+							>
+								<Switch.HiddenInput />
+								<Switch.Control>
+									<Switch.Thumb />
+								</Switch.Control>
+								<Switch.Label>Режим мастера</Switch.Label>
+							</Switch.Root>
+						)}
 
-					{mastery && profile?.verified && showSwitch && (
-						<Stack direction="row" gap={4}>
-							<Suspense fallback={skeleton}>
-								<Event
-									openDraw={openDraw}
-									setOpenDraw={setOpenDraw}
-									companyList={companyList}
-									setCompanyList={setCompanyList}
-									tz={tz}
-									getNewEvent={getNewEvent}
-									profileRegion={profile.region}
-									profileCity={profile.city}
-								/>
-							</Suspense>
-							<Suspense fallback={skeleton}>
-								<Company data={companyList} />
-							</Suspense>
-							<Suspense fallback={skeleton}>
-								<Location />
-							</Suspense>
-						</Stack>
-					)}
-				</HStack>
-				<ScheduleXCalendar calendarApp={calendar} />
+						{mastery && profile?.verified && showSwitch && (
+							<HStack
+								gap={4}
+								// flexDirection={{ base: "column", sm: "row" }}
+							>
+								<Suspense fallback={skeleton}>
+									<Company data={companyList} />
+								</Suspense>
+								<Suspense fallback={skeleton}>
+									<Location />
+								</Suspense>
+								<Suspense fallback={skeleton}>
+									<Event
+										openDraw={openDraw}
+										setOpenDraw={setOpenDraw}
+										companyList={companyList}
+										setCompanyList={setCompanyList}
+										tz={tz}
+										getNewEvent={getNewEvent}
+										profileRegion={profile.region}
+										profileCity={profile.city}
+									/>
+								</Suspense>
+							</HStack>
+						)}
+					</HStack>
+
+					<Box
+						p={2}
+						background={mastery ? "#18181b" : "#e4e4e7"}
+						transition={"background 0.2s ease-in-out"}
+						borderRadius={"lg"}
+						h={"full"}
+					>
+						<ScheduleXCalendar calendarApp={calendar} />
+					</Box>
+				</Flex>
 			</Container>
 		</section>
 	);
