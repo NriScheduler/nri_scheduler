@@ -6,3 +6,14 @@
 .sx__event {
 	cursor: pointer;
 }
+
+/* (93px) - header height
+ 	(24px) - header mb
+ */
+.calendar-page {
+	height: calc(100vh - (93px + 24px));
+}
+
+.sx-preact-calendar-wrapper {
+	height: 100%;
+}

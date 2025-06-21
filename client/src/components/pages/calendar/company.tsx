@@ -189,7 +189,11 @@ const Company = ({ data }: ICompanyProps) => {
 		<DrawerRoot open={open} onOpenChange={(e) => setOpen(e.open)}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button w="30%" disabled={!profile?.signed} variant="outline">
+				<Button
+					disabled={!profile?.signed}
+					variant="outline"
+					size={{ base: "xs", md: "md" }}
+				>
 					Создать кампанию
 				</Button>
 			</DrawerTrigger>

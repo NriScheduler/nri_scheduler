@@ -67,7 +67,11 @@ const Location = () => {
 		<DrawerRoot open={open} onOpenChange={(e) => setOpen(e.open)}>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button w="30%" disabled={!profile?.signed} variant="outline">
+				<Button
+					disabled={!profile?.signed}
+					variant="outline"
+					size={{ base: "xs", md: "md" }}
+				>
 					Создать локацию
 				</Button>
 			</DrawerTrigger>
