@@ -1,82 +1,54 @@
-import type { UUID } from "node:crypto";
+import { UUID } from "node:crypto";
 
 import { Fragment, h } from "preact";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import { useRouter } from "preact-router";
-import { useForm } from "react-hook-form";
 
 import {
 	Button,
 	Card,
 	Container,
-	createListCollection,
 	DataList,
-	Dialog,
-	Group,
 	Heading,
 	HStack,
 	Image,
-	Input,
-	InputAddon,
 	Link,
-	NativeSelect,
-	Portal,
 	Skeleton,
-	Stack,
-	Text,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 import dayjs from "dayjs";
 
+import { EditEventDrawer } from "./edit-event";
+import { EventAlert } from "./event-alert";
+import { EventDialog } from "./event-dialog";
 import { NotFoundPage } from "../not-found/not-found";
-import { CloseButton } from "../../ui/close-button";
+import { IApiEvent } from "../../../api";
 import {
-	DrawerBackdrop,
-	DrawerBody,
-	DrawerCloseTrigger,
-	DrawerContent,
-	DrawerHeader,
-	DrawerRoot,
-	DrawerTitle,
-	DrawerTrigger,
-} from "../../ui/drawer";
-import { Field } from "../../ui/field";
-import { HoverCard } from "../../ui/hover-card";
-import { Warning } from "../../ui/icons";
-import { toaster } from "../../ui/toaster";
-import {
-	applyEvent,
-	cancelEvent,
-	EScenarioStatus,
-	IApiEvent,
-	IApiLocation,
-	readEvent,
-	readLocations,
-	reopenEvent,
-	updateEvent,
-} from "../../../api";
+	$event,
+	$isEventMaster,
+	applyToEvent,
+	cancelEventAction,
+	fetchEvent,
+	reopenEventAction,
+} from "../../../store/event";
 import { $profile, $tz } from "../../../store/profile";
-import {
-	calcMapIconLink,
-	EVENT_FORMAT,
-	navBack,
-	YYYY_MM_DD,
-} from "../../../utils";
+import { calcMapIconLink, navBack } from "../../../utils";
 
-const EventCard = ({
-	event,
-	updateEventData,
-}: {
+interface IEventCardProps {
 	event: IApiEvent;
-	updateEventData: () => void;
-}) => {
+	isLoading: boolean;
+	isApplied: boolean;
+}
+
+const EventCard = ({ event, isLoading, isApplied }: IEventCardProps) => {
 	const tz = useStore($tz);
 	const profile = useStore($profile);
 
 	const eventDate = dayjs(event.date).tz(tz);
+	const nowDate = dayjs().tz(tz);
 
-	const [isLoading, setIsLoading] = useState(false);
-	const [youApplied, setYouApplied] = useState(event.you_applied);
+	const isEventFull =
+		event.max_slots !== null && event.players.length >= event.max_slots;
 
 	const stats = [
 		{
@@ -94,9 +66,12 @@ const EventCard = ({
 		{ label: "Время", value: eventDate.format("HH:mm") },
 		{
 			label: "Количество игроков",
-			value: event.max_slots
-				? `${event.players.length} из ${event.max_slots}`
-				: "Без ограничений",
+			value:
+				event.max_slots === null
+					? "Без ограничений"
+					: isEventFull
+						? "Свободных мест нет"
+						: `${event.players.length} из ${event.max_slots}`,
 		},
 		{
 			label: "Записаны",
@@ -128,32 +103,9 @@ const EventCard = ({
 	];
 
 	const handleSubscribe = () => {
-		setIsLoading(true);
-		applyEvent(event.id)
-			.then((responce) => {
-				if (responce?.status === EScenarioStatus.SCENARIO_SUCCESS) {
-					setYouApplied(true);
-					toaster.success({ title: "Успех. Запись оформлена" });
-				}
-			})
-			.finally(() => {
-				setIsLoading(false);
-			});
-	};
-	const nowDate = dayjs().tz(tz);
-
-	const onCancelEvent = () => {
-		cancelEvent(event.id).then(() => {
-			toaster.success({ title: "Событие отменено" });
-			updateEventData();
-		});
-	};
-
-	const onReopenEvent = () => {
-		reopenEvent(event.id).then(() => {
-			toaster.success({ title: "Событие открыто" });
-			updateEventData();
-		});
+		if (event.id) {
+			applyToEvent(event.id);
+		}
 	};
 
 	return (
@@ -209,94 +161,101 @@ const EventCard = ({
 					})}
 				</DataList.Root>
 			</Card.Body>
-			<Card.Footer>
+			<Card.Footer
+				flexDirection={"column"}
+				alignItems={"flex-start"}
+				gap={2}
+			>
 				{profile?.signed ? (
 					!event.you_are_master &&
 					(nowDate.isSame(eventDate, "minute") ||
 						eventDate.isAfter(nowDate, "minute")) &&
 					!event.cancelled ? (
 						<>
-							<Button
-								variant="subtle"
-								colorPalette="blue"
-								minW="115px"
-								onClick={handleSubscribe}
-								disabled={isLoading || youApplied || !profile.verified}
-							>
-								{isLoading
-									? "..."
-									: youApplied
-										? "Вы записаны"
-										: "Записаться"}
-							</Button>
+							{isEventFull && !isApplied && (
+								<>
+									<EventAlert
+										title="Свободных мест нет"
+										description="ваша заявка будет рассмотрена отдельно мастером игры"
+										status="warning"
+									/>
+									<EventDialog
+										buttonTitle="Записаться"
+										handleClick={handleSubscribe}
+									/>
+								</>
+							)}
+
+							{!isEventFull && (
+								<Button
+									variant="subtle"
+									colorPalette="blue"
+									minW="115px"
+									onClick={handleSubscribe}
+									disabled={
+										isLoading || isApplied || !profile.verified
+									}
+								>
+									{isLoading
+										? "..."
+										: isApplied
+											? "Вы записаны"
+											: "Записаться"}
+								</Button>
+							)}
+
+							{isApplied && isEventFull && (
+								<Button
+									variant="subtle"
+									colorPalette="blue"
+									minW="115px"
+									disabled
+								>
+									В ожидании
+								</Button>
+							)}
+
 							{!profile.verified && (
-								<HoverCard content="Нельзя записаться на событие - контактные данные не подтверждены">
-									<Warning />
-								</HoverCard>
+								<EventAlert
+									title="Нельзя записаться на событие"
+									description="контактные данные не подтверждены"
+									status="error"
+								/>
 							)}
 						</>
 					) : null
 				) : (
-					!event.cancelled &&
-					"необходимо авторизоваться для записи на игру"
+					!event.cancelled && (
+						<EventAlert
+							title="Внимание"
+							description="необходимо авторизоваться для записи на игру"
+							status="warning"
+						/>
+					)
 				)}
 				{eventDate.isBefore(nowDate, "minute") && (
-					<>
-						<HoverCard content="Запись закрыта потому что событие уже стартовало">
-							<Warning />
-						</HoverCard>
-						<Text>Запись закрыта</Text>
-					</>
+					<EventAlert
+						title="Запись закрыта"
+						description="событие уже стартовало"
+						status="neutral"
+					/>
 				)}
 				{event.cancelled && (
-					<>
-						<HoverCard content="Запись закрыта потому что мастер отменил событие">
-							<Warning />
-						</HoverCard>
-						<Text>Запись закрыта мастером</Text>
-					</>
+					<EventAlert
+						title="Запись закрыта"
+						description="мастер отменил событие"
+						status="neutral"
+					/>
 				)}
 				{event.you_are_master && !event.cancelled && (
-					<Dialog.Root role="alertdialog" placement="center">
-						<Dialog.Trigger asChild>
-							<Button
-								type="button"
-								variant="subtle"
-								colorPalette="blue"
-								minW="115px"
-							>
-								Отменить событие
-							</Button>
-						</Dialog.Trigger>
-						<Portal>
-							<Dialog.Backdrop />
-							<Dialog.Positioner>
-								<Dialog.Content>
-									<Dialog.Header>
-										<Dialog.Title>А вы уверены?</Dialog.Title>
-									</Dialog.Header>
-									<Dialog.Footer>
-										<Dialog.ActionTrigger asChild>
-											<Button variant="outline">Нет</Button>
-										</Dialog.ActionTrigger>
-										<Button
-											colorPalette="red"
-											onClick={onCancelEvent}
-										>
-											Да
-										</Button>
-									</Dialog.Footer>
-									<Dialog.CloseTrigger asChild>
-										<CloseButton size="sm" />
-									</Dialog.CloseTrigger>
-								</Dialog.Content>
-							</Dialog.Positioner>
-						</Portal>
-					</Dialog.Root>
+					<EventDialog
+						buttonTitle="Отменить событие"
+						handleClick={() => cancelEventAction(event.id)}
+					/>
 				)}
 				{event.you_are_master && event.cancelled && (
 					<Button
-						onClick={onReopenEvent}
+						onClick={() => reopenEventAction(event.id)}
 						variant="subtle"
 						colorPalette="blue"
 						minW="115px"
@@ -343,175 +302,29 @@ const EventCardSkeleton = () => {
 	);
 };
 
-interface IFormEditEvent {
-	readonly company: UUID;
-	readonly location: UUID;
-	readonly start: string;
-	readonly startTime: string;
-	readonly max_slots: string;
-	readonly plan_duration: string;
-}
-
 export const EventPage = () => {
 	const [route] = useRouter();
 	const eventId = route.matches?.id as UUID | undefined;
-	const [fetching, setFetching] = useState(false);
-	const [event, setEvent] = useState<IApiEvent | null>(null);
-	const [open, setOpen] = useState(false);
-	const [locationList, setLocationList] = useState<
-		ReadonlyArray<IApiLocation>
-	>([]);
-	const [isDisableEditEventSubmitButton, setIsDisableEditEventSubmitButton] =
-		useState(false);
-	const tz = useStore($tz);
+	const event = useStore($event);
+	const isEventLoading = event.loading;
+	const isLoading = event.subscribing;
+	const isApplied = event.applied;
+	const isMaster = useStore($isEventMaster);
 
-	const getLocations = () => {
-		return readLocations().then((responce) => {
-			if (responce?.payload) {
-				setLocationList(responce.payload);
-			}
-			return responce?.payload || null;
-		});
-	};
-
-	const locations = useMemo(() => {
-		return createListCollection({
-			items: locationList,
-			itemToString: (item) => item.name,
-			itemToValue: (item) => item.id,
-		});
-	}, [locationList]);
-	const {
-		register,
-		handleSubmit,
-		watch,
-		clearErrors,
-		formState: { errors },
-	} = useForm<IFormEditEvent>();
-	const onSubmit = handleSubmit((data) => {
-		const { location, start, startTime, max_slots, plan_duration } = data;
-
-		if (data) {
-			const date = dayjs.tz(`${start} ${startTime}`, EVENT_FORMAT, tz);
-			setIsDisableEditEventSubmitButton(true);
-			if (!eventId) {
-				return;
-			}
-			updateEvent(
-				eventId,
-				date.toISOString(),
-				location,
-				Number(max_slots) || null,
-				Number(plan_duration) || null,
-			)
-				.then((res) => {
-					if (res !== null) {
-						setOpen(false);
-					}
-				})
-				.then(() =>
-					readEvent(eventId).then((res) => {
-						if (res !== null) {
-							setEvent(res.payload);
-							return res?.payload;
-						}
-					}),
-				)
-				.finally(() => {
-					setIsDisableEditEventSubmitButton(false);
-				});
-		}
-	});
-	const [start] = watch(["start"]);
-	const validateDate = (value: string) => {
-		clearErrors("startTime");
-		const fieldDate = dayjs.tz(`${value} 12:00`, EVENT_FORMAT, tz);
-		const nowDate = dayjs().tz(tz);
-		if (
-			nowDate.isSame(fieldDate, "day") ||
-			fieldDate.isAfter(nowDate, "day")
-		) {
-			return true;
-		} else {
-			return "Вы указали прошлый день";
-		}
-	};
-
-	const validateTime = (value: string) => {
-		if (!start) {
-			return "Укажите дату";
-		}
-		const fultime = dayjs.tz(`${start} ${value}`, EVENT_FORMAT, tz);
-		const nowDate = dayjs().tz(tz);
-		if (
-			nowDate.isSame(fultime, "minute") ||
-			fultime.isAfter(nowDate, "minute")
-		) {
-			return true;
-		} else {
-			return "Вы указали прошлое время";
-		}
-	};
 	useEffect(() => {
 		if (eventId) {
-			setFetching(true);
-			readEvent(eventId)
-				.then((res) => {
-					if (res !== null) {
-						setEvent(res.payload);
-						return res?.payload;
-					}
-				})
-				.then((eventData) => {
-					if (eventData?.you_are_master) {
-						return getLocations();
-					}
-				})
-				.finally(() => {
-					setFetching(false);
-				});
+			fetchEvent(eventId);
 		}
-	}, [route.matches?.id]);
-
-	const eventDate = dayjs(event?.date).tz(tz);
-
-	const updateEventData = () => {
-		if (eventId) {
-			setFetching(true);
-			readEvent(eventId)
-				.then((res) => {
-					if (res !== null) {
-						setEvent(res.payload);
-						return res?.payload;
-					}
-				})
-				.then((eventData) => {
-					if (eventData?.you_are_master) {
-						return getLocations();
-					}
-				})
-				.finally(() => {
-					setFetching(false);
-				});
-		}
-	};
+	}, [eventId]);
 
 	return (
 		<section>
 			<Container>
-				<Button mb={4} onClick={navBack}>
-					Вернуться назад
-				</Button>
-				{event?.you_are_master && (
-					<HStack alignItems="top">
-						<DrawerRoot
-							open={open}
-							onOpenChange={(e) => {
-								setOpen(e.open);
-							}}
-						>
-							<DrawerBackdrop />
-							<DrawerTrigger asChild>
+				<HStack gap={2} mb={4}>
+					<Button onClick={navBack}>Вернуться назад</Button>
+					{isMaster && (
+						<EditEventDrawer
+							renderButton={
 								<Button
 									colorPalette="cyan"
 									mt="4"
@@ -520,130 +333,18 @@ export const EventPage = () => {
 								>
 									Редактировать событие
 								</Button>
-							</DrawerTrigger>
-							<DrawerContent>
-								<DrawerHeader>
-									<DrawerTitle>Редактирование события</DrawerTitle>
-								</DrawerHeader>
-								<DrawerBody>
-									<form onSubmit={onSubmit}>
-										<Stack gap="4" w="full">
-											<HStack
-												alignItems="start"
-												gap={2}
-												width="full"
-											>
-												<Field
-													label="Начало"
-													errorText={errors.start?.message}
-													invalid={!!errors.start?.message}
-												>
-													<Input
-														type="date"
-														defaultValue={eventDate.format(
-															YYYY_MM_DD,
-														)}
-														min={dayjs()
-															.tz(tz)
-															.format(YYYY_MM_DD)}
-														{...register("start", {
-															required: "Заполните поле",
-															validate: validateDate,
-														})}
-													/>
-												</Field>
-												<Field
-													label="Время"
-													errorText={errors.startTime?.message}
-													invalid={!!errors.startTime?.message}
-												>
-													<Input
-														type="time"
-														defaultValue={eventDate.format(
-															"HH:mm",
-														)}
-														{...register("startTime", {
-															required: "Заполните поле",
-															validate: validateTime,
-														})}
-													/>
-												</Field>
-											</HStack>
-											<Field
-												label="Локация"
-												errorText={errors.location?.message}
-												invalid={!!errors.location?.message}
-											>
-												<NativeSelect.Root>
-													<NativeSelect.Field
-														placeholder="Выберите из списка"
-														{...register("location", {
-															required: "Заполните",
-														})}
-														defaultValue={event.location_id}
-													>
-														{locations.items.map((location) => (
-															<option
-																value={location.id}
-																key={location.name}
-															>
-																{location.name}
-															</option>
-														))}
-													</NativeSelect.Field>
-													<NativeSelect.Indicator />
-												</NativeSelect.Root>
-											</Field>
-
-											<Field label="Максимальное количество игроков">
-												<Input
-													type="number"
-													min="1"
-													step="1"
-													defaultValue={event?.max_slots || 0}
-													{...register("max_slots")}
-												/>
-											</Field>
-
-											<Field label="Планируемая длительность">
-												<Group attached w="full">
-													<Input
-														type="number"
-														min="1"
-														step="1"
-														defaultValue={
-															event?.plan_duration || 0
-														}
-														{...register("plan_duration")}
-													/>
-													<InputAddon>час</InputAddon>
-												</Group>
-											</Field>
-										</Stack>
-										<Button
-											disabled={isDisableEditEventSubmitButton}
-											type="submit"
-											w="full"
-											mt={6}
-										>
-											Редактировать
-										</Button>
-										<DrawerTrigger asChild>
-											<Button type="button" w="full" mt={6}>
-												Отмена
-											</Button>
-										</DrawerTrigger>
-									</form>
-								</DrawerBody>
-								<DrawerCloseTrigger />
-							</DrawerContent>
-						</DrawerRoot>
-					</HStack>
-				)}
-				{fetching ? (
+							}
+						/>
+					)}
+				</HStack>
+				{isEventLoading ? (
 					<EventCardSkeleton />
-				) : event !== null ? (
-					<EventCard event={event} updateEventData={updateEventData} />
+				) : event.data !== null ? (
+					<EventCard
+						event={event.data}
+						isLoading={isLoading}
+						isApplied={isApplied}
+					/>
 				) : (
 					<NotFoundPage
 						checkButton={false}
