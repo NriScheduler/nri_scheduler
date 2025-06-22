@@ -32,10 +32,11 @@ futures-util = "0.3.31"
 hex = "0.4.3"
 hmac = "0.12.1"
 josekit = "0.10.3"
-lettre = { version = "0.11.16", default-features = false, features = ["builder", "pool", "rustls-tls", "smtp-transport"] }
+lettre = { version = "0.11.17", default-features = false, features = ["builder", "pool", "rustls-tls", "smtp-transport"] }
+okapi-operation = { version = "0.3.0", features = ["axum"] }
 rand = "0.9.1"
 regex = "1.11.1"
-reqwest = { version = "0.12.19", default-features = false, features = ["json", "rustls-tls", "stream"] }
+reqwest = { version = "0.12.20", default-features = false, features = ["json", "rustls-tls", "stream"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 sha2 = "0.10.8"
@@ -44,9 +45,9 @@ sqlx-core = { version = "0.8.6", features = ["migrate"] }
 sqlx-postgres = { version = "0.8.6", features = ["migrate", "chrono", "uuid"] }
 tokio = { version = "1.45.1", features = ["full"] }
 tokio-stream = { version = "0.1.17", features = ["sync"] }
-tower-http = { version = "0.6.5", features = ["fs"], optional = true }
-utoipa = { version = "5.3.1", features = ["uuid", "chrono"], optional = true }
-utoipa-swagger-ui = { version = "9.0.2", features = ["axum"], optional = true }
+tower-http = { version = "0.6.6", features = ["fs"], optional = true }
+utoipa = { version = "5.4.0", features = ["uuid", "chrono"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
 uuid = { version = "1.17.0", features = ["serde"] }
 
 [features]
@@ -54,7 +55,6 @@ default = []
 cors = []
 https = ["axum-server"]
 static = ["tower-http"]
-swagger = ["utoipa", "utoipa-swagger-ui"]
 vite = []
 
 [dev-dependencies]

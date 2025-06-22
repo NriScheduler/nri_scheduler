@@ -31,21 +31,14 @@ pub(crate) async fn read_player_app(
 	Path(app_id): Path<Uuid>,
 ) -> AppResult {
 	let may_be_app = state.repo.read_player_app(user_id, app_id).await?;
+	let msg = may_be_app
+		.as_ref()
+		.map(|_| "Ваша заявка")
+		.unwrap_or("Заявка не найдена");
 
-	let Some(app) = may_be_app else {
-		let payload = serde_json::to_value(app_id)?;
-		return Ok(AppResponse::scenario_fail(
-			"Заявка не найдена",
-			Some(payload),
-		));
-	};
+	let payload = may_be_app.map(serde_json::to_value).transpose()?;
 
-	let json_value = serde_json::to_value(app)?;
-
-	return Ok(AppResponse::scenario_success(
-		"Ваша заявка",
-		Some(json_value),
-	));
+	return Ok(AppResponse::scenario_success(msg, payload));
 }
 
 pub(crate) async fn read_player_app_by_event(
@@ -58,20 +51,14 @@ pub(crate) async fn read_player_app_by_event(
 		.read_player_app_by_event(user_id, event_id)
 		.await?;
 
-	let Some(app) = may_be_app else {
-		let payload = serde_json::to_value(event_id)?;
-		return Ok(AppResponse::scenario_fail(
-			"Заявка не найдена",
-			Some(payload),
-		));
-	};
+	let msg = may_be_app
+		.as_ref()
+		.map(|_| "Ваша заявка")
+		.unwrap_or("Заявка не найдена");
 
-	let json_value = serde_json::to_value(app)?;
+	let payload = may_be_app.map(serde_json::to_value).transpose()?;
 
-	return Ok(AppResponse::scenario_success(
-		"Ваша заявка",
-		Some(json_value),
-	));
+	return Ok(AppResponse::scenario_success(msg, payload));
 }
 
 pub(crate) async fn read_player_app_company_closest(
@@ -84,20 +71,14 @@ pub(crate) async fn read_player_app_company_closest(
 		.read_player_app_company_closest(user_id, company_id)
 		.await?;
 
-	let Some(app) = may_be_app else {
-		let payload = serde_json::to_value(company_id)?;
-		return Ok(AppResponse::scenario_fail(
-			"Заявка не найдена",
-			Some(payload),
-		));
-	};
+	let msg = may_be_app
+		.as_ref()
+		.map(|_| "Ваша заявка на ближайшую игру кампании")
+		.unwrap_or("Заявка не найдена");
 
-	let json_value = serde_json::to_value(app)?;
+	let payload = may_be_app.map(serde_json::to_value).transpose()?;
 
-	return Ok(AppResponse::scenario_success(
-		"Ваша заявка на ближайшую игру кампании",
-		Some(json_value),
-	));
+	return Ok(AppResponse::scenario_success(msg, payload));
 }
 
 pub(crate) async fn read_master_apps_list(
@@ -157,20 +138,14 @@ pub(crate) async fn read_master_app(
 ) -> AppResult {
 	let may_be_app = state.repo.read_master_app(user_id, app_id).await?;
 
-	let Some(app) = may_be_app else {
-		let payload = serde_json::to_value(app_id)?;
-		return Ok(AppResponse::scenario_fail(
-			"Заявка не найдена",
-			Some(payload),
-		));
-	};
+	let msg = may_be_app
+		.as_ref()
+		.map(|_| "Заявка на вашу игру")
+		.unwrap_or("Заявка не найдена");
 
-	let json_value = serde_json::to_value(app)?;
+	let payload = may_be_app.map(serde_json::to_value).transpose()?;
 
-	return Ok(AppResponse::scenario_success(
-		"Заявка на вашу игру",
-		Some(json_value),
-	));
+	return Ok(AppResponse::scenario_success(msg, payload));
 }
 
 pub(crate) async fn approve_app(
