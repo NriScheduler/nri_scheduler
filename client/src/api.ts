@@ -472,11 +472,11 @@ export interface IPlayerApp {
 export const readPlayerAppsList = (abortController?: AbortController) =>
 	ajax<ReadonlyArray<IPlayerApp>>(`/api/apps`, null, abortController);
 export const readPlayerApp = (appId: UUID) =>
-	ajax<IPlayerApp>(`/api/apps/${appId}`);
+	ajax<IPlayerApp | null>(`/api/apps/${appId}`);
 export const readPlayerAppByEvent = (eventId: UUID) =>
-	ajax<IPlayerApp>(`/api/apps/by_event/${eventId}`);
+	ajax<IPlayerApp | null>(`/api/apps/by_event/${eventId}`);
 export const readPlayerAppCompanyClosest = (companyId: UUID) =>
-	ajax<IPlayerApp>(`/api/apps/company_closest/${companyId}`);
+	ajax<IPlayerApp | null>(`/api/apps/company_closest/${companyId}`);
 
 export interface IMasterApp {
 	readonly approval: boolean | null;
@@ -501,7 +501,7 @@ export const readMasterAppsListCompanyClosest = (companyId: UUID) =>
 		`/api/apps/master/company_closest/${companyId}`,
 	);
 export const readMasterApp = (appId: UUID) =>
-	ajax<IMasterApp>(`/api/apps/master/${appId}`);
+	ajax<IMasterApp | null>(`/api/apps/master/${appId}`);
 
 export const approveApplication = (appId: UUID) => {
 	return ajax<null>(
