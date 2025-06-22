@@ -7,7 +7,7 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
-import { IApiShortEvent } from "./api";
+import { IApiEvent, IApiShortEvent } from "./api";
 import { $profile, $tz, IStorePrifile, TStorePrifile } from "./store/profile";
 
 export const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
@@ -147,7 +147,7 @@ export const useEventTime = () => {
 		return end.isSame(start, "day") ? end : start.endOf("day");
 	};
 
-	const formatEvent = (apiEvent: IApiShortEvent) => {
+	const formatEvent = (apiEvent: IApiShortEvent | IApiEvent) => {
 		const start = parseWithTz(apiEvent.date);
 		const end = getEventEnd(
 			start,
