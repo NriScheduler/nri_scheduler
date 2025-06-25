@@ -124,8 +124,6 @@ export const CalendarPage = () => {
 		},
 	});
 
-	// calendar.setTheme(mastery ? "dark" : "light");
-
 	useEffect(() => {
 		const app = calendar["$app"] as CalendarAppSingleton;
 		const range = app.calendarState.range.value;
