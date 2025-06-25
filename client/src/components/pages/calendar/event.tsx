@@ -225,9 +225,9 @@ const Event = (props: IEventProps) => {
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
 				<Button
-					w="30%"
 					disabled={isDisableCreateEventButton}
-					variant="outline"
+					// variant="outline"
+					size={{ base: "xs", md: "md" }}
 				>
 					Добавить событие
 				</Button>
