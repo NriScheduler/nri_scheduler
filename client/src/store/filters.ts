@@ -42,8 +42,12 @@ export const $playerFilters = map<IFilterState>(initialPlayerFilters);
 // Сброс фильтров
 export const resetFilters = (isMaster: boolean) => {
 	const store = isMaster ? $masterFilters : $playerFilters;
-	const initialState = isMaster ? initialMasterFilters : initialPlayerFilters;
-	store.set({ ...initialState });
+	const current = store.get();
+	store.set({
+		...(isMaster ? initialMasterFilters : initialPlayerFilters),
+		applied: current.applied,
+		not_rejected: current.not_rejected,
+	});
 };
 
 // Получение изменённых полей с строгой типизацией

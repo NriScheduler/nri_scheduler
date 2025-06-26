@@ -458,9 +458,12 @@ export const CalendarFilter = ({
 							</HStack>
 							<CheckboxRoot
 								checked={filters.applied ?? false}
-								onChange={() =>
-									$masterFilters.setKey("applied", !filters.applied)
-								}
+								onChange={() => {
+									const store = isMaster
+										? $masterFilters
+										: $playerFilters;
+									store.setKey("applied", !filters.applied);
+								}}
 							>
 								<CheckboxHiddenInput />
 								<CheckboxControl />
@@ -468,12 +471,12 @@ export const CalendarFilter = ({
 							</CheckboxRoot>
 							<CheckboxRoot
 								checked={filters.not_rejected ?? false}
-								onChange={() =>
-									$masterFilters.setKey(
-										"not_rejected",
-										!filters.not_rejected,
-									)
-								}
+								onChange={() => {
+									const store = isMaster
+										? $masterFilters
+										: $playerFilters;
+									store.setKey("not_rejected", !filters.not_rejected);
+								}}
 							>
 								<CheckboxHiddenInput />
 								<CheckboxControl />
