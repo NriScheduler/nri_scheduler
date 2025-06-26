@@ -12,5 +12,6 @@
 		"source.fixAll.eslint": "explicit"
 	},
 	"typescript.preferences.importModuleSpecifier": "relative",
-	"postman.settings.dotenv-detection-notification-visibility": false
+	"postman.settings.dotenv-detection-notification-visibility": false,
+	"cSpell.language": "en,ru"
 }

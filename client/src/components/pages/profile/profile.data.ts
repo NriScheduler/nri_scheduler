@@ -1,7 +1,7 @@
 export const PROFILE_TABS = [
 	{ id: "user", label: "Профиль" },
 	{ id: "events", label: "Заявки" },
-	{ id: "complist", label: "Кампания" },
+	{ id: "complist", label: "Кампании" },
 	{ id: "resetpass", label: "Сброс пароля" },
 ] as const;
 

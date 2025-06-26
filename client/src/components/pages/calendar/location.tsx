@@ -1,5 +1,4 @@
 import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
 import { useForm } from "react-hook-form";
 
 import { Button, Input, Stack, Textarea } from "@chakra-ui/react";
@@ -18,10 +17,15 @@ import {
 import { Field } from "../../ui/field";
 import { addLocation, IApiLocation } from "../../../api";
 import { $profile } from "../../../store/profile";
+import { loadLocations, sharedLocations } from "../../../store/sharedDataStore";
 
-const Location = () => {
-	const [open, setOpen] = useState(false);
+interface ILocationProps {
+	isOpen: boolean;
+	openDrawer: () => void;
+	closeDrawer: () => void;
+}
 
+const Location = ({ isOpen, openDrawer, closeDrawer }: ILocationProps) => {
 	const {
 		register,
 		handleSubmit,
@@ -30,20 +34,6 @@ const Location = () => {
 	} = useForm<IApiLocation>();
 
 	const profile = useStore($profile);
-
-	useEffect(() => {
-		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				setOpen(false);
-			}
-		};
-
-		document.addEventListener("keydown", handleKeyDown, { passive: true });
-		return () => {
-			document.removeEventListener("keydown", handleKeyDown);
-			setOpen(false);
-		};
-	}, []);
 
 	const onSubmit = handleSubmit((data) => {
 		const { name, address, description, map_link } = data;
@@ -57,14 +47,18 @@ const Location = () => {
 			).then((res) => {
 				if (res !== null) {
 					reset();
-					setOpen(false);
+					closeDrawer();
+					loadLocations().then(sharedLocations.set);
 				}
 			});
 		}
 	});
 
 	return (
-		<DrawerRoot open={open} onOpenChange={(e) => setOpen(e.open)}>
+		<DrawerRoot
+			open={isOpen}
+			onOpenChange={(e) => (e.open ? openDrawer() : closeDrawer())}
+		>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
 				<Button

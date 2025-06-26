@@ -27,19 +27,21 @@ import { ScheduleXCalendar, useCalendarApp } from "@schedule-x/preact";
 import { CalendarAppSingleton } from "@schedule-x/shared";
 import dayjs from "dayjs";
 
+import { CalendarFilter } from "./calendar-filter";
 import { HoverCard } from "../../ui/hover-card";
 import { Warning } from "../../ui/icons";
-import { IApiCompany, readEvent, readEventsList } from "../../../api";
+import { IEventsFilter, readEvent, readEventsList } from "../../../api";
 import {
 	$mastery,
 	disableMastery,
 	enableMastery,
 } from "../../../store/mastery";
-import { $profile, $tz } from "../../../store/profile";
+import { $profile } from "../../../store/profile";
+import { loadSharedData } from "../../../store/sharedDataStore";
 import {
 	convertEventStyleToCalendarType,
 	escapeCalendarId,
-	EVENT_FORMAT,
+	useEventTime,
 } from "../../../utils";
 
 const Company = lazy(() => import("./company"));
@@ -50,27 +52,36 @@ const skeleton = <Skeleton alignSelf="100%" w="30%" />;
 const DEFAULT_EVENT_DURATION = 4;
 
 export const CalendarPage = () => {
-	const [showSwitch, setShowSwitch] = useState(false);
-	const [openDraw, setOpenDraw] = useState(false);
-	const [companyList, setCompanyList] = useState<ReadonlyArray<IApiCompany>>(
-		[],
-	);
-
-	const tz = useStore($tz);
 	const mastery = useStore($mastery);
 	const profile = useStore($profile);
+
+	const [showSwitch, setShowSwitch] = useState(false);
+	const [openDrawers, setOpenDrawers] = useState({
+		event: false,
+		company: false,
+		location: false,
+		filter: false,
+	});
+
+	const { tz, EVENT_FORMAT, parseWithTz, formatEvent } = useEventTime();
 
 	const addDataEventToCalendar = (
 		dateStart: string,
 		dateEnd: string,
 		calendar: CalendarApp,
+		filters?: IEventsFilter,
 	) => {
-		const dateStartWithTz = dayjs.tz(dateStart, EVENT_FORMAT, tz).format();
+		const dateStartWithTz = parseWithTz(dateStart).format();
 		const dateEndWithTz = dayjs.tz(dateEnd, EVENT_FORMAT, tz).format();
-		readEventsList(dateStartWithTz, dateEndWithTz, {
-			imamaster: $mastery.get(),
-		}).then((res) => {
+		readEventsList(
+			dateStartWithTz,
+			dateEndWithTz,
+			filters ?? {
+				imamaster: $mastery.get(),
+			},
+		).then((res) => {
 			if (res !== null) {
+				calendar.events.set(res.payload.map((apiEv) => formatEvent(apiEv)));
 				const calendars: Record<string, CalendarType> = {};
 
 				const events = res.payload.map((apiEv) => {
@@ -124,13 +135,13 @@ export const CalendarPage = () => {
 		},
 	});
 
-	useEffect(() => {
+	const applyFilters = (filters: IEventsFilter) => {
 		const app = calendar["$app"] as CalendarAppSingleton;
 		const range = app.calendarState.range.value;
 		if (range !== null) {
-			addDataEventToCalendar(range.start, range.end, calendar);
+			addDataEventToCalendar(range.start, range.end, calendar, filters);
 		}
-	}, [mastery]);
+	};
 
 	const getNewEvent = (id: UUID) => {
 		readEvent(id).then((responce) => {
@@ -145,103 +156,103 @@ export const CalendarPage = () => {
 				if (!end.isSame(start, "day")) {
 					end = start.endOf("day");
 				}
+				calendar.events.add(formatEvent(data));
 
-				calendar.events.add({
-					...data,
-					title: data.company,
-					start: start.format(EVENT_FORMAT),
-					end: end.format(EVENT_FORMAT),
-				});
+				toggleDrawer("event", false);
 			}
 		});
 	};
 
+	const toggleDrawer = (drawerName: string, isOpen: boolean) => {
+		setOpenDrawers((prev) => ({ ...prev, [drawerName]: isOpen }));
+	};
+
+	useEffect(() => {
+		const app = calendar["$app"] as CalendarAppSingleton;
+		const range = app.calendarState.range.value;
+		if (range !== null) {
+			addDataEventToCalendar(range.start, range.end, calendar);
+		}
+	}, [mastery]);
+
 	useEffect(() => {
 		setShowSwitch(Boolean(profile?.signed));
-
-		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				setOpenDraw(false);
-			}
-		};
-
-		document.addEventListener("keydown", handleKeyDown, { passive: true });
-
-		return () => {
-			document.removeEventListener("keydown", handleKeyDown);
-			setOpenDraw(false);
-		};
 	}, [profile?.signed]);
 
+	useEffect(() => {
+		const loadData = async () => {
+			await loadSharedData();
+		};
+
+		loadData();
+	}, []);
+
 	return (
-		<section className={"calendar-page"}>
-			<Container h={"full"} pb={"6"}>
-				<Flex gap="4" direction="column" h={"full"}>
-					<HStack
-						flexDirection={{ base: "column", md: "row" }}
-						minH={"40px"}
-						gap={4}
-						justifyContent={"space-between"}
-					>
-						{!profile?.verified && profile?.signed && (
-							<HoverCard content="Нельзя перейти в режим мастера - контактные данные не подтверждены">
-								<Warning />
-							</HoverCard>
-						)}
-						{showSwitch && (
-							<Switch.Root
-								size="lg"
-								checked={mastery && profile?.verified}
-								disabled={!profile?.verified}
-								onCheckedChange={() =>
-									mastery ? disableMastery() : enableMastery()
-								}
-							>
-								<Switch.HiddenInput />
-								<Switch.Control>
-									<Switch.Thumb />
-								</Switch.Control>
-								<Switch.Label>Режим мастера</Switch.Label>
-							</Switch.Root>
-						)}
+		<section>
+			<Container>
+				<HStack flexWrap="wrap" mb="5" minHeight="40px" gap={10}>
+					{!profile?.verified && profile?.signed && (
+						<HoverCard content="Нельзя перейти в режим мастера - контактные данные не подтверждены">
+							<Warning />
+						</HoverCard>
+					)}
+					{showSwitch && (
+						<Switch.Root
+							size="lg"
+							checked={mastery && profile?.verified}
+							disabled={!profile?.verified}
+							onCheckedChange={() =>
+								mastery ? disableMastery() : enableMastery()
+							}
+						>
+							<Switch.HiddenInput />
+							<Switch.Control>
+								<Switch.Thumb />
+							</Switch.Control>
+							<Switch.Label>Режим мастера</Switch.Label>
+						</Switch.Root>
+					)}
 
-						{mastery && profile?.verified && showSwitch && (
-							<HStack
-								gap={4}
-								// flexDirection={{ base: "column", sm: "row" }}
-							>
-								<Suspense fallback={skeleton}>
-									<Company data={companyList} />
-								</Suspense>
-								<Suspense fallback={skeleton}>
-									<Location />
-								</Suspense>
-								<Suspense fallback={skeleton}>
-									<Event
-										openDraw={openDraw}
-										setOpenDraw={setOpenDraw}
-										companyList={companyList}
-										setCompanyList={setCompanyList}
-										tz={tz}
-										getNewEvent={getNewEvent}
-										profileRegion={profile.region}
-										profileCity={profile.city}
-									/>
-								</Suspense>
-							</HStack>
-						)}
-					</HStack>
+					{mastery && profile?.verified && showSwitch && (
+						<Stack direction="row" gap={4}>
+							<Suspense fallback={skeleton}>
+								<Event
+									isOpen={openDrawers.event}
+									closeDrawer={() => toggleDrawer("event", false)}
+									openDrawer={() => toggleDrawer("event", true)}
+									getNewEvent={getNewEvent}
+									profileRegion={profile.region}
+									profileCity={profile.city}
+								/>
+							</Suspense>
+							<Suspense fallback={skeleton}>
+								<Company
+									isOpen={openDrawers.company}
+									closeDrawer={() => toggleDrawer("company", false)}
+									openDrawer={() => toggleDrawer("company", true)}
+								/>
+							</Suspense>
+							<Suspense fallback={skeleton}>
+								<Location
+									isOpen={openDrawers.location}
+									closeDrawer={() => toggleDrawer("location", false)}
+									openDrawer={() => toggleDrawer("location", true)}
+								/>
+							</Suspense>
+						</Stack>
+					)}
 
-					<Box
-						p={2}
-						background={mastery ? "#18181b" : "#e4e4e7"}
-						transition={"background 0.2s ease-in-out"}
-						borderRadius={"lg"}
-						h={"full"}
-					>
-						<ScheduleXCalendar calendarApp={calendar} />
-					</Box>
-				</Flex>
+					<Stack ml="auto">
+						<CalendarFilter
+							isOpen={openDrawers.filter}
+							closeDrawer={() => toggleDrawer("filter", false)}
+							openDrawer={() => toggleDrawer("filter", true)}
+							applyFilters={applyFilters}
+							isMaster={mastery}
+						/>
+					</Stack>
+				</HStack>
+				<ScheduleXCalendar calendarApp={calendar} />
 			</Container>
 		</section>
 	);

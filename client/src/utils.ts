@@ -3,13 +3,21 @@ import { route } from "preact-router";
 
 import { useStore } from "@nanostores/preact";
 import type { CalendarType } from "@schedule-x/calendar";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 
-import { $profile, IStorePrifile, TStorePrifile } from "./store/profile";
-
-export const navBack = () => history.back();
+import { IApiEvent, IApiShortEvent } from "./api";
+import { $profile, $tz, IStorePrifile, TStorePrifile } from "./store/profile";
 
 export const EVENT_FORMAT = "YYYY-MM-DD HH:mm";
 export const YYYY_MM_DD = "YYYY-MM-DD";
+export const DEFAULT_EVENT_DURATION = 4;
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+export const navBack = () => history.back();
 
 /**
  * Универсальный хук для проверки состояния и редиректа
@@ -121,6 +129,46 @@ export const calcMapIconLink = (mapLink: string | null | undefined): string => {
 	} else {
 		return "";
 	}
+};
+
+/**
+ * Хуки для форматирования даты
+ */
+export const useEventTime = () => {
+	const tz = useStore($tz);
+
+	const parseWithTz = (dateStr: string) => dayjs.tz(dateStr, EVENT_FORMAT, tz);
+
+	const formatWithTz = (dateStr: string) =>
+		parseWithTz(dateStr).format(EVENT_FORMAT);
+
+	const getEventEnd = (start: dayjs.Dayjs, durationHours: number) => {
+		const end = start.add(durationHours, "h");
+		return end.isSame(start, "day") ? end : start.endOf("day");
+	};
+
+	const formatEvent = (apiEvent: IApiShortEvent | IApiEvent) => {
+		const start = parseWithTz(apiEvent.date);
+		const end = getEventEnd(
+			start,
+			apiEvent.plan_duration ?? DEFAULT_EVENT_DURATION,
+		);
+		return {
+			id: apiEvent.id,
+			title: apiEvent.company,
+			start: start.format(EVENT_FORMAT),
+			end: end.format(EVENT_FORMAT),
+		};
+	};
+
+	return {
+		tz,
+		EVENT_FORMAT,
+		parseWithTz,
+		formatWithTz,
+		getEventEnd,
+		formatEvent,
+	};
 };
 
 const HEX_COLOR_PREFIX = "#";

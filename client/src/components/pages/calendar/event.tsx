@@ -1,7 +1,7 @@
 import type { UUID } from "node:crypto";
 
 import { h } from "preact";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { Controller, useForm } from "react-hook-form";
 
 import {
@@ -9,7 +9,6 @@ import {
 	Card,
 	CardBody,
 	Checkbox,
-	createListCollection,
 	Group,
 	HStack,
 	Input,
@@ -23,6 +22,7 @@ import {
 	AutoCompleteItem,
 	AutoCompleteList,
 } from "@choc-ui/chakra-autocomplete";
+import { useStore } from "@nanostores/preact";
 import dayjs from "dayjs";
 
 import {
@@ -37,13 +37,12 @@ import {
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
 import { toaster } from "../../ui/toaster";
+import { createEvent } from "../../../api";
+import { $tz } from "../../../store/profile";
 import {
-	createEvent,
-	IApiCompany,
-	IApiLocation,
-	readLocations,
-	readMyCompanies,
-} from "../../../api";
+	sharedCompanies,
+	sharedLocations,
+} from "../../../store/sharedDataStore";
 import { EVENT_FORMAT, YYYY_MM_DD } from "../../../utils";
 
 interface IFormCreateEvent {
@@ -60,35 +59,28 @@ interface IFormCreateEvent {
 }
 
 export interface IEventProps {
-	readonly openDraw: boolean;
-	readonly setOpenDraw: (val: boolean) => void;
-	readonly companyList: ReadonlyArray<IApiCompany>;
-	readonly setCompanyList: (List: ReadonlyArray<IApiCompany>) => void;
-	readonly tz: string;
+	readonly isOpen: boolean;
+	readonly openDrawer: () => void;
+	readonly closeDrawer: () => void;
+
 	readonly getNewEvent: (id: UUID) => void;
 	readonly profileRegion: string | null;
 	readonly profileCity: string | null;
 }
 
 const Event = (props: IEventProps) => {
-	const [locationList, setLocationList] = useState<
-		ReadonlyArray<IApiLocation>
-	>([]);
+	const tz = useStore($tz);
+	const companies = useStore(sharedCompanies);
+	const locations = useStore(sharedLocations);
 
-	const [
-		isDisableCreateEventSubmitButton,
-		setIsDisableCreateEventSubmitButton,
-	] = useState(false);
-
-	const [isDisableCreateEventButton, setIsDisableCreateEventButton] =
-		useState(false);
+	const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
 
 	const {
 		register,
 		handleSubmit,
 		setValue,
 		watch,
-		reset,
+		// reset,
 		control,
 		clearErrors,
 		formState: { errors },
@@ -97,14 +89,13 @@ const Event = (props: IEventProps) => {
 	});
 
 	const [isStart] = watch(["start"]);
-
 	const isMaxSlotsChecked = watch("isMax_slots");
 	const isMaxDuration = watch("isPlan_duration");
 
 	const validateDate = (value: string) => {
 		clearErrors("startTime");
-		const fieldDate = dayjs.tz(`${value} 12:00`, EVENT_FORMAT, props.tz);
-		const nowDate = dayjs().tz(props.tz);
+		const fieldDate = dayjs.tz(`${value} 12:00`, EVENT_FORMAT, tz);
+		const nowDate = dayjs().tz(tz);
 		if (
 			nowDate.isSame(fieldDate, "day") ||
 			fieldDate.isAfter(nowDate, "day")
@@ -119,8 +110,8 @@ const Event = (props: IEventProps) => {
 		if (!isStart) {
 			return "Укажите дату";
 		}
-		const fultime = dayjs.tz(`${isStart} ${value}`, EVENT_FORMAT, props.tz);
-		const nowDate = dayjs().tz(props.tz);
+		const fultime = dayjs.tz(`${isStart} ${value}`, EVENT_FORMAT, tz);
+		const nowDate = dayjs().tz(tz);
 		if (
 			nowDate.isSame(fultime, "minute") ||
 			fultime.isAfter(nowDate, "minute")
@@ -131,50 +122,18 @@ const Event = (props: IEventProps) => {
 		}
 	};
 
-	const getCompanies = () => {
-		return readMyCompanies().then((responce) => {
-			if (responce?.payload) {
-				props.setCompanyList(responce.payload);
-			}
-			return responce?.payload || null;
-		});
-	};
-
-	const getLocations = () => {
-		return readLocations().then((responce) => {
-			if (responce?.payload) {
-				setLocationList(responce.payload);
-			}
-			return responce?.payload || null;
-		});
-	};
-
-	const companies = useMemo(() => {
-		return createListCollection({
-			items: props.companyList,
-			itemToString: (item) => item.name,
-			itemToValue: (item) => item.id,
-		});
-	}, [props.companyList]);
-
-	const locations = useMemo(() => {
-		return createListCollection({
-			items: locationList,
-			itemToString: (item) => item.name,
-			itemToValue: (item) => item.id,
-		});
-	}, [locationList]);
-
-	const onSubmit = handleSubmit((data) => {
+	const onSubmit = handleSubmit(async (data) => {
 		const { company, location, start, startTime, max_slots, plan_duration } =
 			data;
 
-		const date = dayjs.tz(`${start} ${startTime}`, EVENT_FORMAT, props.tz);
+		const date = dayjs
+			.tz(`${start} ${startTime}`, EVENT_FORMAT, tz)
+			.toISOString();
 
-		setIsDisableCreateEventSubmitButton(true);
+		setIsSubmitDisabled(true);
 		createEvent(
 			company,
-			date.toISOString(),
+			date,
 			location,
 			Number(max_slots) || null,
 			Number(plan_duration) || null,
@@ -182,52 +141,36 @@ const Event = (props: IEventProps) => {
 			.then((res) => {
 				if (res) {
 					toaster.success({ title: "Событие успешно создано" });
-					props.setOpenDraw(false);
+					props.closeDrawer();
 					props.getNewEvent(res.payload);
-					reset();
 				}
 			})
 			.finally(() => {
-				setIsDisableCreateEventSubmitButton(false);
+				setIsSubmitDisabled(false);
 			});
 	});
 
 	useEffect(() => {
 		if (isMaxSlotsChecked) {
-			setValue("max_slots", null); // Обнуляем значение
+			setValue("max_slots", null);
 		}
 		if (isMaxDuration) {
-			setValue("plan_duration", null); // Обнуляем значение
+			setValue("plan_duration", null);
 		}
 	}, [isMaxSlotsChecked, isMaxDuration, setValue]);
 
 	return (
 		<DrawerRoot
-			open={props.openDraw}
-			onOpenChange={(e) => {
-				if (e.open) {
-					setIsDisableCreateEventButton(true);
-					Promise.all([getCompanies(), getLocations()]).then(
-						([companiesResult, locationsResult]) => {
-							if (companiesResult === null || locationsResult === null) {
-								setIsDisableCreateEventButton(false);
-								return;
-							}
-							props.setOpenDraw(e.open);
-							setIsDisableCreateEventButton(false);
-						},
-					);
-				} else {
-					props.setOpenDraw(e.open);
-				}
-			}}
+			open={props.isOpen}
+			onOpenChange={(e) =>
+				e.open ? props.openDrawer() : props.closeDrawer()
+			}
 		>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
 				<Button
-					disabled={isDisableCreateEventButton}
-					// variant="outline"
-					size={{ base: "xs", md: "md" }}
+					w="30%"
+					variant="outline"
 				>
 					Добавить событие
 				</Button>
@@ -242,7 +185,7 @@ const Event = (props: IEventProps) => {
 							<Field
 								label="Кампания *"
 								helperText={
-									companies.items.length > 0
+									companies.length > 0
 										? ""
 										: "Сначала создайте кампанию"
 								}
@@ -265,11 +208,11 @@ const Event = (props: IEventProps) => {
 												variant="outline"
 												onBlur={field.onBlur}
 												ref={field.ref}
-												disabled={companies.items.length < 1}
+												disabled={companies.length < 1}
 											/>
 											<AutoCompleteList bg="inherit">
 												<AutoCompleteGroup>
-													{companies.items.map((c) => (
+													{companies.map((c) => (
 														<AutoCompleteItem
 															key={c.id}
 															value={{ title: c.id }}
@@ -295,7 +238,7 @@ const Event = (props: IEventProps) => {
 								>
 									<Input
 										type="date"
-										min={dayjs().tz(props.tz).format(YYYY_MM_DD)}
+										min={dayjs().tz(tz).format(YYYY_MM_DD)}
 										{...register("start", {
 											required: "Заполните поле",
 											validate: validateDate,
@@ -322,7 +265,7 @@ const Event = (props: IEventProps) => {
 									<Field
 										label="Локация *"
 										helperText={
-											locations.items.length > 0
+											locations.length > 0
 												? ""
 												: "Сначала создайте локацию"
 										}
@@ -345,11 +288,11 @@ const Event = (props: IEventProps) => {
 														variant="outline"
 														onBlur={field.onBlur}
 														ref={field.ref}
-														disabled={locations.items.length < 1}
+														disabled={locations.length < 1}
 													/>
 													<AutoCompleteList bg="inherit">
 														<AutoCompleteGroup>
-															{locations.items.map((option) => (
+															{locations.map((option) => (
 																<AutoCompleteItem
 																	key={option.id}
 																	value={{
@@ -470,7 +413,7 @@ const Event = (props: IEventProps) => {
 							</Card.Root>
 						</Stack>
 						<Button
-							disabled={isDisableCreateEventSubmitButton}
+							disabled={isSubmitDisabled}
 							type="submit"
 							w="full"
 							mt={6}
