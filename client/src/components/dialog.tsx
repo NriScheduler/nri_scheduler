@@ -13,7 +13,6 @@ interface IDialogItem {
 	item: AppItem;
 	trigger: ReactNode;
 	footer?: ReactNode;
-	title?: string;
 	additionalData?: Array<{
 		label: string;
 		value: ReactNode;
@@ -25,7 +24,6 @@ export const DialogItem = ({
 	item,
 	trigger,
 	footer,
-	title = `Игра по кампании ${item.company_name}`,
 	additionalData = [],
 }: IDialogItem) => {
 	const [isOpen, setIsOpen] = useState(false);
@@ -106,11 +104,12 @@ export const DialogItem = ({
 						<Dialog.Content>
 							<Dialog.Header>
 								<Dialog.Title>
+									Игра по кампании{" "}
 									<Link
 										href={`/company/${item.company_id}`}
 										colorPalette="blue"
 									>
-										{title}
+										{item.company_name}
 									</Link>
 								</Dialog.Title>
 							</Dialog.Header>
