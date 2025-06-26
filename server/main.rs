@@ -13,7 +13,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 	let repo = Repository::new().await?;
 	let state = Arc::new(AppState::new(repo));
-	let app = router::create_router(state.clone());
+	let app = router::create_router(state.clone())?;
 
 	let addr = config::get_http_host_to_serve();
 

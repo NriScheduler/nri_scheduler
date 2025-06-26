@@ -8,7 +8,14 @@ import { lazy, Suspense } from "preact/compat";
 import { useEffect, useState } from "preact/hooks";
 import { route as navigate } from "preact-router";
 
-import { Container, HStack, Skeleton, Stack, Switch } from "@chakra-ui/react";
+import {
+	Box,
+	Container,
+	Flex,
+	HStack,
+	Skeleton,
+	Switch,
+} from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 import {
 	CalendarApp,
@@ -108,6 +115,7 @@ export const CalendarPage = () => {
 
 				const app = calendar["$app"] as CalendarAppSingleton;
 				app.config.calendars.value = calendars;
+				app.config.theme = "master";
 
 				calendar.events.set(events);
 			}

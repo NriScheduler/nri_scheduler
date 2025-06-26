@@ -64,7 +64,11 @@ const Company = ({ isOpen, openDrawer, closeDrawer }: ICompanyProps) => {
 		>
 			<DrawerBackdrop />
 			<DrawerTrigger asChild>
-				<Button w="30%" disabled={!profile?.signed} variant="outline">
+				<Button
+					disabled={!profile?.signed}
+					variant="outline"
+					size={{ base: "xs", md: "md" }}
+				>
 					Создать кампанию
 				</Button>
 			</DrawerTrigger>
@@ -74,13 +78,12 @@ const Company = ({ isOpen, openDrawer, closeDrawer }: ICompanyProps) => {
 				</DrawerHeader>
 				<DrawerBody>
 					<form onSubmit={onSubmit}>
-						<Stack
-							gap="4"
-							align="flex-start"
-							maxW="lg"
-							w="full"
-							mx="auto"
-						>
+						<Stack gap={2}>
+							<HStack>
+								<Separator flex="1" />
+								<Text flexShrink="0">Данные</Text>
+								<Separator flex="1" />
+							</HStack>
 							<Field
 								label="Название *"
 								errorText={errors.name?.message}
@@ -88,7 +91,9 @@ const Company = ({ isOpen, openDrawer, closeDrawer }: ICompanyProps) => {
 							>
 								<Input
 									placeholder="Заполните поле"
-									{...register("name", { required: "Заполните поле" })}
+									{...register("name", {
+										required: "Заполните поле",
+									})}
 								/>
 							</Field>
 							<Field
@@ -110,7 +115,17 @@ const Company = ({ isOpen, openDrawer, closeDrawer }: ICompanyProps) => {
 								/>
 							</Field>
 						</Stack>
-						<Button type="submit" w="full" mt={6}>
+
+						<Stack gap={2}>
+							<HStack mt={2}>
+								<Separator flex="1" />
+								<Text flexShrink="0">Оформление</Text>
+								<Separator flex="1" />
+							</HStack>
+							<PreviewCompany control={control} value={watch("name")} />
+						</Stack>
+
+						<Button type="submit" w="full" mt={4}>
 							Создать
 						</Button>
 					</form>

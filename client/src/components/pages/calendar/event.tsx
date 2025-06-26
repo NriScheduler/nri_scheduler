@@ -170,7 +170,6 @@ const Event = (props: IEventProps) => {
 			<DrawerTrigger asChild>
 				<Button
 					w="30%"
-					// disabled={isLoading}
 					variant="outline"
 				>
 					Добавить событие
