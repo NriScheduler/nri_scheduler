@@ -131,10 +131,11 @@ export interface IEventStyle {
 	readonly text: string;
 }
 
+/** @todo придумать как не хардкодить цвета а использовать переменные */
 export const DEFAULT_EVENT_STYLE: IEventStyle = {
-	background: "var(--sx-color-primary-container)",
-	highlight: "var(--sx-color-primary)",
-	text: "var(--sx-color-on-primary-container)",
+	background: "#a2e2f1", // var(--sx-color-primary-container)
+	highlight: "#0891b2", // var(--sx-color-primary)
+	text: "#21005e", // var(--sx-color-on-primary-container)
 };
 
 export const parseEventStyle = (style: string): IEventStyle => {

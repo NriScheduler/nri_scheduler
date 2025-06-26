@@ -1,0 +1,24 @@
+# sudo nano /etc/systemd/system/nri.service
+# sudo systemctl daemon-reload
+# sudo systemctl enable nri
+# sudo systemctl start nri
+# sudo journalctl -u nri.service -b --no-pager
+
+[Unit]
+Description=My outstanding trpg scheduler
+After=network.target
+
+[Service]
+Type=simple
+User=dmitry
+Group=dmitry
+ExecStart=/var/www/nri_scheduler/scripts.sh start_release
+WorkingDirectory=/var/www/nri_scheduler
+Restart=always
+RestartSec=5
+UMask=0023
+StandardOutput=file:/var/www/nri_scheduler/nri.log
+StandardError=file:/var/www/nri_scheduler/nri-error.log
+
+[Install]
+WantedBy=multi-user.target

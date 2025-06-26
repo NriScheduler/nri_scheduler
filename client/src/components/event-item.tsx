@@ -64,7 +64,9 @@ export const EventItem = ({ item, isMaster, onUpdate }: IEventItemProps) => {
 		<Card.Root key={item.id}>
 			<Card.Body>
 				<Card.Title>
-					{isMaster ? `Игрок ${item.player_name}` : "Ваша заявка"}
+					{isMaster && "player_name" in item
+						? `Игрок ${item.player_name}`
+						: "Ваша заявка"}
 				</Card.Title>
 				<Card.Description>
 					{isMaster

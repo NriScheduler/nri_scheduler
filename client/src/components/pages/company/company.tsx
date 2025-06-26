@@ -18,12 +18,14 @@ import {
 	Image,
 	Input,
 	Link,
+	Separator,
 	Skeleton,
 	Stack,
 	Textarea,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
 
+import { CompanyFormValues, PreviewCompany } from "../calendar/company";
 import { NotFoundPage } from "../not-found/not-found";
 import { EventItem } from "../../event-item";
 import {
@@ -39,7 +41,11 @@ import {
 import { Field } from "../../ui/field";
 import { IApiCompanyInfo, readCompanyById, updateCompany } from "../../../api";
 import { $eventsStore, fetchEvents } from "../../../store/eventList";
-import { convertEventStyleToCSS, navBack } from "../../../utils";
+import {
+	convertEventStyleToCSS,
+	navBack,
+	stringifyEventStyle,
+} from "../../../utils";
 
 const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 	const stats = [
@@ -138,14 +144,23 @@ export const CompanyPage = () => {
 	const {
 		register,
 		handleSubmit,
+		control,
+		reset,
+		watch,
 		formState: { errors },
-	} = useForm<IApiCompanyInfo>();
+	} = useForm<CompanyFormValues>();
 
 	const onSubmit = handleSubmit((companyData) => {
 		if (companyId) {
-			const { name, system, description } = companyData;
+			const { name, system, description, style } = companyData;
+			const eventStyle = stringifyEventStyle(style);
 			setFetching(true);
-			updateCompany(companyId, { name, system, description })
+			updateCompany(companyId, {
+				name,
+				system,
+				description,
+				event_style: eventStyle,
+			})
 				.then((res) => {
 					if (res !== null) {
 						setOpen(false);
@@ -202,7 +217,7 @@ export const CompanyPage = () => {
 		return () => {
 			document.removeEventListener("keydown", onEscClose);
 		};
-	}, [companyId]);
+	}, [companyId, reset]);
 
 	return (
 		<Container>
@@ -229,6 +244,11 @@ export const CompanyPage = () => {
 							</DrawerHeader>
 							<DrawerBody>
 								<form onSubmit={onSubmit}>
+									<HStack>
+										<Separator flex="1" />
+										<Text flexShrink="0">Данные</Text>
+										<Separator flex="1" />
+									</HStack>
 									<Stack
 										gap="4"
 										align="flex-start"
@@ -246,7 +266,6 @@ export const CompanyPage = () => {
 												{...register("name", {
 													required: "Заполните поле",
 												})}
-												defaultValue={company?.name}
 											/>
 										</Field>
 										<Field
@@ -259,23 +278,38 @@ export const CompanyPage = () => {
 												{...register("system", {
 													required: "Заполните поле",
 												})}
-												defaultValue={company?.system}
 											/>
 										</Field>
 										<Field label="Описание">
 											<Textarea
 												placeholder="Расскажите о своей кампании"
 												{...register("description")}
-											>
-												{company?.description}
-											</Textarea>
+											/>
 										</Field>
 									</Stack>
-									<Button type="submit" w="full" mt={6}>
+
+									<Stack gap={2}>
+										<HStack mt={2}>
+											<Separator flex="1" />
+											<Text flexShrink="0">Оформление</Text>
+											<Separator flex="1" />
+										</HStack>
+										<PreviewCompany
+											control={control}
+											value={watch("name")}
+										/>
+									</Stack>
+
+									<Button type="submit" w="full" mt={4}>
 										Редактировать
 									</Button>
 									<DrawerTrigger asChild>
-										<Button type="button" w="full" mt={6}>
+										<Button
+											type="button"
+											variant="subtle"
+											w="full"
+											mt={2}
+										>
 											Отмена
 										</Button>
 									</DrawerTrigger>
