@@ -18,7 +18,7 @@ export const EventAlert = ({
 	icon,
 }: IEventAlertProps) => {
 	return (
-		<Alert.Root status={status} variant="surface" size={"sm"}>
+		<Alert.Root status={status} variant="surface" size={"sm"} maxW={"350px"}>
 			<Alert.Indicator>{icon}</Alert.Indicator>
 			<Alert.Content>
 				<Alert.Title>{title}</Alert.Title>

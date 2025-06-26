@@ -5,11 +5,15 @@ import { Button, Dialog, Portal } from "@chakra-ui/react";
 import { CloseButton } from "../../ui/close-button";
 
 interface IEventDialogProps {
+	title: string;
+	description?: string;
 	buttonTitle: string;
 	handleClick: () => void;
 }
 
 export const EventDialog = ({
+	title,
+	description,
 	buttonTitle,
 	handleClick,
 }: IEventDialogProps) => {
@@ -25,13 +29,16 @@ export const EventDialog = ({
 				<Dialog.Positioner>
 					<Dialog.Content>
 						<Dialog.Header>
-							<Dialog.Title>А вы уверены?</Dialog.Title>
+							<Dialog.Title>{title}</Dialog.Title>
 						</Dialog.Header>
+						<Dialog.Body>
+							<p>{description}</p>
+						</Dialog.Body>
 						<Dialog.Footer>
 							<Dialog.ActionTrigger asChild>
 								<Button variant="outline">Нет</Button>
 							</Dialog.ActionTrigger>
-							<Button colorPalette="red" onClick={handleClick}>
+							<Button colorPalette="blue" onClick={handleClick}>
 								Да
 							</Button>
 						</Dialog.Footer>

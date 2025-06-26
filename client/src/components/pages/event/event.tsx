@@ -162,9 +162,9 @@ const EventCard = ({ event, isLoading, isApplied }: IEventCardProps) => {
 				</DataList.Root>
 			</Card.Body>
 			<Card.Footer
-				flexDirection={"column"}
-				alignItems={"flex-start"}
-				gap={2}
+				// flexDirection={"column"}
+				alignItems={"center"}
+				gap={4}
 			>
 				{profile?.signed ? (
 					!event.you_are_master &&
@@ -180,6 +180,8 @@ const EventCard = ({ event, isLoading, isApplied }: IEventCardProps) => {
 										status="warning"
 									/>
 									<EventDialog
+										title="Мест нет, но можно подать заявку"
+										description="К сожалению, свободные места на это событие закончились. Вы всё ещё можете отправить заявку, но она не будет подтверждена автоматически — мастер рассмотрит её отдельно"
 										buttonTitle="Записаться"
 										handleClick={handleSubscribe}
 									/>
@@ -249,6 +251,7 @@ const EventCard = ({ event, isLoading, isApplied }: IEventCardProps) => {
 				)}
 				{event.you_are_master && !event.cancelled && (
 					<EventDialog
+						title="А вы уверены?"
 						buttonTitle="Отменить событие"
 						handleClick={() => cancelEventAction(event.id)}
 					/>
