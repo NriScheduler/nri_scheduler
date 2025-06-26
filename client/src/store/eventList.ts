@@ -87,6 +87,7 @@ export const fetchEvents = async (source: EventSource) => {
 	try {
 		setEventsLoading(true);
 		setIsMaster(source.youAreMaster);
+		setEventsData({ list: [], title: "" });
 
 		const apiCall = getApiCall(source);
 		const response = await apiCall();
@@ -99,6 +100,7 @@ export const fetchEvents = async (source: EventSource) => {
 				list: payloadArray,
 				title: response.result || "",
 			});
+			setEventsLoading(false);
 		}
 	} catch (error) {
 		console.error("Error", error);

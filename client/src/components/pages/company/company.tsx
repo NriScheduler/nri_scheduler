@@ -20,7 +20,6 @@ import {
 	Link,
 	Skeleton,
 	Stack,
-	Text,
 	Textarea,
 } from "@chakra-ui/react";
 import { useStore } from "@nanostores/preact";
@@ -100,6 +99,12 @@ const CompanyCardSkeleton = () => {
 
 	return (
 		<Card.Root width="full">
+			<Image
+				height={200}
+				width="100%"
+				src="/assets/company_cover.webp"
+				alt="Обложка кампании"
+			/>
 			<Card.Body>
 				<HStack mb="6" gap="3">
 					<Skeleton height="38px" w="30%" />
@@ -127,7 +132,7 @@ export const CompanyPage = () => {
 	const [fetching, setFetching] = useState(false);
 	const [company, setCompany] = useState<IApiCompanyInfo | null>(null);
 
-	const { list, title, isLoading, isMaster } = useStore($eventsStore);
+	const { list, title, isMaster } = useStore($eventsStore);
 
 	const [open, setOpen] = useState(false);
 	const {
@@ -198,10 +203,6 @@ export const CompanyPage = () => {
 			document.removeEventListener("keydown", onEscClose);
 		};
 	}, [companyId]);
-
-	if (isLoading) {
-		return <Text>Загрузка...</Text>;
-	}
 
 	return (
 		<Container>
