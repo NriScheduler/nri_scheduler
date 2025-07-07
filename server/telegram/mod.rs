@@ -61,7 +61,7 @@ pub(crate) async fn verify_telegram_hash(data: &TelegramAuthDto) -> bool {
 	// 2. Собираем данные для проверки
 	let data_check_string = fields
 		.iter()
-		.map(|(key, value)| format!("{}={}", key, value))
+		.map(|(key, value)| format!("{key}={value}"))
 		.collect::<Vec<_>>()
 		.join("\n");
 

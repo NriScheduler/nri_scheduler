@@ -19,7 +19,7 @@ static FROM_MAIL_BOX: LazyLock<Mailbox> = LazyLock::new(|| {
 	let smtp_login =
 		::std::env::var("SMTP_LOGIN").expect("SMTP_LOGIN environment variable is not defined");
 
-	let login = format!("NriScheduler <{}>", smtp_login);
+	let login = format!("NriScheduler <{smtp_login}>");
 
 	Mailbox::from_str(&login)
 		.expect("SMTP_LOGIN environment variable contains invalid email address")
