@@ -33,7 +33,7 @@ pub(crate) async fn sse_handler(
 		Ok(Event::default().event("heartbeat"))
 	});
 
-	let stream = TokioStreamExt::take_while(event_stream.merge(heartbeat_stream), |res| res.is_ok())
+	let stream = TokioStreamExt::take_while(event_stream.merge(heartbeat_stream), Result::is_ok)
 		.take_until(async move { shutdown_receiver.recv().await.ok() });
 
 	Sse::new(stream).keep_alive(KeepAlive::default())

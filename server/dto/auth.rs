@@ -147,12 +147,12 @@ impl<'de> Deserialize<'de> for UpdateProfileDto {
 					}
 				};
 			}
-			Some("city") | Some("device") => {
+			Some("city" | "device") => {
 				own_tz = None;
 			}
 			_ => {
 				own_tz = None;
-				tz_variant = None
+				tz_variant = None;
 			}
 		};
 

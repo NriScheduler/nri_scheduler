@@ -1,3 +1,5 @@
+use std::string::ToString;
+
 use axum::{
 	body::Body,
 	http::{HeaderValue, Request, header},
@@ -9,7 +11,7 @@ pub(super) async fn cors_middleware(req: Request<Body>, next: Next) -> Response 
 	let origin = req
 		.headers()
 		.get(header::ORIGIN)
-		.and_then(|origin| origin.to_str().ok().map(|s| s.to_string()));
+		.and_then(|origin| origin.to_str().ok().map(ToString::to_string));
 
 	let origin_parts = origin.as_ref().map(|orig| orig.split(':'));
 
