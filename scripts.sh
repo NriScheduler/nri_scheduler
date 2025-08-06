@@ -64,4 +64,14 @@ cert() {
 	openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
 }
 
+# cargo clippy --  -D clippy::pedantic
+# - clippy (everything that has no false positives)
+# - clippy_pedantic (everything)
+# - clippy_nursery (new lints that aren't quite ready yet)
+# - clippy_style (code that should be written in a more idiomatic way)
+# - clippy_complexity (code that does something simple but in a complex way)
+# - clippy_perf (code that can be written in a faster way)
+# - clippy_cargo (checks against the cargo manifest)
+# - clippy_correctness (code that is just outright wrong or very very useless)
+
 "$@"
