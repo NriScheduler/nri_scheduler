@@ -17,34 +17,33 @@ pub(super) async fn cors_middleware(req: Request<Body>, next: Next) -> Response 
 
 	let mut res = next.run(req).await;
 
-	if let Some(mut origin_parts) = origin_parts {
-		if origin_parts.next() == Some("http") && origin_parts.next() == Some("//localhost") {
-			if let Some(port) = origin_parts
-				.next()
-				.and_then(|port| port.parse::<u16>().ok())
-			{
-				let origin = format!("http://localhost:{port}");
+	if let Some(mut origin_parts) = origin_parts
+		&& origin_parts.next() == Some("http")
+		&& origin_parts.next() == Some("//localhost")
+		&& let Some(port) = origin_parts
+			.next()
+			.and_then(|port| port.parse::<u16>().ok())
+	{
+		let origin = format!("http://localhost:{port}");
 
-				if let Ok(origin) = HeaderValue::from_str(&origin) {
-					res.headers_mut()
-						.append(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+		if let Ok(origin) = HeaderValue::from_str(&origin) {
+			res.headers_mut()
+				.append(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
 
-					res.headers_mut().append(
-						header::ACCESS_CONTROL_ALLOW_METHODS,
-						HeaderValue::from_str("GET,POST,PUT,OPTIONS").unwrap(),
-					);
+			res.headers_mut().append(
+				header::ACCESS_CONTROL_ALLOW_METHODS,
+				HeaderValue::from_str("GET,POST,PUT,OPTIONS").unwrap(),
+			);
 
-					res.headers_mut().append(
-						header::ACCESS_CONTROL_ALLOW_HEADERS,
-						HeaderValue::from_str("content-type, origin").unwrap(),
-					);
+			res.headers_mut().append(
+				header::ACCESS_CONTROL_ALLOW_HEADERS,
+				HeaderValue::from_str("content-type, origin").unwrap(),
+			);
 
-					res.headers_mut().append(
-						header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
-						HeaderValue::from_str("true").unwrap(),
-					);
-				}
-			}
+			res.headers_mut().append(
+				header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
+				HeaderValue::from_str("true").unwrap(),
+			);
 		}
 	}
 

@@ -54,10 +54,10 @@ impl<'de> Deserialize<'de> for RegistrationEmailDto {
 		if password.is_empty() {
 			return Err(D::Error::custom("Введен некорректный пароль"));
 		}
-		if let Some(tz) = timezone_offset {
-			if !(-12..=12).contains(&tz) {
-				return Err(D::Error::custom("Введена некорректная временная зона"));
-			}
+		if let Some(tz) = timezone_offset
+			&& !(-12..=12).contains(&tz)
+		{
+			return Err(D::Error::custom("Введена некорректная временная зона"));
 		}
 
 		Ok(Self {

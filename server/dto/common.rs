@@ -37,13 +37,13 @@ where
 				AppError::scenario_error("Переданы некорректные параметры запроса", Some(err))
 			})
 		} else {
-			if let Some(content_type) = req.headers().get(header::CONTENT_TYPE) {
-				if content_type == URL_ENCODED.as_ref() {
-					let body = req.extract::<Form<T>, _>().await;
-					return body
-						.map(|Form(dto)| Dto(dto))
-						.map_err(handle_form_rejection);
-				}
+			if let Some(content_type) = req.headers().get(header::CONTENT_TYPE)
+				&& content_type == URL_ENCODED.as_ref()
+			{
+				let body = req.extract::<Form<T>, _>().await;
+				return body
+					.map(|Form(dto)| Dto(dto))
+					.map_err(handle_form_rejection);
 			}
 
 			let body = req.extract::<Json<T>, _>().await;

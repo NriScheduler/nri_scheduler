@@ -733,14 +733,14 @@ WHERE id = $1;",
 		if let Some(master_id) = query_args.master {
 			qb.push(" AND m.id = ");
 			qb.push_bind(master_id);
-		} else if let Some(imamaster) = query_args.imamaster {
-			if let Some(my_id) = player_id {
-				match imamaster {
-					true => qb.push(" AND m.id = "),
-					false => qb.push(" AND m.id <> "),
-				};
-				qb.push_bind(my_id);
-			}
+		} else if let Some(imamaster) = query_args.imamaster
+			&& let Some(my_id) = player_id
+		{
+			match imamaster {
+				true => qb.push(" AND m.id = "),
+				false => qb.push(" AND m.id <> "),
+			};
+			qb.push_bind(my_id);
 		}
 
 		qb.push(" LEFT JOIN applications y ON y.player = ");
