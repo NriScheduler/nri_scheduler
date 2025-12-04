@@ -62,3 +62,4 @@ cargo-husky = { version = "^1.5.0", default-features = false, features = ["user-
 
 [lints.clippy]
 needless_return = "allow"
+missing_const_for_fn = "deny"

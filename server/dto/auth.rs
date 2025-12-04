@@ -203,7 +203,7 @@ pub(crate) struct TouchSearch {
 }
 
 impl TouchSearch {
-	pub fn is_empty(&self) -> bool {
+	pub const fn is_empty(&self) -> bool {
 		!self.masters && !self.players && !self.co_players
 	}
 }

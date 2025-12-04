@@ -33,7 +33,7 @@ pub(crate) struct ApiUpdateCompanyDto {
 }
 
 impl ApiUpdateCompanyDto {
-	pub fn is_empty(&self) -> bool {
+	pub const fn is_empty(&self) -> bool {
 		self.name.is_none() && self.system.is_none() && self.description.is_none()
 	}
 }

@@ -58,7 +58,7 @@ pub(super) fn get_cookie_params() -> (&'static str, &'static str) {
 }
 
 #[cfg(feature = "https")]
-pub(super) fn get_cookie_params() -> (&'static str, &'static str) {
+pub(super) const fn get_cookie_params() -> (&'static str, &'static str) {
 	("__Secure-authorization", "Secure; ")
 }
 
