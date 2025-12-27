@@ -29,6 +29,7 @@ import { useStore } from "@nanostores/preact";
 import dayjs from "dayjs";
 
 import { NotFoundPage } from "../not-found/not-found";
+import { EventItem } from "../../event-item";
 import { CloseButton } from "../../ui/close-button";
 import {
 	DrawerBackdrop,
@@ -55,6 +56,7 @@ import {
 	reopenEvent,
 	updateEvent,
 } from "../../../api";
+import { $eventsStore, fetchEvents } from "../../../store/eventList";
 import { $profile, $tz } from "../../../store/profile";
 import {
 	calcMapIconLink,
@@ -361,6 +363,9 @@ export const EventPage = () => {
 	const [locationList, setLocationList] = useState<
 		ReadonlyArray<IApiLocation>
 	>([]);
+
+	const { list, title, isMaster } = useStore($eventsStore);
+
 	const [isDisableEditEventSubmitButton, setIsDisableEditEventSubmitButton] =
 		useState(false);
 	const tz = useStore($tz);
@@ -381,6 +386,7 @@ export const EventPage = () => {
 			itemToValue: (item) => item.id,
 		});
 	}, [locationList]);
+
 	const {
 		register,
 		handleSubmit,
@@ -388,6 +394,7 @@ export const EventPage = () => {
 		clearErrors,
 		formState: { errors },
 	} = useForm<IFormEditEvent>();
+
 	const onSubmit = handleSubmit((data) => {
 		const { location, start, startTime, max_slots, plan_duration } = data;
 
@@ -452,25 +459,42 @@ export const EventPage = () => {
 			return "Вы указали прошлое время";
 		}
 	};
+
 	useEffect(() => {
-		if (eventId) {
-			setFetching(true);
-			readEvent(eventId)
-				.then((res) => {
-					if (res !== null) {
-						setEvent(res.payload);
-						return res?.payload;
-					}
-				})
-				.then((eventData) => {
-					if (eventData?.you_are_master) {
-						return getLocations();
-					}
-				})
-				.finally(() => {
-					setFetching(false);
-				});
+		if (!eventId) {
+			return;
 		}
+
+		const loadEventData = async () => {
+			setFetching(true);
+
+			try {
+				const eventResponse = await readEvent(eventId);
+
+				if (!eventResponse?.payload) {
+					return;
+				}
+
+				const eventData = eventResponse.payload;
+				setEvent(eventData);
+
+				if (eventData.you_are_master) {
+					await getLocations();
+				}
+
+				await fetchEvents({
+					type: "event",
+					eventId: eventData.id,
+					youAreMaster: eventData.you_are_master,
+				});
+			} catch (error) {
+				console.error("Failed to load event data:", error);
+			} finally {
+				setFetching(false);
+			}
+		};
+
+		loadEventData();
 	}, [route.matches?.id]);
 
 	const eventDate = dayjs(event?.date).tz(tz);
@@ -643,7 +667,28 @@ export const EventPage = () => {
 				{fetching ? (
 					<EventCardSkeleton />
 				) : event !== null ? (
-					<EventCard event={event} updateEventData={updateEventData} />
+					<HStack gap={6} alignItems={"flex-start"}>
+						<Stack w={list.length > 0 ? "2/3" : "full"}>
+							<EventCard
+								event={event}
+								updateEventData={updateEventData}
+							/>
+						</Stack>
+						{list.length > 0 && (
+							<Card.Root w="1/3">
+								<Card.Body gap="4">
+									<Card.Title>{title}</Card.Title>
+									{list.map((item) => (
+										<EventItem
+											item={item}
+											key={item.id}
+											isMaster={isMaster}
+										/>
+									))}
+								</Card.Body>
+							</Card.Root>
+						)}
+					</HStack>
 				) : (
 					<NotFoundPage
 						checkButton={false}

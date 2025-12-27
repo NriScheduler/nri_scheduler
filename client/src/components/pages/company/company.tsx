@@ -21,12 +21,13 @@ import {
 	Separator,
 	Skeleton,
 	Stack,
-	Text,
 	Textarea,
 } from "@chakra-ui/react";
+import { useStore } from "@nanostores/preact";
 
-import { PreviewCompany } from "../calendar/company";
+import { CompanyFormValues, PreviewCompany } from "../calendar/company";
 import { NotFoundPage } from "../not-found/not-found";
+import { EventItem } from "../../event-item";
 import {
 	DrawerBackdrop,
 	DrawerBody,
@@ -38,24 +39,13 @@ import {
 	DrawerTrigger,
 } from "../../ui/drawer";
 import { Field } from "../../ui/field";
-import {
-	IApiCompany,
-	IApiCompanyInfo,
-	readCompanyById,
-	updateCompany,
-} from "../../../api";
+import { IApiCompanyInfo, readCompanyById, updateCompany } from "../../../api";
+import { $eventsStore, fetchEvents } from "../../../store/eventList";
 import {
 	convertEventStyleToCSS,
-	DEFAULT_EVENT_STYLE,
-	IEventStyle,
 	navBack,
-	parseEventStyle,
 	stringifyEventStyle,
 } from "../../../utils";
-
-interface CompanyFormValues extends IApiCompany {
-	style: IEventStyle;
-}
 
 const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 	const stats = [
@@ -65,7 +55,13 @@ const CompanyCard = ({ company }: { company: IApiCompanyInfo }) => {
 	];
 
 	return (
-		<Card.Root width="full">
+		<Card.Root width="full" overflow="hidden">
+			<Image
+				height={200}
+				width="100%"
+				src="/assets/company_cover.webp"
+				alt="Обложка кампании"
+			/>
 			<Card.Body>
 				<HStack mb="6" gap="3">
 					<Heading size="3xl">Кампания - {company.name}</Heading>
@@ -109,6 +105,12 @@ const CompanyCardSkeleton = () => {
 
 	return (
 		<Card.Root width="full">
+			<Image
+				height={200}
+				width="100%"
+				src="/assets/company_cover.webp"
+				alt="Обложка кампании"
+			/>
 			<Card.Body>
 				<HStack mb="6" gap="3">
 					<Skeleton height="38px" w="30%" />
@@ -135,6 +137,9 @@ export const CompanyPage = () => {
 	const companyId = route.matches?.id as UUID;
 	const [fetching, setFetching] = useState(false);
 	const [company, setCompany] = useState<IApiCompanyInfo | null>(null);
+
+	const { list, title, isMaster } = useStore($eventsStore);
+
 	const [open, setOpen] = useState(false);
 	const {
 		register,
@@ -182,27 +187,33 @@ export const CompanyPage = () => {
 		};
 		document.addEventListener("keydown", onEscClose, { passive: true });
 
-		if (companyId) {
+		const loadCompanyData = async () => {
 			setFetching(true);
-			readCompanyById(companyId)
-				.then((res) => {
-					if (res !== null) {
-						const companyData = res.payload;
-						setCompany(res.payload);
-						reset({
-							name: companyData.name,
-							system: companyData.system,
-							description: companyData.description,
-							style: companyData.event_style
-								? parseEventStyle(companyData.event_style)
-								: DEFAULT_EVENT_STYLE,
-						});
-					}
-				})
-				.finally(() => {
-					setFetching(false);
+
+			try {
+				const companyResponse = await readCompanyById(companyId);
+
+				if (!companyResponse?.payload) {
+					return;
+				}
+
+				const companyData = companyResponse.payload;
+				setCompany(companyData);
+
+				await fetchEvents({
+					type: "company",
+					companyId: companyData.id,
+					youAreMaster: companyData.you_are_master,
 				});
-		}
+			} catch (error) {
+				console.error("Failed to load event data:", error);
+			} finally {
+				setFetching(false);
+			}
+		};
+
+		loadCompanyData();
+
 		return () => {
 			document.removeEventListener("keydown", onEscClose);
 		};
@@ -309,16 +320,28 @@ export const CompanyPage = () => {
 					</DrawerRoot>
 				</HStack>
 			)}
-			<Image
-				height={200}
-				width="100%"
-				src="/assets/company_cover.webp"
-				alt="Обложка кампании"
-			/>
 			{fetching ? (
 				<CompanyCardSkeleton />
 			) : company !== null ? (
-				<CompanyCard company={company} />
+				<HStack gap={6} alignItems={"flex-start"}>
+					<Stack w={list.length > 0 ? "2/3" : "full"}>
+						<CompanyCard company={company} />
+					</Stack>
+					{list.length > 0 && (
+						<Card.Root w="1/3">
+							<Card.Body gap="4">
+								<Card.Title>{title}</Card.Title>
+								{list.map((item) => (
+									<EventItem
+										item={item}
+										key={item.id}
+										isMaster={isMaster}
+									/>
+								))}
+							</Card.Body>
+						</Card.Root>
+					)}
+				</HStack>
 			) : (
 				<NotFoundPage
 					checkButton={false}

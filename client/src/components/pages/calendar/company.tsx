@@ -43,7 +43,7 @@ export interface ICompanyProps {
 	readonly data: ReadonlyArray<IApiCompany>;
 }
 
-interface CompanyFormValues extends IApiCompany {
+export interface CompanyFormValues extends IApiCompany {
 	style: IEventStyle;
 }
 
